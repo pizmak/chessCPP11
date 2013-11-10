@@ -7,41 +7,32 @@
 #include <sstream>
 #include <iostream>
 #include <set>
-//#include "Cmp.h"
-
-//istringstream sstream
 
 using namespace std;
 
 struct debiut {
-	string posuniecia;
-	string nazwa;
+    string posuniecia;
+    string nazwa;
 };
 
 class DebiutyCmp {
 public:
-	bool operator()(const struct debiut& l, const struct debiut& r) {
-		if (l.posuniecia.length() != r.posuniecia.length()) 
-			return (l.posuniecia.length() > r.posuniecia.length());
-		else
-			return (l.posuniecia > r.posuniecia); 
-	}
-};
-
-class StringCmp {
-public:
-	bool operator()(const string& l, const string& r) const {
-		return (l > r); 
-	}
+    bool operator()(const debiut& l, const debiut& r) {
+        if (l.posuniecia.length() != r.posuniecia.length()) {
+            return l.posuniecia.length() > r.posuniecia.length();
+        } else {
+            return l.posuniecia > r.posuniecia;
+        }
+    }
 };
 
 //set<struct debiut, DebiutyCmp> debiuty_set;
-typedef set<struct debiut, DebiutyCmp> DEBSET;
+typedef set<debiut, DebiutyCmp> DEBSET;
 extern DEBSET debiuty_set;
 
-typedef multiset<string, StringCmp> DEBMULTISET;
+typedef multiset<string, std::greater<string> > DEBMULTISET;
 
 int wczytaj_debiuty_z_pliku(char * nazwaPlikuZDebiutami);
 
-struct ruch * wez_z_debiutow(char kto_rusza);
-void uaktualnij_debiuty(struct ruch * po_ruchu);
+ruch * wez_z_debiutow(Color kto_rusza);
+void uaktualnij_debiuty(ruch * po_ruchu);
