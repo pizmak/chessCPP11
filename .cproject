@@ -31,7 +31,7 @@
 								<option id="gnu.cpp.compiler.option.warnings.wconversion.1274477109" name="Implicit conversion warnings (-Wconversion)" superClass="gnu.cpp.compiler.option.warnings.wconversion" value="false" valueType="boolean"/>
 								<option id="gnu.cpp.compiler.option.warnings.pedantic.error.481302741" name="Pedantic warnings as errors (-pedantic-errors)" superClass="gnu.cpp.compiler.option.warnings.pedantic.error" value="false" valueType="boolean"/>
 								<option id="gnu.cpp.compiler.option.warnings.pedantic.319181672" name="Pedantic (-pedantic)" superClass="gnu.cpp.compiler.option.warnings.pedantic" value="true" valueType="boolean"/>
-								<option id="gnu.cpp.compiler.option.other.other.1308838024" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -Wno-parentheses -std=gnu++11  -MT&quot;$@&quot;" valueType="string"/>
+								<option id="gnu.cpp.compiler.option.other.other.1308838024" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -Wno-parentheses -Wno-missing-field-initializers -std=gnu++11  -MT&quot;$@&quot;" valueType="string"/>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.949341402" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="__cplusplus=201103L"/>
 								</option>
