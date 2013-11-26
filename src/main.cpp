@@ -26,6 +26,9 @@ int main() {
     b.dump(std::cerr);
     b.checkIntegrity();
 
+    println1(std::cerr, 1, 2.1 ,"abc");
+    println2(std::cerr, 1, 2. ,"abc");
+    return 0;
     std::list<Move> moveList = {
             {notation2Number("e2"), notation2Number("e4"), Piece::empty},
             {notation2Number("c7"), notation2Number("c5"), Piece::empty},
