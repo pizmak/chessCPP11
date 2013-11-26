@@ -15,3 +15,9 @@ template <typename T1, typename T2, typename ...Types> inline void print(std::os
     stream << val1 << ", ";
     print(stream, val2, types...);
 }
+
+template <typename ... Types>
+void println(std::ostream &stream, Types ... vals) {
+    print(stream, vals...);
+    stream << std::endl;
+}
