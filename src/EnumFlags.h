@@ -28,7 +28,7 @@ public:
         return EnumFlags(flags & enumVal.flags);
     }
     EnumFlags &operator|=(EnumType enumVal) {
-        flags |= enumVal;
+        flags |= toInt(enumVal);
         return *this;
     }
     EnumFlags &operator|=(EnumFlags<EnumType> enumVal) {
@@ -36,7 +36,7 @@ public:
         return *this;
     }
     EnumFlags &operator&=(EnumType enumVal) {
-        flags &= enumVal;
+        flags &= toInt(enumVal);
         return *this;
     }
     EnumFlags &operator&=(EnumFlags<EnumType> enumVal) {
