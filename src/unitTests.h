@@ -2,3 +2,4 @@
 
 void boardUnitTest();
 void testEngine();
+void engineMasksTest();

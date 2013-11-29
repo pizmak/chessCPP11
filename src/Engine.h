@@ -26,17 +26,22 @@ public:
     static uint64_t bishopBitmask[64][4];
     static uint64_t rookBitmask[64][4];
     static uint64_t kingBitmask[64];
+    static uint64_t pawnBitmask[2][64];
     static uint64_t maskOfShortDistancePiece(uint8_t square, const PairList &list);
     static void maskOfLongDistancePiece(uint8_t square, uint64_t array[4], const PairList &list);
     static uint64_t knightMask(uint8_t square);
+    static uint64_t pawnMask(uint8_t square, Color pawnColor);
     static void bishopMask(uint8_t square, uint64_t array[4]);
     static void rookMask(uint8_t square, uint64_t array[4]);
     static uint64_t kingMask(uint8_t square);
+    // do not check if king is attaking square
+    bool isSquareAttacked(uint8_t square, Color color);
 public:
     static void initBitmasks();
     void reset();
     // assume that from, to are set, rest fields will be set by engine
     void move(const std::string &move);
     void move(const std::list<std::string> &moves);
+    bool isMoveValid(const Move &m);
     Move go();
 };

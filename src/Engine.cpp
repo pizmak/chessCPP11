@@ -6,6 +6,7 @@
 #include <set>
 #include <algorithm>
 
+uint64_t Engine::pawnBitmask[2][64];
 uint64_t Engine::knightBitmask[64];
 uint64_t Engine::bishopBitmask[64][4];
 uint64_t Engine::rookBitmask[64][4];
@@ -29,6 +30,8 @@ void Engine::move(const std::list<std::string> &moves) {
 
 void Engine::initBitmasks() {
     for (int square = 0; square < 64; ++square) {
+        pawnBitmask[toInt(Color::white)][square] = pawnMask(square, Color::white);
+        pawnBitmask[toInt(Color::black)][square] = pawnMask(square, Color::black);
         knightBitmask[square] = knightMask(square);
         bishopMask(square, bishopBitmask[square]);
         rookMask(square, rookBitmask[square]);
@@ -79,7 +82,9 @@ Move *Engine::movesOfShortDistancePiece(uint8_t square, uint64_t mask, Move *sta
     mask &= ~board.piecesOf(board.toMove);
     bit::foreach_bit(mask, [this, &startMove, square](uint8_t moveTo) {
         *startMove = {square, moveTo, board.enPassantSquare, board.pieces[moveTo]};
-        ++startMove;
+        if (isMoveValid(*startMove)) {
+            ++startMove;
+        }
     });
     return startMove;
 }
@@ -94,7 +99,9 @@ Move *Engine::movesOfLongDistancePiece(uint8_t square, uint64_t mask[64][4], Mov
                     bit::leastSignificantBit : bit::mostSignificantBit)(piecesOnLine);
             if (board.piecesColors[possiblePiece] != board.toMove) {
                 *startMove = {square, possiblePiece, board.enPassantSquare, board.pieces[possiblePiece]};
-                ++startMove;
+                if (isMoveValid(*startMove)) {
+                    ++startMove;
+                }
             }
             movesMask = bit::sub(movesMask, mask[possiblePiece][direction]);
             bit::unset(movesMask, possiblePiece);
@@ -102,7 +109,9 @@ Move *Engine::movesOfLongDistancePiece(uint8_t square, uint64_t mask[64][4], Mov
 
         bit::foreach_bit(movesMask, [this, square, &startMove](uint8_t targetSquare) {
             *startMove = {square, targetSquare, board.enPassantSquare, Piece::empty};
-            ++startMove;
+            if (isMoveValid(*startMove)) {
+                ++startMove;
+            }
         });
     }
     return startMove;
@@ -113,12 +122,16 @@ Move *Engine::generatePawnMoves(uint8_t square, Move *startMove) {
     uint8_t targetSquare = color == Color::white ? square + 8 : square - 8;
     if (board.pieces[targetSquare] == Piece::empty) {
         *startMove = {square, targetSquare, board.enPassantSquare, Piece::empty};
-        ++startMove;
-        uint8_t targetSquare = color == Color::white ? square + 16 : square - 16;
-        bool inSecondLine = color == Color::white ? square < 0x10 : square > 0x2F;
-        if (inSecondLine && board.pieces[targetSquare] == Piece::empty) {
-            *startMove = {square, targetSquare, board.enPassantSquare, Piece::empty};
+        if (isMoveValid(*startMove)) {
             ++startMove;
+            uint8_t targetSquare = color == Color::white ? square + 16 : square - 16;
+            bool inSecondLine = color == Color::white ? square < 0x10 : square > 0x2F;
+            if (inSecondLine && board.pieces[targetSquare] == Piece::empty) {
+                *startMove = {square, targetSquare, board.enPassantSquare, Piece::empty};
+                if (isMoveValid(*startMove)) {
+                    ++startMove;
+                }
+            }
         }
     }
     // TODO captures, en passant capture
@@ -215,6 +228,12 @@ void Engine::maskOfLongDistancePiece(uint8_t square, uint64_t array[4], const Pa
     }
 }
 
+uint64_t Engine::pawnMask(uint8_t square, Color pawnColor) {
+    static PairList whitePawnList = {{1, -1}, {1, 1}};
+    static PairList blackPawnList = {{-1, -1}, {-1, 1}};
+    return maskOfShortDistancePiece(square, pawnColor == Color::white ? whitePawnList : blackPawnList);
+}
+
 uint64_t Engine::knightMask(uint8_t square) {
     static PairList list = {{-2, -1}, {-2, 1}, {-1, -2}, {-1, 2}, {1, -2}, {1, 2}, {2, -1}, {2, 1}};
     return maskOfShortDistancePiece(square, list);
@@ -233,4 +252,41 @@ void Engine::rookMask(uint8_t square, uint64_t array[4]) {
 uint64_t Engine::kingMask(uint8_t square) {
     static PairList list = {{1, -1}, {1, 0}, {1, 1}, {0, -1}, {0, 1}, {-1, -1}, {-1, 0}, {-1, 1}};
     return maskOfShortDistancePiece(square, list);
+}
+
+bool Engine::isMoveValid(const Move &m) {
+    board.makeMove(m);
+    bool ret = isSquareAttacked(bit::mostSignificantBit(board.bitmask[toInt(opponent(board.toMove))][toInt(Piece::king)]), board.toMove);
+    board.unmakeMove(m);
+    return !ret;
+}
+
+bool Engine::isSquareAttacked(uint8_t square, Color color) {
+    if (knightBitmask[square] & board.bitmask[toInt(color)][toInt(Piece::knight)]) {
+        return true;
+    }
+    if (pawnBitmask[toInt(opponent(color))][square] & board.bitmask[toInt(color)][toInt(Piece::pawn)]) {
+        return true;
+    }
+    auto isAttackedBy = [&](uint64_t mask[64][4], Piece p) {
+        for (int direction = 0; direction < 4; ++direction) {
+            uint64_t piecesOnLine = mask[square][direction] & board.allPieces();
+            uint8_t possiblePiece = 0;
+            if (piecesOnLine) {
+                possiblePiece = (bit::single(square) < mask[square][direction] ?
+                        bit::leastSignificantBit : bit::mostSignificantBit)(piecesOnLine);
+                if (board.piecesColors[possiblePiece] == color && (board.pieces[possiblePiece] == Piece::queen || board.pieces[possiblePiece] == p)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+    if (isAttackedBy(bishopBitmask, Piece::bishop)) {
+        return true;
+    }
+    if (isAttackedBy(rookBitmask, Piece::rook)) {
+        return true;
+    }
+    return false;
 }

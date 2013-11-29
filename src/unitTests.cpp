@@ -55,6 +55,9 @@ void boardUnitTest() {
 
 void engineMasksTest() {
     for (int i = 0; i < 64; ++i) {
+        std::cerr << i << ", black pawn: " << std::endl;
+        printBitmaskAsBoard(Engine::pawnBitmask[toInt(Color::black)][i], std::cerr);
+        std::cerr << std::endl;
         std::cerr << i << ", knight: " << std::endl;
         printBitmaskAsBoard(Engine::knightBitmask[i], std::cerr);
         std::cerr << std::endl;
