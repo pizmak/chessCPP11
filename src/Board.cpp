@@ -13,6 +13,15 @@ void Board::disappearPiece(Board &board, Piece piece, Color color, uint_fast8_t 
     bit::unset(board.bitmask[toInt(color)][toInt(piece)], from);
 }
 
+uint64_t Board::piecesOf(Color color) {
+    return bitmask[toInt(color)][toInt(Piece::pawn)] | bitmask[toInt(color)][toInt(Piece::knight)] | bitmask[toInt(color)][toInt(Piece::bishop)] |
+            bitmask[toInt(color)][toInt(Piece::rook)] | bitmask[toInt(color)][toInt(Piece::queen)] | bitmask[toInt(color)][toInt(Piece::king)];
+}
+
+uint64_t Board::allPieces() {
+    return piecesOf(Color::white) | piecesOf(Color::black);
+}
+
 void Board::appearPiece(Board &board, Piece piece, Color color, uint_fast8_t to) {
     // we can appear piece on square which is empty on opponents square (capture) or our square (promotion)
     board.pieces[to] = piece;
@@ -43,6 +52,8 @@ void Board::movePiece(Board &board, Piece piece, Color color, uint_fast8_t from,
     appearPiece(board, piece, color, to);
 }
 
+// not very nice but fast way to convert MoveFlags to BoardFlags
+// with assumption that correspondent enums has same values
 EnumFlags<BoardFlags> toBoardFlags(EnumFlags<MoveFlags> moveFlags) {
     return BoardFlags(toInt(moveFlags) & toInt(castling));
 }

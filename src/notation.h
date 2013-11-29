@@ -1,5 +1,14 @@
 #pragma once
+
+#include <iostream>
 #include <string>
+
+#include "asserts.h"
+#include "bit.h"
+
+inline bool inRange(uint_fast8_t _rank, uint_fast8_t _file) {
+    return _rank < 8 && _file < 8;
+}
 
 inline uint_fast8_t notation2Number(const std::string &s) {
     return (s[0] - 'a') + (s[1] - '1') * 8;
@@ -73,4 +82,49 @@ inline char piece2Notation(Piece piece, Color color) {
         ret += 'a' - 'A';
     }
     return ret;
+}
+
+inline Piece notation2Piece(char notation) {
+    switch (notation) {
+    case 'p':
+    case 'P':
+        return Piece::pawn;
+    case 'n':
+    case 'N':
+        return Piece::knight;
+    case 'b':
+    case 'B':
+        return Piece::bishop;
+    case 'r':
+    case 'R':
+        return Piece::rook;
+    case 'q':
+    case 'Q':
+        return Piece::queen;
+    case 'k':
+    case 'K':
+        return Piece::king;
+    }
+    ASSERT(false, notation);
+    return Piece::empty;
+}
+
+inline Move parseMove(const std::string &move) {
+    Move m;
+    m.from = notation2Number(move.substr(0, 2));
+    m.to = notation2Number(move.substr(2, 2));
+    if (move.length() == 5) {
+        ASSERT(m.to > 56 && m.to < 64, move);
+        m.flags = piece2promotion(notation2Piece(move[4]));
+    }
+    return m;
+}
+
+inline void printBitmaskAsBoard(uint64_t bitmask, std::ostream &stream) {
+    for (uint_fast8_t rank = 7; rank < 8; --rank) {
+        for (uint_fast8_t file = 0; file < 8; ++file) {
+            stream << (bit::isSet(bitmask, number(rank, file)) ? "1" : "0");
+        }
+        stream << std::endl;
+    }
 }

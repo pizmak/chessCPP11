@@ -25,3 +25,19 @@ Piece promotionPiece(EnumFlags<MoveFlags> promotionType) {
     }
     return Piece::empty;
 }
+
+MoveFlags piece2promotion(Piece piece) {
+    switch (piece) {
+    case Piece::knight:
+        return MoveFlags::knightPromotion;
+    case Piece::bishop:
+        return MoveFlags::bishopPromotion;
+    case Piece::rook:
+        return MoveFlags::rookPromotion;
+    case Piece::queen:
+        return MoveFlags::queenPromotion;
+    default:
+        ASSERT(false, piece);
+        return MoveFlags::empty;
+    }
+}

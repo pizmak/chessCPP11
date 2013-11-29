@@ -58,9 +58,11 @@ struct Board {
     void unmakeMove(const Move &r);
     void checkIntegrity();
     void dump(std::ostream &stream);
+    uint64_t piecesOf(Color color);
+    uint64_t allPieces();
+private:
     void dumpRank(std::ostream &stream, uint_fast8_t rank);
     void dumpMask(std::ostream &stream, Piece piece);
-private:
     static void movePiece(Board &board, Piece piece, Color color, uint_fast8_t from, uint_fast8_t to);
     static void takePiece(Board &board, Piece piece, Color color, Piece opponentPiece, uint_fast8_t from, uint_fast8_t to);
     static void untakePiece(Board &board, Piece piece, Color color, Piece opponentPiece, uint_fast8_t from, uint_fast8_t to);
