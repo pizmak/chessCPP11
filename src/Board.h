@@ -53,7 +53,7 @@ struct Board {
     };
     EnumFlags<BoardFlags> flags = castling;
     Color toMove = Color::white;
-    uint_fast8_t enPassantSquare = 0;
+    uint8_t enPassantSquare = 0;
     void makeMove(const Move &r); // only move pieces around, no check for move validity
     void unmakeMove(const Move &r);
     void checkIntegrity();
@@ -61,11 +61,11 @@ struct Board {
     uint64_t piecesOf(Color color);
     uint64_t allPieces();
 private:
-    void dumpRank(std::ostream &stream, uint_fast8_t rank);
+    void dumpRank(std::ostream &stream, uint8_t rank);
     void dumpMask(std::ostream &stream, Piece piece);
-    static void movePiece(Board &board, Piece piece, Color color, uint_fast8_t from, uint_fast8_t to);
-    static void takePiece(Board &board, Piece piece, Color color, Piece opponentPiece, uint_fast8_t from, uint_fast8_t to);
-    static void untakePiece(Board &board, Piece piece, Color color, Piece opponentPiece, uint_fast8_t from, uint_fast8_t to);
-    static void disappearPiece(Board &board, Piece piece, Color color, uint_fast8_t from);
-    static void appearPiece(Board &board, Piece piece, Color color, uint_fast8_t to);
+    static void movePiece(Board &board, Piece piece, Color color, uint8_t from, uint8_t to);
+    static void takePiece(Board &board, Piece piece, Color color, Piece opponentPiece, uint8_t from, uint8_t to);
+    static void untakePiece(Board &board, Piece piece, Color color, Piece opponentPiece, uint8_t from, uint8_t to);
+    static void disappearPiece(Board &board, Piece piece, Color color, uint8_t from);
+    static void appearPiece(Board &board, Piece piece, Color color, uint8_t to);
 };

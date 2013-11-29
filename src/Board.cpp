@@ -5,7 +5,7 @@
 #include "bit.h"
 #include <iomanip>
 
-void Board::disappearPiece(Board &board, Piece piece, Color color, uint_fast8_t from) {
+void Board::disappearPiece(Board &board, Piece piece, Color color, uint8_t from) {
     ASSERT(board.pieces[from] == piece && board.piecesColors[from] == color,
             number2Notation(from), board.pieces[from], piece, board.piecesColors[from], color);
     board.pieces[from] = Piece::empty;
@@ -22,14 +22,14 @@ uint64_t Board::allPieces() {
     return piecesOf(Color::white) | piecesOf(Color::black);
 }
 
-void Board::appearPiece(Board &board, Piece piece, Color color, uint_fast8_t to) {
+void Board::appearPiece(Board &board, Piece piece, Color color, uint8_t to) {
     // we can appear piece on square which is empty on opponents square (capture) or our square (promotion)
     board.pieces[to] = piece;
     board.piecesColors[to] = color;
     bit::set(board.bitmask[toInt(color)][toInt(piece)], to);
 }
 
-void Board::takePiece(Board &board, Piece piece, Color color, Piece capturedPiece, uint_fast8_t from, uint_fast8_t to) {
+void Board::takePiece(Board &board, Piece piece, Color color, Piece capturedPiece, uint8_t from, uint8_t to) {
     ASSERT(board.pieces[from] == piece && board.piecesColors[from] == color && board.pieces[to] == capturedPiece && board.piecesColors[to] == opponent(color),
             from, to, piece, color, capturedPiece, board.pieces[from], board.pieces[to]);
 
@@ -38,7 +38,7 @@ void Board::takePiece(Board &board, Piece piece, Color color, Piece capturedPiec
     appearPiece(board, piece, color, to);
 }
 
-void Board::untakePiece(Board &board, Piece piece, Color color, Piece capturedPiece, uint_fast8_t from, uint_fast8_t to) {
+void Board::untakePiece(Board &board, Piece piece, Color color, Piece capturedPiece, uint8_t from, uint8_t to) {
     ASSERT(board.pieces[to] == piece && board.piecesColors[to] == color && board.pieces[from] == Piece::empty && board.piecesColors[from] == Color::empty,
             (int)from, (int)to, piece, color, capturedPiece, board.pieces[from], board.pieces[to]);
 
@@ -47,7 +47,7 @@ void Board::untakePiece(Board &board, Piece piece, Color color, Piece capturedPi
     appearPiece(board, piece, color, from);
 }
 
-void Board::movePiece(Board &board, Piece piece, Color color, uint_fast8_t from, uint_fast8_t to) {
+void Board::movePiece(Board &board, Piece piece, Color color, uint8_t from, uint8_t to) {
     disappearPiece(board, piece, color, from);
     appearPiece(board, piece, color, to);
 }
@@ -61,7 +61,7 @@ EnumFlags<BoardFlags> toBoardFlags(EnumFlags<MoveFlags> moveFlags) {
 void Board::makeMove(const Move &move) {
     ASSERT(piecesColors[move.from] == toMove, number2Notation(move.from), piecesColors[move.from], toMove);
     // TODO remove this variable as it is only for diagnostic purposes at the moment
-    uint_fast8_t newEnPassantSquare = pieces[move.from] == Piece::pawn && (move.to - move.from == 16 || move.from - move.to == 16) ? move.to : 0;
+    uint8_t newEnPassantSquare = pieces[move.from] == Piece::pawn && (move.to - move.from == 16 || move.from - move.to == 16) ? move.to : 0;
     if (move.captured != Piece::empty) {
         takePiece(*this, pieces[move.from], toMove, move.captured, move.from, move.to);
     } else {
@@ -72,9 +72,9 @@ void Board::makeMove(const Move &move) {
         if (move.flags & MoveFlags::castling) {
             std::cerr << "roszada" << std::endl;
             ASSERT(flags & castling, flags);
-            uint_fast8_t startSquare = move.to > move.from ? 7 : 0;
-            uint_fast8_t offset = move.to > move.from ? -2 : 3;
-            uint_fast8_t colorOffset = 56 * int(toMove);
+            uint8_t startSquare = move.to > move.from ? 7 : 0;
+            uint8_t offset = move.to > move.from ? -2 : 3;
+            uint8_t colorOffset = 56 * int(toMove);
             movePiece(*this, Piece::rook, toMove, startSquare + colorOffset, startSquare + colorOffset + offset);
         }
     } else if (move.flags & promotions) {
@@ -101,9 +101,9 @@ void Board::unmakeMove(const Move &move) {
     enPassantSquare = move.enPassantSquare;
     if (pieces[move.from] == Piece::king) {
         if (move.flags & MoveFlags::castling) {
-            uint_fast8_t startSquare = move.to > move.from ? 7 : 0;
-            uint_fast8_t offset = move.to > move.from ? -2 : 3;
-            uint_fast8_t colorOffset = 56 * int(opponent(toMove));
+            uint8_t startSquare = move.to > move.from ? 7 : 0;
+            uint8_t offset = move.to > move.from ? -2 : 3;
+            uint8_t colorOffset = 56 * int(opponent(toMove));
             movePiece(*this, Piece::rook, opponent(toMove), startSquare + colorOffset + offset, startSquare + colorOffset);
         }
     } else if (move.flags & promotions) {
@@ -141,9 +141,9 @@ void Board::checkIntegrity() {
                                    (toMove == Color::white && enPassantSquare >= 32 && enPassantSquare < 40), toMove, (int)enPassantSquare);
 }
 
-void Board::dumpRank(std::ostream &stream, uint_fast8_t rank) {
+void Board::dumpRank(std::ostream &stream, uint8_t rank) {
     ASSERT(/*rank >= 0 && */rank < 8, rank);
-    for (uint_fast8_t file = 0; file < 8; ++file) {
+    for (uint8_t file = 0; file < 8; ++file) {
         switch (piecesColors[number(rank, file)]) {
         case Color::empty:
             stream << (isWhite(rank, file) ? " " : ".");
@@ -161,7 +161,7 @@ void Board::dumpMask(std::ostream &stream, Piece piece) {
 
 void Board::dump(std::ostream &stream) {
     stream << std::showbase << std::endl << "__________\tpiece\twhite\t\t\t\tblack" << std::endl;
-    for (uint_fast8_t rank = 7; /*rank >= 0 && */rank < 8; --rank) {
+    for (uint8_t rank = 7; /*rank >= 0 && */rank < 8; --rank) {
         stream << "|";
         dumpRank(stream, rank);
         stream << "|";

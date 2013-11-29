@@ -5,7 +5,7 @@
 #include "asserts.h"
 
 // values of this enum are used as indices in arrays and cannot be changed
-ENUM(Color, uint_fast8_t,
+ENUM(Color, uint8_t,
     white, 0,
     black, 1,
     empty, 2

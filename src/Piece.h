@@ -4,7 +4,7 @@
 #include "enums.h"
 
 // values of this enum are used as indices in arrays and cannot be changed
-ENUM(Piece, uint_fast8_t,
+ENUM(Piece, uint8_t,
     pawn,   0,
     knight, 1,
     bishop, 2,

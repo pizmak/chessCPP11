@@ -38,27 +38,27 @@ void Engine::initBitmasks() {
 
 Move *Engine::generateMoves(Move *startMove) {
     if (board.toMove == Color::white) {
-        bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::pawn)], [&startMove, this](uint_fast8_t pawn) {
+        bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::pawn)], [&startMove, this](uint8_t pawn) {
             startMove = generatePawnMoves<Color::white>(pawn, startMove);
         });
     } else {
-        bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::pawn)], [&startMove, this](uint_fast8_t pawn) {
+        bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::pawn)], [&startMove, this](uint8_t pawn) {
             startMove = generatePawnMoves<Color::black>(pawn, startMove);
         });
     }
-    bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::knight)], [&startMove, this](uint_fast8_t knight) {
+    bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::knight)], [&startMove, this](uint8_t knight) {
         startMove = generateKnightMoves(knight, startMove);
     });
-    bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::bishop)], [&startMove, this](uint_fast8_t bishop) {
+    bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::bishop)], [&startMove, this](uint8_t bishop) {
         startMove = generateBishopMoves(bishop, startMove);
     });
-    bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::rook)], [&startMove, this](uint_fast8_t rook) {
+    bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::rook)], [&startMove, this](uint8_t rook) {
         startMove = generateRookMoves(rook, startMove);
     });
-    bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::queen)], [&startMove, this](uint_fast8_t queen) {
+    bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::queen)], [&startMove, this](uint8_t queen) {
         startMove = generateQueenMoves(queen, startMove);
     });
-    bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::king)], [&startMove, this](uint_fast8_t king) {
+    bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::king)], [&startMove, this](uint8_t king) {
         startMove = generateKingMoves(king, startMove);
     });
     return startMove;
@@ -75,19 +75,19 @@ void Engine::fillMoveFlags(Move &m) {
     }
 }
 
-Move *Engine::movesOfShortDistancePiece(uint_fast8_t square, uint64_t mask, Move *startMove) {
+Move *Engine::movesOfShortDistancePiece(uint8_t square, uint64_t mask, Move *startMove) {
     mask &= ~board.piecesOf(board.toMove);
-    bit::foreach_bit(mask, [this, &startMove, square](uint_fast8_t moveTo) {
+    bit::foreach_bit(mask, [this, &startMove, square](uint8_t moveTo) {
         *startMove = {square, moveTo, board.enPassantSquare, board.pieces[moveTo]};
         ++startMove;
     });
     return startMove;
 }
 
-Move *Engine::movesOfLongDistancePiece(uint_fast8_t square, uint64_t mask[64][4], Move *startMove) {
+Move *Engine::movesOfLongDistancePiece(uint8_t square, uint64_t mask[64][4], Move *startMove) {
     for (int direction = 0; direction < 4; ++direction) {
         uint64_t piecesOnLine = mask[square][direction] & board.allPieces();
-        uint_fast8_t possiblePiece = 0;
+        uint8_t possiblePiece = 0;
         uint64_t movesMask = mask[square][direction];
         if (piecesOnLine) {
             possiblePiece = (bit::single(square) < mask[square][direction] ?
@@ -100,7 +100,7 @@ Move *Engine::movesOfLongDistancePiece(uint_fast8_t square, uint64_t mask[64][4]
             bit::unset(movesMask, possiblePiece);
         }
 
-        bit::foreach_bit(movesMask, [this, square, &startMove](uint_fast8_t targetSquare) {
+        bit::foreach_bit(movesMask, [this, square, &startMove](uint8_t targetSquare) {
             *startMove = {square, targetSquare, board.enPassantSquare, Piece::empty};
             ++startMove;
         });
@@ -109,12 +109,12 @@ Move *Engine::movesOfLongDistancePiece(uint_fast8_t square, uint64_t mask[64][4]
 }
 
 template <Color color>
-Move *Engine::generatePawnMoves(uint_fast8_t square, Move *startMove) {
-    uint_fast8_t targetSquare = color == Color::white ? square + 8 : square - 8;
+Move *Engine::generatePawnMoves(uint8_t square, Move *startMove) {
+    uint8_t targetSquare = color == Color::white ? square + 8 : square - 8;
     if (board.pieces[targetSquare] == Piece::empty) {
         *startMove = {square, targetSquare, board.enPassantSquare, Piece::empty};
         ++startMove;
-        uint_fast8_t targetSquare = color == Color::white ? square + 16 : square - 16;
+        uint8_t targetSquare = color == Color::white ? square + 16 : square - 16;
         bool inSecondLine = color == Color::white ? square < 0x10 : square > 0x2F;
         if (inSecondLine && board.pieces[targetSquare] == Piece::empty) {
             *startMove = {square, targetSquare, board.enPassantSquare, Piece::empty};
@@ -125,15 +125,15 @@ Move *Engine::generatePawnMoves(uint_fast8_t square, Move *startMove) {
     return startMove;
 }
 
-Move *Engine::generateKnightMoves(uint_fast8_t square, Move *startMove) {
+Move *Engine::generateKnightMoves(uint8_t square, Move *startMove) {
     return movesOfShortDistancePiece(square, knightBitmask[square], startMove);
 }
 
-Move *Engine::generateBishopMoves(uint_fast8_t square, Move *startMove) {
+Move *Engine::generateBishopMoves(uint8_t square, Move *startMove) {
     return movesOfLongDistancePiece(square, bishopBitmask, startMove);
 }
 
-Move *Engine::generateRookMoves(uint_fast8_t square, Move *startMove) {
+Move *Engine::generateRookMoves(uint8_t square, Move *startMove) {
     Move *afterLastMove = movesOfLongDistancePiece(square, rookBitmask, startMove);
     if (square == 0 && board.flags & BoardFlags::w_q_rook) {
         std::for_each(startMove, afterLastMove, [](Move &move) {
@@ -155,12 +155,12 @@ Move *Engine::generateRookMoves(uint_fast8_t square, Move *startMove) {
     return afterLastMove;
 }
 
-Move *Engine::generateQueenMoves(uint_fast8_t square, Move *startMove) {
+Move *Engine::generateQueenMoves(uint8_t square, Move *startMove) {
     startMove = generateBishopMoves(square, startMove);
     return generateRookMoves(square, startMove);
 }
 
-Move *Engine::generateKingMoves(uint_fast8_t square, Move* startMove) {
+Move *Engine::generateKingMoves(uint8_t square, Move* startMove) {
     Move *afterLastMove = movesOfShortDistancePiece(square, kingBitmask[square], startMove);
     if (square == 4 && board.flags & BoardFlags::w_king) {
         std::for_each(startMove, afterLastMove, [](Move &move) {
@@ -187,10 +187,10 @@ Move Engine::go() {
     return moves[0];
 }
 
-uint64_t Engine::maskOfShortDistancePiece(uint_fast8_t square, const PairList &list) {
+uint64_t Engine::maskOfShortDistancePiece(uint8_t square, const PairList &list) {
     uint64_t ret = 0;
-    uint_fast8_t _file = file(square);
-    uint_fast8_t _rank = rank(square);
+    uint8_t _file = file(square);
+    uint8_t _rank = rank(square);
     for (auto &pair : list) {
         if (inRange(_rank + pair.first, _file + pair.second)) {
             bit::set(ret, number(_rank + pair.first, _file + pair.second));
@@ -199,10 +199,10 @@ uint64_t Engine::maskOfShortDistancePiece(uint_fast8_t square, const PairList &l
     return ret;
 }
 
-void Engine::maskOfLongDistancePiece(uint_fast8_t square, uint64_t array[4], const PairList &list) {
+void Engine::maskOfLongDistancePiece(uint8_t square, uint64_t array[4], const PairList &list) {
     array[0] = array[1] = array[2] = array[3] = 0;
-    uint_fast8_t _file = file(square);
-    uint_fast8_t _rank = rank(square);
+    uint8_t _file = file(square);
+    uint8_t _rank = rank(square);
     int multiplier = 0;
     int direction = 0;
     for (auto &pair : list) {
@@ -215,22 +215,22 @@ void Engine::maskOfLongDistancePiece(uint_fast8_t square, uint64_t array[4], con
     }
 }
 
-uint64_t Engine::knightMask(uint_fast8_t square) {
+uint64_t Engine::knightMask(uint8_t square) {
     static PairList list = {{-2, -1}, {-2, 1}, {-1, -2}, {-1, 2}, {1, -2}, {1, 2}, {2, -1}, {2, 1}};
     return maskOfShortDistancePiece(square, list);
 }
 
-void Engine::bishopMask(uint_fast8_t square, uint64_t array[4]) {
+void Engine::bishopMask(uint8_t square, uint64_t array[4]) {
     static PairList list = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
     maskOfLongDistancePiece(square, array, list);
 }
 
-void Engine::rookMask(uint_fast8_t square, uint64_t array[4]) {
+void Engine::rookMask(uint8_t square, uint64_t array[4]) {
     static PairList list = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
     maskOfLongDistancePiece(square, array, list);
 }
 
-uint64_t Engine::kingMask(uint_fast8_t square) {
+uint64_t Engine::kingMask(uint8_t square) {
     static PairList list = {{1, -1}, {1, 0}, {1, 1}, {0, -1}, {0, 1}, {-1, -1}, {-1, 0}, {-1, 1}};
     return maskOfShortDistancePiece(square, list);
 }

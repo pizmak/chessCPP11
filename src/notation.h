@@ -6,47 +6,47 @@
 #include "asserts.h"
 #include "bit.h"
 
-inline bool inRange(uint_fast8_t _rank, uint_fast8_t _file) {
+inline bool inRange(uint8_t _rank, uint8_t _file) {
     return _rank < 8 && _file < 8;
 }
 
-inline uint_fast8_t notation2Number(const std::string &s) {
+inline uint8_t notation2Number(const std::string &s) {
     return (s[0] - 'a') + (s[1] - '1') * 8;
 }
 
 // kolumny od 0 do 7
-inline uint_fast8_t file(uint_fast8_t number) {
+inline uint8_t file(uint8_t number) {
     ASSERT(/*number >= 0 && */number < 64, number);
     return number & 7;
 }
 
 // wiersze od 0 do 7 (0 -> 'a', 1 -> 'b' ...)
-inline uint_fast8_t rank(uint_fast8_t number) {
+inline uint8_t rank(uint8_t number) {
     ASSERT(/*number >= 0 && */number < 64, number);
     return number >> 3;
 }
 
-inline uint_fast8_t number(uint_fast8_t rank, uint_fast8_t file) {
+inline uint8_t number(uint8_t rank, uint8_t file) {
     ASSERT(/*rank >= 0 && */rank < 8/* && file >= 0 */&& file < 8, rank, file);
     return (rank << 3) + file;
 }
 
-inline Color color(uint_fast8_t number) {
+inline Color color(uint8_t number) {
     ASSERT(/*number >= 0 && */number < 64, number);
     return number & 1 ? Color::white : Color::black;
 }
 
-inline Color color(uint_fast8_t rank, uint_fast8_t file) {
+inline Color color(uint8_t rank, uint8_t file) {
     ASSERT(/*rank >= 0 && */rank < 8/* && file >= 0 */&& file < 8, rank, file);
     return rank + file & 1 ? Color::white : Color::black;
 }
 
-inline bool isWhite(uint_fast8_t rank, uint_fast8_t file) {
+inline bool isWhite(uint8_t rank, uint8_t file) {
     ASSERT(/*rank >= 0 &&*/ rank < 8 && /*file >= 0 && */file < 8, rank, file);
     return color(rank, file) == Color::white;
 }
 
-inline std::string number2Notation(uint_fast8_t pos) {
+inline std::string number2Notation(uint8_t pos) {
     char ans[3] = "\0\0";
     ans[0] = 'a' + rank(pos);
     ans[1] = '1' + file(pos);
@@ -121,8 +121,8 @@ inline Move parseMove(const std::string &move) {
 }
 
 inline void printBitmaskAsBoard(uint64_t bitmask, std::ostream &stream) {
-    for (uint_fast8_t rank = 7; rank < 8; --rank) {
-        for (uint_fast8_t file = 0; file < 8; ++file) {
+    for (uint8_t rank = 7; rank < 8; --rank) {
+        for (uint8_t file = 0; file < 8; ++file) {
             stream << (bit::isSet(bitmask, number(rank, file)) ? "1" : "0");
         }
         stream << std::endl;

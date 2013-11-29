@@ -24,9 +24,9 @@ static const EnumFlags<MoveFlags> promotions = MoveFlags::queenPromotion | MoveF
         | MoveFlags::rookPromotion | MoveFlags::bishopPromotion;
 
 struct Move {
-    uint_fast8_t from;
-    uint_fast8_t to;
-    uint_fast8_t enPassantSquare;
+    uint8_t from;
+    uint8_t to;
+    uint8_t enPassantSquare;
     Piece captured; // empty in case of en passant capture
     EnumFlags<MoveFlags> flags;
     // always rewritten from Board enPassantSquare - unmakeMove should properly set boards enPassantSqare to previous value

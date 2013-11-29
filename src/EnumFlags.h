@@ -92,7 +92,7 @@ auto operator<<(std::ostream &stream, EnumFlags<EnumType> flags) -> decltype(toS
     if (enumVal == 0) {
         stream << EnumType(0);
     } else {
-        uint_fast8_t pos = bit::leastSignificantBit(enumVal);
+        uint8_t pos = bit::leastSignificantBit(enumVal);
         stream << EnumType(1 << pos);
         bit::unset(enumVal, pos);
         while (enumVal != 0) {
