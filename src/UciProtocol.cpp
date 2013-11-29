@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "notation.h"
+
 bool isFile(char file) {
     return file >= 'a' && file <= 'h';
 }
@@ -17,10 +19,7 @@ bool isMove(const std::string &move) {
     return move.length() == 4 && isRank(move[0]) && isFile(move[1]) && isRank(move[2]) && isFile(move[3]);
 }
 
-std::vector<std::string> moves = {"a7a6", "a6a5", "a5a4"};
-
-std::string dispatchCommand(const std::string &command) {
-    static int index = 0;
+std::string UciProtocol::dispatchCommand(std::string command) {
     if (command == "uci") {
         return "uciok";
     }
@@ -30,16 +29,29 @@ std::string dispatchCommand(const std::string &command) {
     if (command == "new") {
         return "";
     }
-    if (command == "position") {
+    if (command == "ucinewgame") {
+        return "";
+    }
+    if (command.find("position") == 0) {
+        setupPosition(command.substr(sizeof("position")));
         return "";
     }
     if (command.find("go") == 0) {
-        return std::string("bestmove ") + moves[index++ % 3];
+        Move m = engine.go();
+        std::ofstream f(R"(c:\arenatest2.txt)");
+        if (!f) {
+            std::cerr << "file open failure" << std::endl;
+            return "";
+        }
+        f << "out:\t" << m << std::endl;
+        f.flush();
+        f.close();
+        return std::string("bestmove ") + move2String(m);
     }
     return "";
 }
 
-void testArena() {
+void UciProtocol::testArena() {
     std::ofstream f(R"(c:\arenatest.txt)");
     if (!f) {
         std::cerr << "file open failure" << std::endl;
@@ -60,7 +72,51 @@ void testArena() {
     f.close();
 }
 
+std::list<std::string> split(std::string data, char c) {
+    std::list<std::string> ret;
+    size_t pos;
+    while ((pos = data.find_first_of(c)) != std::string::npos) {
+        ret.push_back(data.substr(0, pos));
+        data = data.substr(pos + 1);
+    }
+    if (data.length() > 0) {
+        ret.push_back(data);
+    }
+    return ret;
+}
+
+void UciProtocol::setupStartPosition(std::string data) {
+    std::list<std::string> moves = split(data, ' ');
+    for (auto &move : moves) {
+        std::cerr << move << " ";
+    }
+    engine.reset();
+    engine.move(moves);
+}
+
+void UciProtocol::setupFenPosition(std::string data) {
+    // TODO
+}
 
 void UciProtocol::start() {
+    engine.reset();
     testArena();
+}
+
+void UciProtocol::setupPosition(std::string command) {
+    engine.reset();
+    size_t movesPosition = command.find("moves");
+    std::string movesString;
+    if (movesPosition != std::string::npos) {
+        movesString = command.substr(movesPosition + sizeof("moves"));
+        command = command.substr(0, movesPosition);
+    }
+    if (command.find("startpos") == 0) {
+        command = command.substr(std::min(sizeof("startpos"), command.length()));
+    } else if (command.find("fen") == 0) {
+        command = command.substr(sizeof("fen"));
+        setupFenPosition(command);
+    }
+    std::list<std::string> moves = split(movesString, ' ');
+    engine.move(moves);
 }

@@ -73,13 +73,15 @@ void Engine::fillMoveFlags(Move &m) {
     if (board.pieces[m.from] == Piece::king && (m.from - m.to == 2 || m.to - m.from == 2)) {
         m.flags |= MoveFlags::castling;
     }
-    if (board.pieces[m.from] == Piece::pawn && (m.from - m.to == 7 || m.from - m.to == 9 || m.to - m.from == 7 || m.to - m.from == 9)) {
+    if (board.pieces[m.from] == Piece::pawn && (board.enPassantSquare - m.to == 8 || m.to - board.enPassantSquare == 8)) {
         m.flags |= MoveFlags::enPassantCapture;
     }
 }
 
 Move *Engine::movesOfShortDistancePiece(uint8_t square, uint64_t mask, Move *startMove) {
     mask &= ~board.piecesOf(board.toMove);
+    board.dump(std::cerr);
+    printBitmaskAsBoard(mask, std::cerr);
     bit::foreach_bit(mask, [this, &startMove, square](uint8_t moveTo) {
         *startMove = {square, moveTo, board.enPassantSquare, board.pieces[moveTo]};
         if (isMoveValid(*startMove)) {
@@ -134,7 +136,14 @@ Move *Engine::generatePawnMoves(uint8_t square, Move *startMove) {
             }
         }
     }
-    // TODO captures, en passant capture
+    uint64_t captures = pawnBitmask[toInt(color)][square] & board.piecesOf(opponent(color));
+    bit::foreach_bit(captures, [this, &startMove, square](uint8_t targetSquare) {
+        *startMove = {square, targetSquare, board.enPassantSquare, board.pieces[targetSquare]};
+        if (isMoveValid(*startMove)) {
+            ++startMove;
+        }
+    });
+    // TODO en passant capture
     return startMove;
 }
 
@@ -186,12 +195,13 @@ Move *Engine::generateKingMoves(uint8_t square, Move* startMove) {
     }
 
     // TODO roszada
-    return startMove;
+    return afterLastMove;
 }
 
 Move Engine::go() {
     Move *afterLastMove = generateMoves(moves);
     if (moves == afterLastMove) {
+        std::cerr << "no valid moves" << std::endl;
         return {notation2Number("e2"), notation2Number("e4") };
     }
     std::for_each(moves, afterLastMove, [](Move &m) {

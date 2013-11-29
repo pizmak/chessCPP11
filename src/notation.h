@@ -48,8 +48,8 @@ inline bool isWhite(uint8_t rank, uint8_t file) {
 
 inline std::string number2Notation(uint8_t pos) {
     char ans[3] = "\0\0";
-    ans[0] = 'a' + rank(pos);
-    ans[1] = '1' + file(pos);
+    ans[0] = 'a' + file(pos);
+    ans[1] = '1' + rank(pos);
     return ans;
 }
 
@@ -110,7 +110,7 @@ inline Piece notation2Piece(char notation) {
 }
 
 inline Move parseMove(const std::string &move) {
-    Move m;
+    Move m{0, 0, 0, Piece::empty, MoveFlags::empty, 0};
     m.from = notation2Number(move.substr(0, 2));
     m.to = notation2Number(move.substr(2, 2));
     if (move.length() == 5) {
@@ -118,6 +118,18 @@ inline Move parseMove(const std::string &move) {
         m.flags = piece2promotion(notation2Piece(move[4]));
     }
     return m;
+}
+
+inline std::string move2String(const Move &move) {
+    std::string ret;
+    std::cerr << (int)move.from << ", " << (int)move.to << std::endl;
+    ret += number2Notation(move.from);
+    ret += number2Notation(move.to);
+    std::cerr << ret << std::endl;
+    if (move.flags & promotions) {
+        ret += piece2Notation(promotionPiece(move.flags), Color::white);
+    }
+    return ret;
 }
 
 inline void printBitmaskAsBoard(uint64_t bitmask, std::ostream &stream) {
