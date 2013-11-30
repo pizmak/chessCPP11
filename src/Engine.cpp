@@ -356,6 +356,9 @@ bool Engine::isSquareAttacked(uint8_t square, Color color) {
     if (knightBitmask[square] & board.bitmask[toInt(color)][toInt(Piece::knight)]) {
         return true;
     }
+    if (kingBitmask[square] & board.bitmask[toInt(color)][toInt(Piece::king)]) {
+        return true;
+    }
     if (pawnBitmask[toInt(opponent(color))][square] & board.bitmask[toInt(color)][toInt(Piece::pawn)]) {
         return true;
     }
@@ -384,7 +387,7 @@ bool Engine::isSquareAttacked(uint8_t square, Color color) {
 
 void Engine::setupFenPosition(std::list<std::string> fenPosition) {
     ASSERT(fenPosition.size() == 6, "invalid fen position");
-    reset();
+    board.clear();
     if (fenPosition.size() != 6) {
         return;
     }
@@ -397,12 +400,12 @@ void Engine::setupFenPosition(std::list<std::string> fenPosition) {
         while (rank.size() > 0) {
             if (std::isdigit(rank[0])) {
                 file += rank[0] - '0';
-                continue;
             } else {
                 Piece piece = notation2Piece(rank[0]);
                 Board::appearPiece(board, piece, rank[0] >= 'a' ? Color::black : Color::white, number(_rank, file));
                 ++file;
             }
+            rank = rank.substr(1);
         }
         ASSERT(file == 8, file);
     }

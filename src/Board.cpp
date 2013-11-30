@@ -196,3 +196,21 @@ void Board::dump(std::ostream &stream) {
     }
     stream << std::endl << std::endl;;
 }
+
+void Board::clear() {
+    for(auto &p: this->pieces) {
+        p = Piece::empty;
+    }
+    for(auto &c: this->piecesColors) {
+        c = Color::empty;
+    }
+
+    for (auto &c: this->bitmask) {
+        for (auto &p : c) {
+            p = 0;
+        }
+    }
+
+    this->enPassantSquare = 0;
+    this->flags = BoardFlags::empty;
+}

@@ -27,7 +27,7 @@ inline uint8_t rank(uint8_t number) {
 }
 
 inline uint8_t number(uint8_t rank, uint8_t file) {
-    ASSERT(/*rank >= 0 && */rank < 8/* && file >= 0 */&& file < 8, rank, file);
+    ASSERT(/*rank >= 0 && */rank < 8/* && file >= 0 */&& file < 8, (int)rank, (int)file);
     return (rank << 3) + file;
 }
 
@@ -114,7 +114,7 @@ inline Move parseMove(const std::string &move) {
     m.from = notation2Number(move.substr(0, 2));
     m.to = notation2Number(move.substr(2, 2));
     if (move.length() == 5) {
-        ASSERT(m.to > 56 && m.to < 64, move);
+        ASSERT(m.to > 0x37 && m.to < 0x40 || m.to < 0x8, move);
         m.flags = piece2promotion(notation2Piece(move[4]));
     }
     return m;

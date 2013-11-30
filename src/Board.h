@@ -62,6 +62,7 @@ struct Board {
     uint64_t allPieces();
     static void disappearPiece(Board &board, Piece piece, Color color, uint8_t from);
     static void appearPiece(Board &board, Piece piece, Color color, uint8_t to);
+    void clear();
 private:
     void dumpRank(std::ostream &stream, uint8_t rank);
     void dumpMask(std::ostream &stream, Piece piece);
