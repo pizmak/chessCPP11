@@ -36,6 +36,7 @@ public:
     static uint64_t kingMask(uint8_t square);
     // do not check if king is attaking square
     bool isSquareAttacked(uint8_t square, Color color);
+    void setupFenPosition(std::list<std::string> fenPosition);
 public:
     static void initBitmasks();
     void reset();

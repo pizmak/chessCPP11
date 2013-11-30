@@ -5,14 +5,6 @@
 #include "bit.h"
 #include <iomanip>
 
-void Board::disappearPiece(Board &board, Piece piece, Color color, uint8_t from) {
-    ASSERT(board.pieces[from] == piece && board.piecesColors[from] == color,
-            number2Notation(from), board.pieces[from], piece, board.piecesColors[from], color);
-    board.pieces[from] = Piece::empty;
-    board.piecesColors[from] = Color::empty;
-    bit::unset(board.bitmask[toInt(color)][toInt(piece)], from);
-}
-
 uint64_t Board::piecesOf(Color color) {
     return bitmask[toInt(color)][toInt(Piece::pawn)] | bitmask[toInt(color)][toInt(Piece::knight)] | bitmask[toInt(color)][toInt(Piece::bishop)] |
             bitmask[toInt(color)][toInt(Piece::rook)] | bitmask[toInt(color)][toInt(Piece::queen)] | bitmask[toInt(color)][toInt(Piece::king)];
@@ -20,6 +12,14 @@ uint64_t Board::piecesOf(Color color) {
 
 uint64_t Board::allPieces() {
     return piecesOf(Color::white) | piecesOf(Color::black);
+}
+
+void Board::disappearPiece(Board &board, Piece piece, Color color, uint8_t from) {
+    ASSERT(board.pieces[from] == piece && board.piecesColors[from] == color,
+            number2Notation(from), board.pieces[from], piece, board.piecesColors[from], color);
+    board.pieces[from] = Piece::empty;
+    board.piecesColors[from] = Color::empty;
+    bit::unset(board.bitmask[toInt(color)][toInt(piece)], from);
 }
 
 void Board::appearPiece(Board &board, Piece piece, Color color, uint8_t to) {
@@ -31,7 +31,7 @@ void Board::appearPiece(Board &board, Piece piece, Color color, uint8_t to) {
 
 void Board::takePiece(Board &board, Piece piece, Color color, Piece capturedPiece, uint8_t from, uint8_t to) {
     ASSERT(board.pieces[from] == piece && board.piecesColors[from] == color && board.pieces[to] == capturedPiece && board.piecesColors[to] == opponent(color),
-            from, to, piece, color, capturedPiece, board.pieces[from], board.pieces[to]);
+            (int)from, (int)to, piece, color, capturedPiece, board.pieces[from], board.pieces[to]);
 
     bit::unset(board.bitmask[toInt(opponent(color))][toInt(capturedPiece)], to); // disappear opponent's piece
     disappearPiece(board, piece, color, from);
@@ -83,8 +83,8 @@ void Board::makeMove(const Move &move) {
         appearPiece(*this, promotionPiece(move.flags & promotions), toMove, move.to);
     } else if (move.flags & MoveFlags::enPassantCapture) {
         std::cerr << "bicie w przelocie" << std::endl;
-        ASSERT(enPassantSquare == move.to - 8, move.to - 8, (int)enPassantSquare);
-        disappearPiece(*this, Piece::pawn, opponent(toMove), move.to - 8);
+        ASSERT(enPassantSquare == (toMove == Color::white ? move.to - 8 : move.to + 8), move.to - 8, (int)enPassantSquare);
+        disappearPiece(*this, Piece::pawn, opponent(toMove), enPassantSquare);
     }
     flags &= ~toBoardFlags(move.flags);
     enPassantSquare = newEnPassantSquare;

@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "notation.h"
+#include "utils.h"
 
 bool isFile(char file) {
     return file >= 'a' && file <= 'h';
@@ -72,19 +73,6 @@ void UciProtocol::testArena() {
     f.close();
 }
 
-std::list<std::string> split(std::string data, char c) {
-    std::list<std::string> ret;
-    size_t pos;
-    while ((pos = data.find_first_of(c)) != std::string::npos) {
-        ret.push_back(data.substr(0, pos));
-        data = data.substr(pos + 1);
-    }
-    if (data.length() > 0) {
-        ret.push_back(data);
-    }
-    return ret;
-}
-
 void UciProtocol::setupStartPosition(std::string data) {
     std::list<std::string> moves = split(data, ' ');
     for (auto &move : moves) {
@@ -95,7 +83,8 @@ void UciProtocol::setupStartPosition(std::string data) {
 }
 
 void UciProtocol::setupFenPosition(std::string data) {
-    // TODO
+    std::list<std::string> fenPosition  = split(data, ' ');
+    engine.setupFenPosition(fenPosition);
 }
 
 void UciProtocol::start() {

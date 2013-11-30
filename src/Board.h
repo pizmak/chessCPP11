@@ -60,12 +60,12 @@ struct Board {
     void dump(std::ostream &stream);
     uint64_t piecesOf(Color color);
     uint64_t allPieces();
+    static void disappearPiece(Board &board, Piece piece, Color color, uint8_t from);
+    static void appearPiece(Board &board, Piece piece, Color color, uint8_t to);
 private:
     void dumpRank(std::ostream &stream, uint8_t rank);
     void dumpMask(std::ostream &stream, Piece piece);
     static void movePiece(Board &board, Piece piece, Color color, uint8_t from, uint8_t to);
     static void takePiece(Board &board, Piece piece, Color color, Piece opponentPiece, uint8_t from, uint8_t to);
     static void untakePiece(Board &board, Piece piece, Color color, Piece opponentPiece, uint8_t from, uint8_t to);
-    static void disappearPiece(Board &board, Piece piece, Color color, uint8_t from);
-    static void appearPiece(Board &board, Piece piece, Color color, uint8_t to);
 };

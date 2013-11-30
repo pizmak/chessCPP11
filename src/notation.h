@@ -78,7 +78,7 @@ inline char piece2Notation(Piece piece, Color color) {
         ASSERT(false, piece);
         ret = ' ';
     }
-    if (color == Color::white) {
+    if (color == Color::black) {
         ret += 'a' - 'A';
     }
     return ret;
