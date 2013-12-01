@@ -14,42 +14,42 @@ uint64_t Board::allPieces() {
     return piecesOf(Color::white) | piecesOf(Color::black);
 }
 
-void Board::disappearPiece(Board &board, Piece piece, Color color, uint8_t from) {
-    ASSERT(board.pieces[from] == piece && board.piecesColors[from] == color,
-            number2Notation(from), board.pieces[from], piece, board.piecesColors[from], color);
-    board.pieces[from] = Piece::empty;
-    board.piecesColors[from] = Color::empty;
-    bit::unset(board.bitmask[toInt(color)][toInt(piece)], from);
+void Board::disappearPiece(Piece piece, Color color, uint8_t from) {
+    ASSERT(pieces[from] == piece && piecesColors[from] == color,
+            number2Notation(from), pieces[from], piece, piecesColors[from], color);
+    pieces[from] = Piece::empty;
+    piecesColors[from] = Color::empty;
+    bit::unset(bitmask[toInt(color)][toInt(piece)], from);
 }
 
-void Board::appearPiece(Board &board, Piece piece, Color color, uint8_t to) {
+void Board::appearPiece(Piece piece, Color color, uint8_t to) {
     // we can appear piece on square which is empty on opponents square (capture) or our square (promotion)
-    board.pieces[to] = piece;
-    board.piecesColors[to] = color;
-    bit::set(board.bitmask[toInt(color)][toInt(piece)], to);
+    pieces[to] = piece;
+    piecesColors[to] = color;
+    bit::set(bitmask[toInt(color)][toInt(piece)], to);
 }
 
-void Board::takePiece(Board &board, Piece piece, Color color, Piece capturedPiece, uint8_t from, uint8_t to) {
-    ASSERT(board.pieces[from] == piece && board.piecesColors[from] == color && board.pieces[to] == capturedPiece && board.piecesColors[to] == opponent(color),
-            (int)from, (int)to, piece, color, capturedPiece, board.pieces[from], board.pieces[to]);
+void Board::takePiece(Piece piece, Color color, Piece capturedPiece, uint8_t from, uint8_t to) {
+    ASSERT(pieces[from] == piece && piecesColors[from] == color && pieces[to] == capturedPiece && piecesColors[to] == opponent(color),
+            (int)from, (int)to, piece, color, capturedPiece, pieces[from], pieces[to]);
 
-    bit::unset(board.bitmask[toInt(opponent(color))][toInt(capturedPiece)], to); // disappear opponent's piece
-    disappearPiece(board, piece, color, from);
-    appearPiece(board, piece, color, to);
+    bit::unset(bitmask[toInt(opponent(color))][toInt(capturedPiece)], to); // disappear opponent's piece
+    disappearPiece(piece, color, from);
+    appearPiece(piece, color, to);
 }
 
-void Board::untakePiece(Board &board, Piece piece, Color color, Piece capturedPiece, uint8_t from, uint8_t to) {
-    ASSERT(board.pieces[to] == piece && board.piecesColors[to] == color && board.pieces[from] == Piece::empty && board.piecesColors[from] == Color::empty,
-            (int)from, (int)to, piece, color, capturedPiece, board.pieces[from], board.pieces[to]);
+void Board::untakePiece(Piece piece, Color color, Piece capturedPiece, uint8_t from, uint8_t to) {
+    ASSERT(pieces[to] == piece && piecesColors[to] == color && pieces[from] == Piece::empty && piecesColors[from] == Color::empty,
+            (int)from, (int)to, piece, color, capturedPiece, pieces[from], pieces[to]);
 
-    bit::unset(board.bitmask[toInt(color)][toInt(piece)], to); // disappear our piece
-    appearPiece(board, capturedPiece, opponent(color), to);
-    appearPiece(board, piece, color, from);
+    bit::unset(bitmask[toInt(color)][toInt(piece)], to); // disappear our piece
+    appearPiece(capturedPiece, opponent(color), to);
+    appearPiece(piece, color, from);
 }
 
-void Board::movePiece(Board &board, Piece piece, Color color, uint8_t from, uint8_t to) {
-    disappearPiece(board, piece, color, from);
-    appearPiece(board, piece, color, to);
+void Board::movePiece(Piece piece, Color color, uint8_t from, uint8_t to) {
+    disappearPiece(piece, color, from);
+    appearPiece(piece, color, to);
 }
 
 // not very nice but fast way to convert MoveFlags to BoardFlags
@@ -63,9 +63,9 @@ void Board::makeMove(const Move &move) {
     // TODO remove this variable as it is only for diagnostic purposes at the moment
     uint8_t newEnPassantSquare = pieces[move.from] == Piece::pawn && (move.to - move.from == 16 || move.from - move.to == 16) ? move.to : 0;
     if (move.captured != Piece::empty) {
-        takePiece(*this, pieces[move.from], toMove, move.captured, move.from, move.to);
+        takePiece(pieces[move.from], toMove, move.captured, move.from, move.to);
     } else {
-        movePiece(*this, pieces[move.from], toMove, move.from, move.to);
+        movePiece(pieces[move.from], toMove, move.from, move.to);
     }
     if (pieces[move.to] == Piece::king) {
         std::cerr << "ruch krola" << std::endl;
@@ -75,16 +75,16 @@ void Board::makeMove(const Move &move) {
             uint8_t startSquare = move.to > move.from ? 7 : 0;
             uint8_t offset = move.to > move.from ? -2 : 3;
             uint8_t colorOffset = 56 * int(toMove);
-            movePiece(*this, Piece::rook, toMove, startSquare + colorOffset, startSquare + colorOffset + offset);
+            movePiece(Piece::rook, toMove, startSquare + colorOffset, startSquare + colorOffset + offset);
         }
     } else if (move.flags & promotions) {
         std::cerr << "promocja: " << move.flags << std::endl;
-        disappearPiece(*this, pieces[move.to], toMove, move.to);
-        appearPiece(*this, promotionPiece(move.flags & promotions), toMove, move.to);
+        disappearPiece(pieces[move.to], toMove, move.to);
+        appearPiece(promotionPiece(move.flags & promotions), toMove, move.to);
     } else if (move.flags & MoveFlags::enPassantCapture) {
         std::cerr << "bicie w przelocie" << std::endl;
         ASSERT(enPassantSquare == (toMove == Color::white ? move.to - 8 : move.to + 8), move.to - 8, (int)enPassantSquare);
-        disappearPiece(*this, Piece::pawn, opponent(toMove), enPassantSquare);
+        disappearPiece(Piece::pawn, opponent(toMove), enPassantSquare);
     }
     flags &= ~toBoardFlags(move.flags);
     enPassantSquare = newEnPassantSquare;
@@ -94,9 +94,9 @@ void Board::makeMove(const Move &move) {
 void Board::unmakeMove(const Move &move) {
     ASSERT(piecesColors[move.to] == opponent(toMove), toMove, piecesColors[move.to]);
     if (move.captured != Piece::empty) {
-        untakePiece(*this, pieces[move.to], opponent(toMove), move.captured, move.from, move.to);
+        untakePiece(pieces[move.to], opponent(toMove), move.captured, move.from, move.to);
     } else {
-        movePiece(*this, pieces[move.to], opponent(toMove), move.to, move.from);
+        movePiece(pieces[move.to], opponent(toMove), move.to, move.from);
     }
     enPassantSquare = move.enPassantSquare;
     if (pieces[move.from] == Piece::king) {
@@ -104,13 +104,13 @@ void Board::unmakeMove(const Move &move) {
             uint8_t startSquare = move.to > move.from ? 7 : 0;
             uint8_t offset = move.to > move.from ? -2 : 3;
             uint8_t colorOffset = 56 * int(opponent(toMove));
-            movePiece(*this, Piece::rook, opponent(toMove), startSquare + colorOffset + offset, startSquare + colorOffset);
+            movePiece(Piece::rook, opponent(toMove), startSquare + colorOffset + offset, startSquare + colorOffset);
         }
     } else if (move.flags & promotions) {
-        disappearPiece(*this, pieces[move.from], opponent(toMove), move.from);
-        appearPiece(*this, Piece::pawn, opponent(toMove), move.from);
+        disappearPiece(pieces[move.from], opponent(toMove), move.from);
+        appearPiece(Piece::pawn, opponent(toMove), move.from);
     } else if (move.flags & MoveFlags::enPassantCapture) { // pion zbity w przelocie pojawia sie
-        appearPiece(*this, Piece::pawn, toMove, move.enPassantSquare);
+        appearPiece(Piece::pawn, toMove, move.enPassantSquare);
     }
     flags |= toBoardFlags(move.flags);
     toMove = opponent(toMove);

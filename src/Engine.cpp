@@ -404,7 +404,7 @@ void Engine::setupFenPosition(std::list<std::string> fenPosition) {
                 file += rank[0] - '0';
             } else {
                 Piece piece = notation2Piece(rank[0]);
-                Board::appearPiece(board, piece, rank[0] >= 'a' ? Color::black : Color::white, number(_rank, file));
+                board.appearPiece(piece, rank[0] >= 'a' ? Color::black : Color::white, number(_rank, file));
                 ++file;
             }
             rank = rank.substr(1);
