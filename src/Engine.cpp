@@ -75,25 +75,19 @@ void Engine::fillMoveFlags(Move &m) {
     m.enPassantSquare = board.enPassantSquare;
     m.captured = board.pieces[m.to];
     if (board.pieces[m.from] == Piece::king) {
-        if (board.toMove == Color::white && board.flags & BoardFlags::w_king) {
-            m.flags |= MoveFlags::w_king_first;
+        if (board.toMove == Color::white && board.flags & BoardFlags::K_castling) {
+            m.flags |= MoveFlags::K_castling;
         }
-        if (board.toMove == Color::black && board.flags & BoardFlags::b_king) {
-            m.flags |= MoveFlags::b_king_first;
+        if (board.toMove == Color::white && board.flags & BoardFlags::Q_castling) {
+            m.flags |= MoveFlags::Q_castling;
+        }
+        if (board.toMove == Color::black && board.flags & BoardFlags::k_castling) {
+            m.flags |= MoveFlags::k_castling;
+        }
+        if (board.toMove == Color::black && board.flags & BoardFlags::q_castling) {
+            m.flags |= MoveFlags::q_castling;
         }
         if (m.from - m.to == 2 || m.to - m.from == 2) {
-            if (board.toMove == Color::white && board.flags & BoardFlags::w_k_rook && m.to - m.from == 2) {
-                m.flags |= MoveFlags::w_k_rook_first;
-            }
-            if (board.toMove == Color::white && board.flags & BoardFlags::w_q_rook && m.from - m.to == 2) {
-                m.flags |= MoveFlags::w_q_rook_first;
-            }
-            if (board.toMove == Color::black && board.flags & BoardFlags::b_k_rook && m.to - m.from == 2) {
-                m.flags |= MoveFlags::b_k_rook_first;
-            }
-            if (board.toMove == Color::black && board.flags & BoardFlags::b_q_rook && m.from - m.to == 2) {
-                m.flags |= MoveFlags::b_q_rook_first;
-            }
             m.flags |= MoveFlags::castling;
         }
     }
@@ -102,17 +96,14 @@ void Engine::fillMoveFlags(Move &m) {
         m.flags |= MoveFlags::enPassantCapture;
     }
     if (board.pieces[m.from] == Piece::rook) {
-        if (m.from == 7 && board.flags & BoardFlags::w_k_rook) {
-            m.flags |= MoveFlags::w_k_rook_first;
-        }
-        if (m.from == 0 && board.flags & BoardFlags::w_q_rook) {
-            m.flags |= MoveFlags::w_q_rook_first;
-        }
-        if (m.from == 0x3E && board.flags & BoardFlags::b_k_rook) {
-            m.flags |= MoveFlags::b_k_rook_first;
-        }
-        if (m.from == 0x38 && board.flags & BoardFlags::b_q_rook) {
-            m.flags |= MoveFlags::b_q_rook_first;
+        if (m.from == 7 && board.flags & BoardFlags::K_castling) {
+            m.flags |= MoveFlags::K_castling;
+        } else if (m.from == 0 && board.flags & BoardFlags::Q_castling) {
+            m.flags |= MoveFlags::Q_castling;
+        } else if (m.from == 0x3E && board.flags & BoardFlags::k_castling) {
+            m.flags |= MoveFlags::k_castling;
+        } else if (m.from == 0x38 && board.flags & BoardFlags::q_castling) {
+            m.flags |= MoveFlags::q_castling;
         }
     }
 }
@@ -218,21 +209,21 @@ Move *Engine::generateBishopMoves(uint8_t square, Move *startMove) {
 
 Move *Engine::generateRookMoves(uint8_t square, Move *startMove) {
     Move *afterLastMove = movesOfLongDistancePiece(square, rookBitmask, startMove);
-    if (square == 0 && board.flags & BoardFlags::w_q_rook) {
+    if (square == 0 && board.flags & BoardFlags::Q_castling) {
         std::for_each(startMove, afterLastMove, [](Move &move) {
-            move.flags |= MoveFlags::w_q_rook_first;
+            move.flags |= MoveFlags::Q_castling;
         });
-    } else if (square == 7 && board.flags & BoardFlags::w_k_rook) {
+    } else if (square == 7 && board.flags & BoardFlags::K_castling) {
         std::for_each(startMove, afterLastMove, [](Move &move) {
-            move.flags |= MoveFlags::w_k_rook_first;
+            move.flags |= MoveFlags::K_castling;
         });
-    } else if (square == 0x38 && board.flags & BoardFlags::b_q_rook) {
+    } else if (square == 0x38 && board.flags & BoardFlags::q_castling) {
         std::for_each(startMove, afterLastMove, [](Move &move) {
-            move.flags |= MoveFlags::b_q_rook_first;
+            move.flags |= MoveFlags::q_castling;
         });
-    } else if (square == 0x3E && board.flags & BoardFlags::b_k_rook) {
+    } else if (square == 0x3E && board.flags & BoardFlags::k_castling) {
         std::for_each(startMove, afterLastMove, [](Move &move) {
-            move.flags |= MoveFlags::b_k_rook_first;
+            move.flags |= MoveFlags::k_castling;
         });
     }
     return afterLastMove;
@@ -245,32 +236,43 @@ Move *Engine::generateQueenMoves(uint8_t square, Move *startMove) {
 
 Move *Engine::generateKingMoves(uint8_t square, Move* startMove) {
     Move *afterLastMove = movesOfShortDistancePiece(square, kingBitmask[square], startMove);
-    if (square == 4 && board.flags & BoardFlags::w_king) {
+    if (square == 4 && board.flags & BoardFlags::K_castling) {
         std::for_each(startMove, afterLastMove, [](Move &move) {
-            move.flags |= MoveFlags::w_king_first;
+            move.flags |= MoveFlags::K_castling;
         });
-        if (board.flags & BoardFlags::w_k_rook && board.piecesColors[5] == Color::empty && board.piecesColors[6] == Color::empty &&
+        if (board.piecesColors[5] == Color::empty && board.piecesColors[6] == Color::empty &&
                 !isSquareAttacked(4, Color::black) && !isSquareAttacked(5, Color::black) && !isSquareAttacked(6, Color::black)) {
-            *afterLastMove = {4, 6, 0, Piece::empty, MoveFlags::w_king_first | MoveFlags::w_k_rook_first};
+            *afterLastMove = {4, 6, 0, Piece::empty, MoveFlags::K_castling};
             ++afterLastMove;
         }
-        if (board.flags & BoardFlags::w_q_rook && board.piecesColors[3] == Color::empty && board.piecesColors[2] == Color::empty && board.piecesColors[1] == Color::empty &&
-                !isSquareAttacked(4, Color::black) && !isSquareAttacked(3, Color::black) && !isSquareAttacked(2, Color::black)) {
-            *afterLastMove = {4, 2, 0, Piece::empty, MoveFlags::w_king_first | MoveFlags::w_q_rook_first};
-            ++afterLastMove;
-        }
-    } else if (square == 0x3C && board.flags & BoardFlags::b_king) {
+    }
+    if (square == 4 && board.flags & BoardFlags::Q_castling) {
         std::for_each(startMove, afterLastMove, [](Move &move) {
-            move.flags |= MoveFlags::b_king_first;
+            move.flags |= MoveFlags::Q_castling;
         });
-        if (board.flags & BoardFlags::b_k_rook && board.piecesColors[0x35] == Color::empty && board.piecesColors[0x36] == Color::empty &&
-                !isSquareAttacked(0x34, Color::white) && !isSquareAttacked(0x35, Color::white) && !isSquareAttacked(0x36, Color::white)) {
-            *afterLastMove = {0x34, 0x36, 0, Piece::empty, MoveFlags::b_king_first | MoveFlags::b_k_rook_first};
+        if (board.piecesColors[3] == Color::empty && board.piecesColors[2] == Color::empty && board.piecesColors[1] == Color::empty &&
+                !isSquareAttacked(4, Color::black) && !isSquareAttacked(3, Color::black) && !isSquareAttacked(2, Color::black)) {
+            *afterLastMove = {4, 2, 0, Piece::empty, MoveFlags::Q_castling};
             ++afterLastMove;
         }
-        if (board.flags & BoardFlags::b_q_rook && board.piecesColors[0x33] == Color::empty && board.piecesColors[0x32] == Color::empty && board.piecesColors[0x31] == Color::empty &&
+    }
+    if (square == 0x3C && board.flags & BoardFlags::k_castling) {
+        std::for_each(startMove, afterLastMove, [](Move &move) {
+            move.flags |= MoveFlags::k_castling;
+        });
+        if (board.piecesColors[0x35] == Color::empty && board.piecesColors[0x36] == Color::empty &&
+                !isSquareAttacked(0x34, Color::white) && !isSquareAttacked(0x35, Color::white) && !isSquareAttacked(0x36, Color::white)) {
+            *afterLastMove = {0x34, 0x36, 0, Piece::empty, MoveFlags::k_castling};
+            ++afterLastMove;
+        }
+    }
+    if (square == 0x3C && board.flags & BoardFlags::q_castling) {
+        std::for_each(startMove, afterLastMove, [](Move &move) {
+            move.flags |= MoveFlags::q_castling;
+        });
+        if (board.piecesColors[0x33] == Color::empty && board.piecesColors[0x32] == Color::empty && board.piecesColors[0x31] == Color::empty &&
                 !isSquareAttacked(0x34, Color::white) && !isSquareAttacked(0x33, Color::white) && !isSquareAttacked(0x32, Color::white)) {
-            *afterLastMove = {0x34, 0x32, 0, Piece::empty, MoveFlags::b_king_first | MoveFlags::b_q_rook_first};
+            *afterLastMove = {0x34, 0x32, 0, Piece::empty, MoveFlags::q_castling};
             ++afterLastMove;
         }
     }
@@ -419,16 +421,16 @@ void Engine::setupFenPosition(std::list<std::string> fenPosition) {
     std::string castles = fenPosition.front();
     fenPosition.pop_front();
     if (castles.find("K") != std::string::npos) {
-        board.flags |= BoardFlags::w_king | BoardFlags::w_k_rook;
+        board.flags |= BoardFlags::K_castling;
     }
     if (castles.find("Q") != std::string::npos) {
-        board.flags |= BoardFlags::w_king | BoardFlags::w_q_rook;
+        board.flags |= BoardFlags::Q_castling;
     }
     if (castles.find("k") != std::string::npos) {
-        board.flags |= BoardFlags::b_king | BoardFlags::b_k_rook;
+        board.flags |= BoardFlags::k_castling;
     }
     if (castles.find("q") != std::string::npos) {
-        board.flags |= BoardFlags::b_king | BoardFlags::b_q_rook;
+        board.flags |= BoardFlags::q_castling;
     }
 
     std::string enPassant = fenPosition.front();

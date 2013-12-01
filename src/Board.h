@@ -3,6 +3,7 @@
 #include "Piece.h"
 #include "Color.h"
 #include "EnumFlags.h"
+#include "common.h"
 #include <cstdint>
 #include <iosfwd>
 
@@ -10,19 +11,13 @@ struct Move;
 
 ENUM(BoardFlags, uint16_t,
     empty,    0x0000,
-    w_k_rook, 0x0001,// = MoveFlags::w_k_rook_first
-    w_q_rook, 0x0002,// = MoveFlags::w_q_rook_first
-    b_k_rook, 0x0004,// = MoveFlags::b_k_rook_first
-    b_q_rook, 0x0008,// = MoveFlags::b_q_rook_first
-    w_king,   0x0010,// = MoveFlags::w_king_first
-    b_king,   0x0020// = MoveFlags::b_king_first
+    K_castling, K_CASTLING,
+    Q_castling, Q_CASTLING,
+    k_castling, k_CASTLING,
+    q_castling, q_CASTLING
 )
 
-static const EnumFlags<BoardFlags> white_castling_kingside = BoardFlags::w_k_rook | BoardFlags::w_king;
-static const EnumFlags<BoardFlags> white_castling_queenside = BoardFlags::w_q_rook | BoardFlags::w_king;
-static const EnumFlags<BoardFlags> black_castling_kingside = BoardFlags::b_k_rook | BoardFlags::b_king;
-static const EnumFlags<BoardFlags> black_castling_queenside = BoardFlags::b_q_rook | BoardFlags::b_king;
-static const EnumFlags<BoardFlags> castling = white_castling_kingside | white_castling_queenside | black_castling_kingside | black_castling_queenside;
+static const EnumFlags<BoardFlags> castling = BoardFlags::K_castling | BoardFlags::Q_castling | BoardFlags::k_castling | BoardFlags::q_castling;
 
 #define START_BOARD \
     Piece::rook,  Piece::knight, Piece::bishop, Piece::queen, Piece::king,  Piece::bishop, Piece::knight, Piece::rook,\

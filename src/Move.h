@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstdint>
+
+#include "common.h"
 #include "EnumFlags.h"
 #include "Piece.h"
 
@@ -12,12 +14,10 @@ ENUM(MoveFlags, uint16_t,
     knightPromotion,  0x0200,
     rookPromotion,    0x0400,
     bishopPromotion,  0x0800,
-    w_k_rook_first,   0x0001,// = BoardFlags::w_k_rook
-    w_q_rook_first,   0x0002,// = BoardFlags::w_q_rook
-    b_k_rook_first,   0x0004,// = BoardFlags::b_k_rook
-    b_q_rook_first,   0x0008,// = BoardFlags::b_q_rook
-    w_king_first,     0x0010,// = BoardFlags::w_king
-    b_king_first,     0x0020 // = BoardFlags::b_king
+    K_castling,       K_CASTLING,
+    Q_castling,       Q_CASTLING,
+    k_castling,       k_CASTLING,
+    q_castling,       q_CASTLING
 )
 
 static const EnumFlags<MoveFlags> promotions = MoveFlags::queenPromotion | MoveFlags::knightPromotion
