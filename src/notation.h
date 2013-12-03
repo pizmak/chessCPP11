@@ -5,6 +5,7 @@
 
 #include "asserts.h"
 #include "bit.h"
+#include "Move.h"
 
 inline bool inRange(uint8_t _rank, uint8_t _file) {
     return _rank < 8 && _file < 8;
@@ -139,4 +140,9 @@ inline void printBitmaskAsBoard(uint64_t bitmask, std::ostream &stream) {
         }
         stream << std::endl;
     }
+}
+
+template <Color color> constexpr uint8_t  forwardSquare(uint8_t square) {
+    static_assert(color == Color::white || color == Color::black, "invalid color");
+    return color == Color::white ? square + 8 : square - 8;
 }

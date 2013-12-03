@@ -29,7 +29,7 @@ struct Underlying : UnderlyingHelper<PossibleEnumType, std::is_enum<PossibleEnum
 inline int toInt(...) { ASSERT(false, "shoud not happen"); return 0; }
 
 template <typename EnumType>
-typename std::enable_if<std::is_enum<EnumType>::value, typename Underlying<EnumType>::type>::type toInt(EnumType enumVal) {
+constexpr typename std::enable_if<std::is_enum<EnumType>::value, typename Underlying<EnumType>::type>::type toInt(EnumType enumVal) {
     return (typename std::underlying_type<EnumType>::type)(enumVal);
 }
 

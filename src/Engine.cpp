@@ -8,6 +8,7 @@
 #include "asserts.h"
 
 #include "notation.h"
+#include "ScorePosition.h"
 #include "utils.h"
 
 uint64_t Engine::pawnBitmask[2][64];
@@ -260,9 +261,9 @@ Move *Engine::generateKingMoves(uint8_t square, Move* startMove) {
         std::for_each(startMove, afterLastMove, [](Move &move) {
             move.flags |= MoveFlags::k_castling;
         });
-        if (board.piecesColors[0x35] == Color::empty && board.piecesColors[0x36] == Color::empty &&
-                !isSquareAttacked(0x34, Color::white) && !isSquareAttacked(0x35, Color::white) && !isSquareAttacked(0x36, Color::white)) {
-            *afterLastMove = {0x34, 0x36, 0, Piece::empty, MoveFlags::k_castling};
+        if (board.piecesColors[0x3D] == Color::empty && board.piecesColors[0x3E] == Color::empty &&
+                !isSquareAttacked(0x3C, Color::white) && !isSquareAttacked(0x3D, Color::white) && !isSquareAttacked(0x3E, Color::white)) {
+            *afterLastMove = {0x3C, 0x3E, 0, Piece::empty, MoveFlags::k_castling};
             ++afterLastMove;
         }
     }
@@ -270,9 +271,9 @@ Move *Engine::generateKingMoves(uint8_t square, Move* startMove) {
         std::for_each(startMove, afterLastMove, [](Move &move) {
             move.flags |= MoveFlags::q_castling;
         });
-        if (board.piecesColors[0x33] == Color::empty && board.piecesColors[0x32] == Color::empty && board.piecesColors[0x31] == Color::empty &&
-                !isSquareAttacked(0x34, Color::white) && !isSquareAttacked(0x33, Color::white) && !isSquareAttacked(0x32, Color::white)) {
-            *afterLastMove = {0x34, 0x32, 0, Piece::empty, MoveFlags::q_castling};
+        if (board.piecesColors[0x3B] == Color::empty && board.piecesColors[0x3A] == Color::empty && board.piecesColors[0x39] == Color::empty &&
+                !isSquareAttacked(0x3C, Color::white) && !isSquareAttacked(0x3B, Color::white) && !isSquareAttacked(0x3A, Color::white)) {
+            *afterLastMove = {0x3C, 0x3A, 0, Piece::empty, MoveFlags::q_castling};
             ++afterLastMove;
         }
     }
@@ -287,10 +288,21 @@ Move Engine::go() {
         std::cerr << "no valid moves" << std::endl;
         return {notation2Number("e2"), notation2Number("e4") };
     }
-    std::for_each(moves, afterLastMove, [](Move &m) {
+    ScorePosition scorer;
+    Move bestMove = moves[0];
+    int multiplier = board.toMove == Color::white ? 1 : -1;
+    bestMove.score = std::numeric_limits<int16_t>::max() * -multiplier;
+    std::for_each(moves, afterLastMove, [this, &scorer, &bestMove, multiplier](Move &m) {
+        board.makeMove(m);
+        m.score = scorer.scorePosition(board);
+        board.unmakeMove(m);
+        if (multiplier * m.score > multiplier * bestMove.score) {
+            bestMove = m;
+            std::cerr << "new bestmove whith score: " << m.score << std::endl;
+        }
         std::cerr << m << std::endl;
     });
-    return moves[0];
+    return bestMove;
 }
 
 uint64_t Engine::maskOfShortDistancePiece(uint8_t square, const PairList &list) {

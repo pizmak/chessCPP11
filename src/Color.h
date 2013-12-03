@@ -11,7 +11,7 @@ ENUM(Color, uint8_t,
     empty, 2
 )
 
-inline Color opponent(Color color) {
-    ASSERT(color == Color::white || color == Color::black, color);
+inline constexpr Color opponent(Color color) {
+//    ASSERT(color == Color::white || color == Color::black, color);
     return Color(toInt(color) ^ 1);
 }
