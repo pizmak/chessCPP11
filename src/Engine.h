@@ -9,18 +9,18 @@ public:
     using PairList = std::list<std::pair<uint8_t, uint8_t>>;
     Board board;
     Move moves[1024];
-    Move *generateMoves(Move *startMove);
-    Move *movesOfShortDistancePiece(uint8_t square, uint64_t mask, Move *startMove);
-    Move *movesOfLongDistancePiece(uint8_t square, uint64_t mask[64][4], Move *startMove);
+    static Move *generateMoves(Board &board, Move *startMove);
+    static Move *movesOfShortDistancePiece(Board &board, uint8_t square, uint64_t mask, Move *startMove);
+    static Move *movesOfLongDistancePiece(Board &board, uint8_t square, uint64_t mask[64][4], Move *startMove);
     template <Color color>
-    Move *generatePawnMoves(uint8_t square, Move *startMove);
-    Move *generateKnightMoves(uint8_t square, Move *startMove);
-    Move *generateBishopMoves(uint8_t square, Move *startMove);
-    Move *generateRookMoves(uint8_t square, Move *startMove);
-    Move *generateQueenMoves(uint8_t square, Move *startMove);
-    Move *generateKingMoves(uint8_t square, Move *startMove);
+    static Move *generatePawnMoves(Board &board, uint8_t square, Move *startMove);
+    static Move *generateKnightMoves(Board &board, uint8_t square, Move *startMove);
+    static Move *generateBishopMoves(Board &board, uint8_t square, Move *startMove);
+    static Move *generateRookMoves(Board &board, uint8_t square, Move *startMove);
+    static Move *generateQueenMoves(Board &board, uint8_t square, Move *startMove);
+    static Move *generateKingMoves(Board &board, uint8_t square, Move *startMove);
 
-    void fillMoveFlags(Move &m);
+    static void fillMoveFlags(Board &board, Move &m);
 
     static uint64_t knightBitmask[64];
     static uint64_t bishopBitmask[64][4];
@@ -35,14 +35,16 @@ public:
     static void rookMask(uint8_t square, uint64_t array[4]);
     static uint64_t kingMask(uint8_t square);
     // do not check if king is attaking square
-    bool isSquareAttacked(uint8_t square, Color color);
+    static bool isSquareAttacked(Board &board, uint8_t square, Color color);
+    static void setupFenPosition(Board &board, std::list<std::string> fenPosition);
     void setupFenPosition(std::list<std::string> fenPosition);
-public:
     static void initBitmasks();
+public:
+    static void init();
     void reset();
     // assume that from, to are set, rest fields will be set by engine
     void move(const std::string &move);
     void move(const std::list<std::string> &moves);
-    bool isMoveValid(const Move &m);
+    static bool isMoveValid(Board &board, const Move &m);
     Move go();
 };

@@ -3,14 +3,15 @@
 #include "asserts.h"
 #include "notation.h"
 #include "bit.h"
+#include "logging.h"
 #include <iomanip>
 
-uint64_t Board::piecesOf(Color color) {
+uint64_t Board::piecesOf(Color color) const {
     return bitmask[toInt(color)][toInt(Piece::pawn)] | bitmask[toInt(color)][toInt(Piece::knight)] | bitmask[toInt(color)][toInt(Piece::bishop)] |
             bitmask[toInt(color)][toInt(Piece::rook)] | bitmask[toInt(color)][toInt(Piece::queen)] | bitmask[toInt(color)][toInt(Piece::king)];
 }
 
-uint64_t Board::allPieces() {
+uint64_t Board::allPieces() const {
     return piecesOf(Color::white) | piecesOf(Color::black);
 }
 
@@ -68,9 +69,9 @@ void Board::makeMove(const Move &move) {
         movePiece(pieces[move.from], toMove, move.from, move.to);
     }
     if (pieces[move.to] == Piece::king) {
-        std::cerr << "ruch krola" << std::endl;
+//        TRACELN("ruch krola");
         if (move.flags & MoveFlags::castling) {
-            std::cerr << "roszada" << std::endl;
+            TRACELN("roszada");
             ASSERT(flags & castling, flags);
             uint8_t startSquare = move.to > move.from ? 7 : 0;
             uint8_t offset = move.to > move.from ? -2 : 3;
@@ -78,11 +79,11 @@ void Board::makeMove(const Move &move) {
             movePiece(Piece::rook, toMove, startSquare + colorOffset, startSquare + colorOffset + offset);
         }
     } else if (move.flags & promotions) {
-        std::cerr << "promocja: " << move.flags << std::endl;
+        TRACELN("promocja: " << move.flags);
         disappearPiece(pieces[move.to], toMove, move.to);
         appearPiece(promotionPiece(move.flags & promotions), toMove, move.to);
     } else if (move.flags & MoveFlags::enPassantCapture) {
-        std::cerr << "bicie w przelocie" << std::endl;
+        TRACELN("bicie w przelocie");
         ASSERT(enPassantSquare == (toMove == Color::white ? move.to - 8 : move.to + 8), move.to - 8, (int)enPassantSquare);
         disappearPiece(Piece::pawn, opponent(toMove), enPassantSquare);
     }
@@ -116,7 +117,7 @@ void Board::unmakeMove(const Move &move) {
     toMove = opponent(toMove);
 }
 
-void Board::checkIntegrity() {
+void Board::checkIntegrity() const {
 #ifndef DEBUG
     return;
 #endif
@@ -141,7 +142,7 @@ void Board::checkIntegrity() {
                                    (toMove == Color::white && enPassantSquare >= 32 && enPassantSquare < 40), toMove, (int)enPassantSquare);
 }
 
-void Board::dumpRank(std::ostream &stream, uint8_t rank) {
+void Board::dumpRank(std::ostream &stream, uint8_t rank) const {
     ASSERT(/*rank >= 0 && */rank < 8, rank);
     for (uint8_t file = 0; file < 8; ++file) {
         switch (piecesColors[number(rank, file)]) {
@@ -154,12 +155,12 @@ void Board::dumpRank(std::ostream &stream, uint8_t rank) {
     }
 }
 
-void Board::dumpMask(std::ostream &stream, Piece piece) {
+void Board::dumpMask(std::ostream &stream, Piece piece) const {
     stream << "\t" << piece << "\t" << std::setw(18) << bitmask[toInt(Color::white)][toInt(piece)] <<
         "\t\t" << std::setw(18) << bitmask[toInt(Color::black)][toInt(piece)];
 }
 
-void Board::dump(std::ostream &stream) {
+void Board::dump(std::ostream &stream) const {
     stream << std::showbase << std::endl << "__________\tpiece\twhite\t\t\t\tblack" << std::endl;
     for (uint8_t rank = 7; /*rank >= 0 && */rank < 8; --rank) {
         stream << "|";

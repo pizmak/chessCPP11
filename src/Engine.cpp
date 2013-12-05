@@ -10,6 +10,7 @@
 #include "notation.h"
 #include "ScorePosition.h"
 #include "utils.h"
+#include "alfabeta.h"
 
 uint64_t Engine::pawnBitmask[2][64];
 uint64_t Engine::knightBitmask[64];
@@ -23,7 +24,7 @@ void Engine::reset() {
 
 void Engine::move(const std::string &move) {
     Move m = parseMove(move);
-    fillMoveFlags(m);
+    fillMoveFlags(board, m);
     board.makeMove(m);
 }
 
@@ -44,35 +45,35 @@ void Engine::initBitmasks() {
     }
 }
 
-Move *Engine::generateMoves(Move *startMove) {
+Move *Engine::generateMoves(Board &board, Move *startMove) {
     if (board.toMove == Color::white) {
-        bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::pawn)], [&startMove, this](uint8_t pawn) {
-            startMove = generatePawnMoves<Color::white>(pawn, startMove);
+        bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::pawn)], [&board, &startMove](uint8_t pawn) {
+            startMove = generatePawnMoves<Color::white>(board, pawn, startMove);
         });
     } else {
-        bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::pawn)], [&startMove, this](uint8_t pawn) {
-            startMove = generatePawnMoves<Color::black>(pawn, startMove);
+        bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::pawn)], [&board, &startMove](uint8_t pawn) {
+            startMove = generatePawnMoves<Color::black>(board, pawn, startMove);
         });
     }
-    bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::knight)], [&startMove, this](uint8_t knight) {
-        startMove = generateKnightMoves(knight, startMove);
+    bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::knight)], [&board, &startMove](uint8_t knight) {
+        startMove = generateKnightMoves(board, knight, startMove);
     });
-    bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::bishop)], [&startMove, this](uint8_t bishop) {
-        startMove = generateBishopMoves(bishop, startMove);
+    bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::bishop)], [&board, &startMove](uint8_t bishop) {
+        startMove = generateBishopMoves(board, bishop, startMove);
     });
-    bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::rook)], [&startMove, this](uint8_t rook) {
-        startMove = generateRookMoves(rook, startMove);
+    bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::rook)], [&board, &startMove](uint8_t rook) {
+        startMove = generateRookMoves(board, rook, startMove);
     });
-    bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::queen)], [&startMove, this](uint8_t queen) {
-        startMove = generateQueenMoves(queen, startMove);
+    bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::queen)], [&board, &startMove](uint8_t queen) {
+        startMove = generateQueenMoves(board, queen, startMove);
     });
-    bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::king)], [&startMove, this](uint8_t king) {
-        startMove = generateKingMoves(king, startMove);
+    bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::king)], [&board, &startMove](uint8_t king) {
+        startMove = generateKingMoves(board, king, startMove);
     });
     return startMove;
 }
 
-void Engine::fillMoveFlags(Move &m) {
+void Engine::fillMoveFlags(Board &board, Move &m) {
     m.enPassantSquare = board.enPassantSquare;
     m.captured = board.pieces[m.to];
     if (board.pieces[m.from] == Piece::king) {
@@ -109,20 +110,18 @@ void Engine::fillMoveFlags(Move &m) {
     }
 }
 
-Move *Engine::movesOfShortDistancePiece(uint8_t square, uint64_t mask, Move *startMove) {
+Move *Engine::movesOfShortDistancePiece(Board &board, uint8_t square, uint64_t mask, Move *startMove) {
     mask &= ~board.piecesOf(board.toMove);
-    board.dump(std::cerr);
-    printBitmaskAsBoard(mask, std::cerr);
-    bit::foreach_bit(mask, [this, &startMove, square](uint8_t moveTo) {
+    bit::foreach_bit(mask, [&board, &startMove, square](uint8_t moveTo) {
         *startMove = {square, moveTo, board.enPassantSquare, board.pieces[moveTo]};
-        if (isMoveValid(*startMove)) {
+        if (isMoveValid(board, *startMove)) {
             ++startMove;
         }
     });
     return startMove;
 }
 
-Move *Engine::movesOfLongDistancePiece(uint8_t square, uint64_t mask[64][4], Move *startMove) {
+Move *Engine::movesOfLongDistancePiece(Board &board, uint8_t square, uint64_t mask[64][4], Move *startMove) {
     for (int direction = 0; direction < 4; ++direction) {
         uint64_t piecesOnLine = mask[square][direction] & board.allPieces();
         uint8_t possiblePiece = 0;
@@ -132,7 +131,7 @@ Move *Engine::movesOfLongDistancePiece(uint8_t square, uint64_t mask[64][4], Mov
                     bit::leastSignificantBit : bit::mostSignificantBit)(piecesOnLine);
             if (board.piecesColors[possiblePiece] != board.toMove) {
                 *startMove = {square, possiblePiece, board.enPassantSquare, board.pieces[possiblePiece]};
-                if (isMoveValid(*startMove)) {
+                if (isMoveValid(board, *startMove)) {
                     ++startMove;
                 }
             }
@@ -140,9 +139,9 @@ Move *Engine::movesOfLongDistancePiece(uint8_t square, uint64_t mask[64][4], Mov
             bit::unset(movesMask, possiblePiece);
         }
 
-        bit::foreach_bit(movesMask, [this, square, &startMove](uint8_t targetSquare) {
+        bit::foreach_bit(movesMask, [&board, square, &startMove](uint8_t targetSquare) {
             *startMove = {square, targetSquare, board.enPassantSquare, Piece::empty};
-            if (isMoveValid(*startMove)) {
+            if (isMoveValid(board, *startMove)) {
                 ++startMove;
             }
         });
@@ -151,18 +150,18 @@ Move *Engine::movesOfLongDistancePiece(uint8_t square, uint64_t mask[64][4], Mov
 }
 
 template <Color color>
-Move *Engine::generatePawnMoves(uint8_t square, Move *startMove) {
+Move *Engine::generatePawnMoves(Board &board, uint8_t square, Move *startMove) {
     static_assert(color == Color::white || color == Color::black, "");
     if (bit::isSet(pawnBitmask[toInt(color)][color == Color::white ? square - 8 : square + 8], board.enPassantSquare)) {
         *startMove = {square, color == Color::white ? uint8_t(board.enPassantSquare + 8) : uint8_t(board.enPassantSquare - 8), board.enPassantSquare, Piece::empty, MoveFlags::enPassantCapture};
-        if (isMoveValid(*startMove)) {
+        if (isMoveValid(board, *startMove)) {
             ++startMove;
         }
     }
     uint8_t targetSquare = color == Color::white ? square + 8 : square - 8;
     if (board.pieces[targetSquare] == Piece::empty) {
         *startMove = {square, targetSquare, board.enPassantSquare, Piece::empty};
-        if (isMoveValid(*startMove)) {
+        if (isMoveValid(board, *startMove)) {
             if (startMove->to > 0x37 || startMove->to < 8) {
                 startMove[1] = startMove[2] = startMove[3] = *startMove;
                 startMove->flags |= MoveFlags::queenPromotion;
@@ -176,16 +175,16 @@ Move *Engine::generatePawnMoves(uint8_t square, Move *startMove) {
             bool inSecondLine = color == Color::white ? square < 0x10 : square > 0x2F;
             if (inSecondLine && board.pieces[targetSquare] == Piece::empty) {
                 *startMove = {square, targetSquare, board.enPassantSquare, Piece::empty};
-                if (isMoveValid(*startMove)) {
+                if (isMoveValid(board, *startMove)) {
                     ++startMove;
                 }
             }
         }
     }
     uint64_t captures = pawnBitmask[toInt(color)][square] & board.piecesOf(opponent(color));
-    bit::foreach_bit(captures, [this, &startMove, square](uint8_t targetSquare) {
+    bit::foreach_bit(captures, [&board, &startMove, square](uint8_t targetSquare) {
         *startMove = {square, targetSquare, board.enPassantSquare, board.pieces[targetSquare]};
-        if (isMoveValid(*startMove)) {
+        if (isMoveValid(board, *startMove)) {
             if (startMove->to > 0x37 || startMove->to < 8) {
                 startMove[1] = startMove[2] = startMove[3] = *startMove;
                 startMove->flags |= MoveFlags::queenPromotion;
@@ -200,16 +199,16 @@ Move *Engine::generatePawnMoves(uint8_t square, Move *startMove) {
     return startMove;
 }
 
-Move *Engine::generateKnightMoves(uint8_t square, Move *startMove) {
-    return movesOfShortDistancePiece(square, knightBitmask[square], startMove);
+Move *Engine::generateKnightMoves(Board &board, uint8_t square, Move *startMove) {
+    return movesOfShortDistancePiece(board, square, knightBitmask[square], startMove);
 }
 
-Move *Engine::generateBishopMoves(uint8_t square, Move *startMove) {
-    return movesOfLongDistancePiece(square, bishopBitmask, startMove);
+Move *Engine::generateBishopMoves(Board &board, uint8_t square, Move *startMove) {
+    return movesOfLongDistancePiece(board, square, bishopBitmask, startMove);
 }
 
-Move *Engine::generateRookMoves(uint8_t square, Move *startMove) {
-    Move *afterLastMove = movesOfLongDistancePiece(square, rookBitmask, startMove);
+Move *Engine::generateRookMoves(Board &board, uint8_t square, Move *startMove) {
+    Move *afterLastMove = movesOfLongDistancePiece(board, square, rookBitmask, startMove);
     if (square == 0 && board.flags & BoardFlags::Q_castling) {
         std::for_each(startMove, afterLastMove, [](Move &move) {
             move.flags |= MoveFlags::Q_castling;
@@ -230,19 +229,19 @@ Move *Engine::generateRookMoves(uint8_t square, Move *startMove) {
     return afterLastMove;
 }
 
-Move *Engine::generateQueenMoves(uint8_t square, Move *startMove) {
-    startMove = generateBishopMoves(square, startMove);
-    return generateRookMoves(square, startMove);
+Move *Engine::generateQueenMoves(Board &board, uint8_t square, Move *startMove) {
+    startMove = generateBishopMoves(board, square, startMove);
+    return generateRookMoves(board, square, startMove);
 }
 
-Move *Engine::generateKingMoves(uint8_t square, Move* startMove) {
-    Move *afterLastMove = movesOfShortDistancePiece(square, kingBitmask[square], startMove);
+Move *Engine::generateKingMoves(Board &board, uint8_t square, Move* startMove) {
+    Move *afterLastMove = movesOfShortDistancePiece(board, square, kingBitmask[square], startMove);
     if (square == 4 && board.flags & BoardFlags::K_castling) {
         std::for_each(startMove, afterLastMove, [](Move &move) {
             move.flags |= MoveFlags::K_castling;
         });
         if (board.piecesColors[5] == Color::empty && board.piecesColors[6] == Color::empty &&
-                !isSquareAttacked(4, Color::black) && !isSquareAttacked(5, Color::black) && !isSquareAttacked(6, Color::black)) {
+                !isSquareAttacked(board, 4, Color::black) && !isSquareAttacked(board, 5, Color::black) && !isSquareAttacked(board, 6, Color::black)) {
             *afterLastMove = {4, 6, 0, Piece::empty, MoveFlags::K_castling};
             ++afterLastMove;
         }
@@ -252,7 +251,7 @@ Move *Engine::generateKingMoves(uint8_t square, Move* startMove) {
             move.flags |= MoveFlags::Q_castling;
         });
         if (board.piecesColors[3] == Color::empty && board.piecesColors[2] == Color::empty && board.piecesColors[1] == Color::empty &&
-                !isSquareAttacked(4, Color::black) && !isSquareAttacked(3, Color::black) && !isSquareAttacked(2, Color::black)) {
+                !isSquareAttacked(board, 4, Color::black) && !isSquareAttacked(board, 3, Color::black) && !isSquareAttacked(board, 2, Color::black)) {
             *afterLastMove = {4, 2, 0, Piece::empty, MoveFlags::Q_castling};
             ++afterLastMove;
         }
@@ -262,7 +261,7 @@ Move *Engine::generateKingMoves(uint8_t square, Move* startMove) {
             move.flags |= MoveFlags::k_castling;
         });
         if (board.piecesColors[0x3D] == Color::empty && board.piecesColors[0x3E] == Color::empty &&
-                !isSquareAttacked(0x3C, Color::white) && !isSquareAttacked(0x3D, Color::white) && !isSquareAttacked(0x3E, Color::white)) {
+                !isSquareAttacked(board, 0x3C, Color::white) && !isSquareAttacked(board, 0x3D, Color::white) && !isSquareAttacked(board, 0x3E, Color::white)) {
             *afterLastMove = {0x3C, 0x3E, 0, Piece::empty, MoveFlags::k_castling};
             ++afterLastMove;
         }
@@ -272,7 +271,7 @@ Move *Engine::generateKingMoves(uint8_t square, Move* startMove) {
             move.flags |= MoveFlags::q_castling;
         });
         if (board.piecesColors[0x3B] == Color::empty && board.piecesColors[0x3A] == Color::empty && board.piecesColors[0x39] == Color::empty &&
-                !isSquareAttacked(0x3C, Color::white) && !isSquareAttacked(0x3B, Color::white) && !isSquareAttacked(0x3A, Color::white)) {
+                !isSquareAttacked(board, 0x3C, Color::white) && !isSquareAttacked(board, 0x3B, Color::white) && !isSquareAttacked(board, 0x3A, Color::white)) {
             *afterLastMove = {0x3C, 0x3A, 0, Piece::empty, MoveFlags::q_castling};
             ++afterLastMove;
         }
@@ -281,20 +280,59 @@ Move *Engine::generateKingMoves(uint8_t square, Move* startMove) {
     return afterLastMove;
 }
 
+static const int alphaBetaDepth = 5;
+
+struct ChessTraits {
+    using State = Board;
+    using Move = ::Move;
+    static int16_t scorePosition(State &state) {
+        return ScorePosition::scorePosition(state);
+    }
+    static void scoreMove(Move &move, int16_t score) {
+        move.score = score;
+    }
+    static int16_t scoreOf(const Move &move) {
+        return move.score;
+    }
+    static Move *generateMoves(State &state, Move *spaceForMoves) {
+        return Engine::generateMoves(state, spaceForMoves);
+    }
+    static int16_t scoreFinalPosition(State &state) {
+        if (Engine::isSquareAttacked(state, bit::mostSignificantBit(state.bitmask[toInt(state.toMove)][toInt(Piece::king)]), opponent(state.toMove))) {
+            return state.toMove == Color::white ? std::numeric_limits<int16_t>::min() + alphaBetaDepth : std::numeric_limits<int16_t>::max() - alphaBetaDepth;
+        } else {
+            return 0;
+        }
+    }
+    static void makeMove(State &state, Move &move) {
+        state.makeMove(move);
+    }
+    static void unmakeMove(State &state, Move &move) {
+        state.unmakeMove(move);
+    }
+};
+
+void Engine::init() {
+    initBitmasks();
+    ScorePosition::initialize();
+}
+
 Move Engine::go() {
+    ScorePosition::updateStageOfGame(board);
     board.dump(std::cerr);
-    Move *afterLastMove = generateMoves(moves);
+    Move *afterLastMove = generateMoves(board, moves);
     if (moves == afterLastMove) {
         std::cerr << "no valid moves" << std::endl;
         return {notation2Number("e2"), notation2Number("e4") };
     }
-    ScorePosition scorer;
     Move bestMove = moves[0];
     int multiplier = board.toMove == Color::white ? 1 : -1;
     bestMove.score = std::numeric_limits<int16_t>::max() * -multiplier;
-    std::for_each(moves, afterLastMove, [this, &scorer, &bestMove, multiplier](Move &m) {
+    std::for_each(moves, afterLastMove, [this, afterLastMove, &bestMove, multiplier](Move &m) {
         board.makeMove(m);
-        m.score = scorer.scorePosition(board);
+        m.score = board.toMove == Color::black ?
+                alfabeta<ChessTraits, true>(board, alphaBetaDepth, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::max(), afterLastMove) :
+                alfabeta<ChessTraits, false>(board, alphaBetaDepth, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::max(), afterLastMove);
         board.unmakeMove(m);
         if (multiplier * m.score > multiplier * bestMove.score) {
             bestMove = m;
@@ -359,14 +397,14 @@ uint64_t Engine::kingMask(uint8_t square) {
     return maskOfShortDistancePiece(square, list);
 }
 
-bool Engine::isMoveValid(const Move &m) {
+bool Engine::isMoveValid(Board &board, const Move &m) {
     board.makeMove(m);
-    bool ret = isSquareAttacked(bit::mostSignificantBit(board.bitmask[toInt(opponent(board.toMove))][toInt(Piece::king)]), board.toMove);
+    bool ret = isSquareAttacked(board, bit::mostSignificantBit(board.bitmask[toInt(opponent(board.toMove))][toInt(Piece::king)]), board.toMove);
     board.unmakeMove(m);
     return !ret;
 }
 
-bool Engine::isSquareAttacked(uint8_t square, Color color) {
+bool Engine::isSquareAttacked(Board &board, uint8_t square, Color color) {
     if (knightBitmask[square] & board.bitmask[toInt(color)][toInt(Piece::knight)]) {
         return true;
     }
@@ -400,6 +438,10 @@ bool Engine::isSquareAttacked(uint8_t square, Color color) {
 }
 
 void Engine::setupFenPosition(std::list<std::string> fenPosition) {
+    setupFenPosition(board, fenPosition);
+}
+
+void Engine::setupFenPosition(Board &board, std::list<std::string> fenPosition) {
     ASSERT(fenPosition.size() == 6, "invalid fen position");
     board.clear();
     if (fenPosition.size() != 6) {

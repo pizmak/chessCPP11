@@ -4,7 +4,6 @@
 #include <assert.h>
 #include "print.h"
 
-#define DEBUG
 #ifdef DEBUG
 #define ASSERT(cond, ...) \
     if (!(cond)) { \

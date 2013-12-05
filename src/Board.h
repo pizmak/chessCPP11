@@ -51,16 +51,16 @@ struct Board {
     uint8_t enPassantSquare = 0;
     void makeMove(const Move &r); // only move pieces around, no check for move validity
     void unmakeMove(const Move &r);
-    void checkIntegrity();
-    void dump(std::ostream &stream);
-    uint64_t piecesOf(Color color);
-    uint64_t allPieces();
+    void checkIntegrity() const;
+    void dump(std::ostream &stream) const;
+    uint64_t piecesOf(Color color) const;
+    uint64_t allPieces() const;
     void disappearPiece(Piece piece, Color color, uint8_t from);
     void appearPiece(Piece piece, Color color, uint8_t to);
     void clear();
 private:
-    void dumpRank(std::ostream &stream, uint8_t rank);
-    void dumpMask(std::ostream &stream, Piece piece);
+    void dumpRank(std::ostream &stream, uint8_t rank) const;
+    void dumpMask(std::ostream &stream, Piece piece) const;
     void movePiece(Piece piece, Color color, uint8_t from, uint8_t to);
     void takePiece(Piece piece, Color color, Piece opponentPiece, uint8_t from, uint8_t to);
     void untakePiece(Piece piece, Color color, Piece opponentPiece, uint8_t from, uint8_t to);

@@ -5,6 +5,7 @@
 
 #include "asserts.h"
 #include "bit.h"
+#include "logging.h"
 #include "Move.h"
 
 inline bool inRange(uint8_t _rank, uint8_t _file) {
@@ -123,10 +124,10 @@ inline Move parseMove(const std::string &move) {
 
 inline std::string move2String(const Move &move) {
     std::string ret;
-    std::cerr << (int)move.from << ", " << (int)move.to << std::endl;
+    TRACELN((int)move.from << ", " << (int)move.to);
     ret += number2Notation(move.from);
     ret += number2Notation(move.to);
-    std::cerr << ret << std::endl;
+    TRACELN(ret);
     if (move.flags & promotions) {
         ret += piece2Notation(promotionPiece(move.flags), Color::white);
     }

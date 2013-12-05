@@ -4,8 +4,10 @@
 #include "notation.h"
 #include "Piece.h"
 #include "Engine.h"
+#include "logging.h"
 
 int16_t ScorePosition::distance[64][64];
+StageOfGame ScorePosition::gameStage = StageOfGame::OPENING;
 const int16_t ScorePosition::piecesValues[] = {100, 300, 300, 500, 900, 9000, 0}; // indexed by Piece
 const int16_t ScorePosition::knight_bonus[] = {
         -10, -15, -10, -10, -10, -10, -15, -10,
@@ -55,13 +57,10 @@ template <Color color> int16_t ScorePosition::scorePawn(const Board &board, uint
     constexpr int8_t multiplier = color == Color::white ? 1 : -1;
     int16_t ret = 0;
     if (rank(square) == bonusLine) {
-        std::cerr << "bonus line: " << (int)square << std::endl;
         ret += oneButLastLineBonus * multiplier;
     } else if (Engine::pawnBitmask[toInt(color)][square] & board.bitmask[toInt(color)][toInt(Piece::pawn)]) {
-        std::cerr << "neighboard pawns: " << (int)square << " and one of " << Engine::pawnBitmask[toInt(color)][square] << std::endl;
         ret += neighboardPawnBonus * multiplier;
     } else if (bit::isSet(board.bitmask[toInt(color)][toInt(Piece::pawn)], square - 8)) {
-        std::cerr << "dubled pawns: " << (int)square << " and " << square - 8 << std::endl;
         ret -= doubledPawnsPenalty * multiplier;
     }
     return ret;
@@ -94,11 +93,10 @@ StageOfGame ScorePosition::stageOfGame(const Board &board) {
     if (currentScore > fullBoard - 2 * 10 - 4 * 2) {
         return StageOfGame::OPENING;
     }
-    if (currentScore <= 100) {
+    if (currentScore <= 100 || bit::numberOfOnes(board.allPieces()) < 6) {
         return StageOfGame::ENDGAME;
     }
     return StageOfGame::MIDDLEGAME;
-
 }
 
 int16_t ScorePosition::scorePosition(const Board &board) {
@@ -107,7 +105,7 @@ int16_t ScorePosition::scorePosition(const Board &board) {
     Color color;
     short multiplier;
 
-    std::cerr << std::dec;
+    TRACE(std::dec);
     uint8_t king_position[2] = {bit::mostSignificantBit(board.bitmask[toInt(Color::white)][toInt(Piece::king)]), bit::mostSignificantBit(board.bitmask[toInt(Color::black)][toInt(Piece::king)])};
     for (uint8_t square = 0; square < 64; square++) {
         piece = board.pieces[square];
@@ -118,7 +116,6 @@ int16_t ScorePosition::scorePosition(const Board &board) {
         multiplier = color == Color::white ? 1 : -1;
 
         sum += (piecesValues[toInt(piece)] + centrumBonus(square)) * multiplier; // obliczenie materialu
-//        std::cerr << sum << std::endl;
 
         switch (piece) {
         case Piece::pawn:
@@ -184,7 +181,7 @@ int16_t ScorePosition::scorePosition(const Board &board) {
             break;
         }
     }
-    std::cerr << std::hex;
+    TRACE(std::hex);
     return sum;
 }
 
@@ -198,10 +195,5 @@ void ScorePosition::initialize() {
         for (uint8_t y = 0; y < 64; y++) {
             distance[x][y] = std::max(std::max(file(x), file(y)) - std::min(file(x), file(y)), std::max(rank(x), rank(y)) - std::min(rank(x), rank(y)));
         }
-        std::cerr << std::endl;
     }
-}
-
-ScorePosition::ScorePosition() {
-    initialize();
 }

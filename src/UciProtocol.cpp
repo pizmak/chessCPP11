@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "logging.h"
+
 #include "notation.h"
 #include "utils.h"
 
@@ -75,9 +77,11 @@ void UciProtocol::testArena() {
 
 void UciProtocol::setupStartPosition(std::string data) {
     std::list<std::string> moves = split(data, ' ');
+#ifdef DEBUG
     for (auto &move : moves) {
-        std::cerr << move << " ";
+        TRACE(move << " ");
     }
+#endif
     engine.reset();
     engine.move(moves);
 }
