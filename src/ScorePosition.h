@@ -12,8 +12,8 @@ ENUM(StageOfGame, uint8_t,
 class ScorePosition {
 public:
     ScorePosition() = delete;
-    static int16_t scorePosition(const Board &board);
-    static void updateStageOfGame(const Board &board);
+    static int16_t scorePosition(const BoardType &board);
+    static void updateStageOfGame(const BoardType &board);
     static void initialize();
 private:
     static StageOfGame gameStage;
@@ -27,7 +27,7 @@ private:
     static constexpr int16_t neighboardPawnBonus = 3;
     static constexpr int16_t doubledPawnsPenalty = 20;
     static uint16_t centrumBonus(uint8_t square);
-    static StageOfGame stageOfGame(const Board &board);
-    template <Color color> static int16_t scorePawn(const Board &board, uint8_t square);
-    template <Color color> static int16_t scoreRook(const Board &board, uint8_t square, uint8_t king_position[2]);
+    static StageOfGame stageOfGame(const BoardType &board);
+    template <Color color> static int16_t scorePawn(const BoardType &board, uint8_t square);
+    template <Color color> static int16_t scoreRook(const BoardType &board, uint8_t square, uint8_t king_position[2]);
 };

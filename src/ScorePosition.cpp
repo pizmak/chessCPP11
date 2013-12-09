@@ -50,7 +50,7 @@ uint16_t ScorePosition::centrumBonus(uint8_t square) {
     }
 }
 
-template <Color color> int16_t ScorePosition::scorePawn(const Board &board, uint8_t square) {
+template <Color color> int16_t ScorePosition::scorePawn(const BoardType &board, uint8_t square) {
     ASSERT(square > 7 && square < 0x38, square);
     static_assert(color == Color::white || color == Color::black, "invalid color");
     constexpr uint8_t bonusLine = color == Color::white ? 7 : 2;
@@ -66,7 +66,7 @@ template <Color color> int16_t ScorePosition::scorePawn(const Board &board, uint
     return ret;
 }
 
-template <Color color> int16_t ScorePosition::scoreRook(const Board &board __attribute__((unused)), uint8_t square, uint8_t king_position[2]) {
+template <Color color> int16_t ScorePosition::scoreRook(const BoardType &board __attribute__((unused)), uint8_t square, uint8_t king_position[2]) {
     constexpr uint8_t penaltyRank = color == Color::white ? 1 : 6;
     constexpr int8_t multiplier = color == Color::white ? 1 : -1;
     int16_t ret =   -2 * distance[square][king_position[toInt(opponent(color))]] * multiplier;
@@ -74,11 +74,11 @@ template <Color color> int16_t ScorePosition::scoreRook(const Board &board __att
     return ret;
 }
 
-void ScorePosition::updateStageOfGame(const Board &board) {
+void ScorePosition::updateStageOfGame(const BoardType &board) {
     gameStage = stageOfGame(board);
 }
 
-StageOfGame ScorePosition::stageOfGame(const Board &board) {
+StageOfGame ScorePosition::stageOfGame(const BoardType &board) {
     int fullBoard = 2 * 100 + 4 * 50 + 8 * 10 + 16 * 2;
     int currentScore = bit::numberOfOnes(board.bitmask[toInt(Color::white)][toInt(Piece::pawn)]) * 2
             + bit::numberOfOnes(board.bitmask[toInt(Color::black)][toInt(Piece::pawn)]) * 2
@@ -99,7 +99,7 @@ StageOfGame ScorePosition::stageOfGame(const Board &board) {
     return StageOfGame::MIDDLEGAME;
 }
 
-int16_t ScorePosition::scorePosition(const Board &board) {
+int16_t ScorePosition::scorePosition(const BoardType &board) {
     int16_t sum = 0;
     Piece piece;
     Color color;

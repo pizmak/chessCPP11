@@ -2,11 +2,12 @@
 #include "Board.h"
 #include "Move.h"
 #include "notation.h"
+#include "ZobristHash.h"
 #include "Engine.h"
 #include <list>
 #include <iostream>
 
-void testMove(Board &b, const Move &m) {
+void testMove(BoardType &b, const Move &m) {
     std::cerr << std::endl << "make move" << m << std::endl;
     b.makeMove(m);
     b.dump(std::cerr);
@@ -21,7 +22,7 @@ void testMove(Board &b, const Move &m) {
 }
 
 void boardUnitTest() {
-    Board b;
+    BoardType b;
     b.dump(std::cerr);
     b.checkIntegrity();
     std::list<Move> moveList = {
@@ -84,4 +85,18 @@ void testEngine() {
         std::cerr << "possible moves after: " << m << std::endl;
         engine.go();
     }
+}
+
+void hashUnitTest() {
+    ZobristHash<4, 2, 2> hash;
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 2; ++j) {
+            for (int k = 0; k < 2; ++k) {
+                std::cerr << hash.randomHash[i][j][k] << " ";
+            }
+            std::cerr << std::endl;
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << NativeArray<uint64_t, 4,2,2>::get(hash.randomHash, 0,0,0) << std::endl;
 }

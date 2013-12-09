@@ -20,7 +20,8 @@ int main() {
 //    engineMasksTest();
 //    testEngine();
 //    testArena();
-
+//    hashUnitTest();
+//    return 0;
     while (true) {
         std::string command;
         std::getline(std::cin, command);
