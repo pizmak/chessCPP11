@@ -243,7 +243,7 @@ Move *Engine::generateKingMoves(BoardType &board, uint8_t square, Move* startMov
         });
         if (board.piecesColors[5] == Color::empty && board.piecesColors[6] == Color::empty &&
                 !isSquareAttacked(board, 4, Color::black) && !isSquareAttacked(board, 5, Color::black) && !isSquareAttacked(board, 6, Color::black)) {
-            *afterLastMove = {4, 6, 0, Piece::empty, MoveFlags::K_castling};
+            *afterLastMove = {4, 6, board.enPassantSquare, Piece::empty, MoveFlags::K_castling};
             ++afterLastMove;
         }
     }
@@ -253,7 +253,7 @@ Move *Engine::generateKingMoves(BoardType &board, uint8_t square, Move* startMov
         });
         if (board.piecesColors[3] == Color::empty && board.piecesColors[2] == Color::empty && board.piecesColors[1] == Color::empty &&
                 !isSquareAttacked(board, 4, Color::black) && !isSquareAttacked(board, 3, Color::black) && !isSquareAttacked(board, 2, Color::black)) {
-            *afterLastMove = {4, 2, 0, Piece::empty, MoveFlags::Q_castling};
+            *afterLastMove = {4, 2, board.enPassantSquare, Piece::empty, MoveFlags::Q_castling};
             ++afterLastMove;
         }
     }
@@ -263,7 +263,7 @@ Move *Engine::generateKingMoves(BoardType &board, uint8_t square, Move* startMov
         });
         if (board.piecesColors[0x3D] == Color::empty && board.piecesColors[0x3E] == Color::empty &&
                 !isSquareAttacked(board, 0x3C, Color::white) && !isSquareAttacked(board, 0x3D, Color::white) && !isSquareAttacked(board, 0x3E, Color::white)) {
-            *afterLastMove = {0x3C, 0x3E, 0, Piece::empty, MoveFlags::k_castling};
+            *afterLastMove = {0x3C, 0x3E, board.enPassantSquare, Piece::empty, MoveFlags::k_castling};
             ++afterLastMove;
         }
     }
@@ -273,7 +273,7 @@ Move *Engine::generateKingMoves(BoardType &board, uint8_t square, Move* startMov
         });
         if (board.piecesColors[0x3B] == Color::empty && board.piecesColors[0x3A] == Color::empty && board.piecesColors[0x39] == Color::empty &&
                 !isSquareAttacked(board, 0x3C, Color::white) && !isSquareAttacked(board, 0x3B, Color::white) && !isSquareAttacked(board, 0x3A, Color::white)) {
-            *afterLastMove = {0x3C, 0x3A, 0, Piece::empty, MoveFlags::q_castling};
+            *afterLastMove = {0x3C, 0x3A, board.enPassantSquare, Piece::empty, MoveFlags::q_castling};
             ++afterLastMove;
         }
     }
