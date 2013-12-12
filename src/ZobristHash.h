@@ -21,7 +21,9 @@ template <int BoardSize, int...AdditionalSizes>
 ZobristHash<BoardSize, AdditionalSizes...>::ZobristHash() {
     static bool inited = false;
     if (!inited) {
+        std::cerr << "init hashes" << std::endl;
         initializeRandomHash();
+        inited = true;
     }
 }
 

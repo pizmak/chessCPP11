@@ -20,7 +20,7 @@ uint64_t Engine::kingBitmask[64];
 
 void Engine::reset() {
     board = BoardType();
-    board.initHash();
+    std::cerr << "start hash: " << board.hash << std::endl;
 }
 
 void Engine::move(const std::string &move) {
@@ -210,22 +210,26 @@ Move *Engine::generateBishopMoves(BoardType &board, uint8_t square, Move *startM
 
 Move *Engine::generateRookMoves(BoardType &board, uint8_t square, Move *startMove) {
     Move *afterLastMove = movesOfLongDistancePiece(board, square, rookBitmask, startMove);
+    static auto QcastFun = [](Move &move) {
+        move.flags |= MoveFlags::Q_castling;
+    };
+    static auto KcastFun = [](Move &move) {
+        move.flags |= MoveFlags::K_castling;
+    };
+    static auto qcastFun = [](Move &move) {
+        move.flags |= MoveFlags::q_castling;
+    };
+    static auto kcastFun = [](Move &move) {
+        move.flags |= MoveFlags::k_castling;
+    };
     if (square == 0 && board.flags & BoardFlags::Q_castling) {
-        std::for_each(startMove, afterLastMove, [](Move &move) {
-            move.flags |= MoveFlags::Q_castling;
-        });
+        std::for_each(startMove, afterLastMove, QcastFun);
     } else if (square == 7 && board.flags & BoardFlags::K_castling) {
-        std::for_each(startMove, afterLastMove, [](Move &move) {
-            move.flags |= MoveFlags::K_castling;
-        });
+        std::for_each(startMove, afterLastMove, KcastFun);
     } else if (square == 0x38 && board.flags & BoardFlags::q_castling) {
-        std::for_each(startMove, afterLastMove, [](Move &move) {
-            move.flags |= MoveFlags::q_castling;
-        });
+        std::for_each(startMove, afterLastMove, qcastFun);
     } else if (square == 0x3E && board.flags & BoardFlags::k_castling) {
-        std::for_each(startMove, afterLastMove, [](Move &move) {
-            move.flags |= MoveFlags::k_castling;
-        });
+        std::for_each(startMove, afterLastMove, kcastFun);
     }
     return afterLastMove;
 }
@@ -237,10 +241,20 @@ Move *Engine::generateQueenMoves(BoardType &board, uint8_t square, Move *startMo
 
 Move *Engine::generateKingMoves(BoardType &board, uint8_t square, Move* startMove) {
     Move *afterLastMove = movesOfShortDistancePiece(board, square, kingBitmask[square], startMove);
+    static auto QcastFun = [](Move &move) {
+        move.flags |= MoveFlags::Q_castling;
+    };
+    static auto KcastFun = [](Move &move) {
+        move.flags |= MoveFlags::K_castling;
+    };
+    static auto qcastFun = [](Move &move) {
+        move.flags |= MoveFlags::q_castling;
+    };
+    static auto kcastFun = [](Move &move) {
+        move.flags |= MoveFlags::k_castling;
+    };
     if (square == 4 && board.flags & BoardFlags::K_castling) {
-        std::for_each(startMove, afterLastMove, [](Move &move) {
-            move.flags |= MoveFlags::K_castling;
-        });
+        std::for_each(startMove, afterLastMove, KcastFun);
         if (board.piecesColors[5] == Color::empty && board.piecesColors[6] == Color::empty &&
                 !isSquareAttacked(board, 4, Color::black) && !isSquareAttacked(board, 5, Color::black) && !isSquareAttacked(board, 6, Color::black)) {
             *afterLastMove = {4, 6, board.enPassantSquare, Piece::empty, MoveFlags::K_castling};
@@ -248,9 +262,7 @@ Move *Engine::generateKingMoves(BoardType &board, uint8_t square, Move* startMov
         }
     }
     if (square == 4 && board.flags & BoardFlags::Q_castling) {
-        std::for_each(startMove, afterLastMove, [](Move &move) {
-            move.flags |= MoveFlags::Q_castling;
-        });
+        std::for_each(startMove, afterLastMove, QcastFun);
         if (board.piecesColors[3] == Color::empty && board.piecesColors[2] == Color::empty && board.piecesColors[1] == Color::empty &&
                 !isSquareAttacked(board, 4, Color::black) && !isSquareAttacked(board, 3, Color::black) && !isSquareAttacked(board, 2, Color::black)) {
             *afterLastMove = {4, 2, board.enPassantSquare, Piece::empty, MoveFlags::Q_castling};
@@ -258,9 +270,7 @@ Move *Engine::generateKingMoves(BoardType &board, uint8_t square, Move* startMov
         }
     }
     if (square == 0x3C && board.flags & BoardFlags::k_castling) {
-        std::for_each(startMove, afterLastMove, [](Move &move) {
-            move.flags |= MoveFlags::k_castling;
-        });
+        std::for_each(startMove, afterLastMove, kcastFun);
         if (board.piecesColors[0x3D] == Color::empty && board.piecesColors[0x3E] == Color::empty &&
                 !isSquareAttacked(board, 0x3C, Color::white) && !isSquareAttacked(board, 0x3D, Color::white) && !isSquareAttacked(board, 0x3E, Color::white)) {
             *afterLastMove = {0x3C, 0x3E, board.enPassantSquare, Piece::empty, MoveFlags::k_castling};
@@ -268,9 +278,7 @@ Move *Engine::generateKingMoves(BoardType &board, uint8_t square, Move* startMov
         }
     }
     if (square == 0x3C && board.flags & BoardFlags::q_castling) {
-        std::for_each(startMove, afterLastMove, [](Move &move) {
-            move.flags |= MoveFlags::q_castling;
-        });
+        std::for_each(startMove, afterLastMove, qcastFun);
         if (board.piecesColors[0x3B] == Color::empty && board.piecesColors[0x3A] == Color::empty && board.piecesColors[0x39] == Color::empty &&
                 !isSquareAttacked(board, 0x3C, Color::white) && !isSquareAttacked(board, 0x3B, Color::white) && !isSquareAttacked(board, 0x3A, Color::white)) {
             *afterLastMove = {0x3C, 0x3A, board.enPassantSquare, Piece::empty, MoveFlags::q_castling};
@@ -281,24 +289,26 @@ Move *Engine::generateKingMoves(BoardType &board, uint8_t square, Move* startMov
     return afterLastMove;
 }
 
-static const int alphaBetaDepth = 5;
+static const int alphaBetaDepth = 7;
 
 struct ChessTraits {
     using State = std::pair<BoardType &, Engine &>;
     using Move = ::Move;
     static int16_t scoreState(State &state) {
         int16_t score = ScorePosition::scorePosition(state.first);
-        state.second.hashes[state.first.hash & Engine::shortHashMask] = {state.first.hash, score, 0};
         return score;
     }
     static void scoreState(State &state, int16_t score, uint8_t level) {
-        state.second.hashes[state.first.hash & Engine::shortHashMask] = {state.first.hash, score, level};
+        state.second.insert(state.first.hash, {state.first.hash, score, level});
     }
     static void scoreMove(Move &move, int16_t score) {
         move.score = score;
     }
     static int16_t scoreOf(const Move &move) {
         return move.score;
+    }
+    static ChessHashElement &scoreOf(const State &state) {
+        return state.second.get(state.first.hash);
     }
     static Move *generateMoves(State &state, Move *spaceForMoves) {
         return Engine::generateMoves(state.first, spaceForMoves);
@@ -319,13 +329,13 @@ struct ChessTraits {
 };
 
 void Engine::init() {
+    std::cerr << __PRETTY_FUNCTION__ << std::endl;
     initBitmasks();
     ScorePosition::initialize();
 }
 
 Move Engine::go() {
     ScorePosition::updateStageOfGame(board);
-    board.dump(std::cerr);
     Move *afterLastMove = generateMoves(board, moves);
     if (moves == afterLastMove) {
         std::cerr << "no valid moves" << std::endl;
@@ -340,6 +350,7 @@ Move Engine::go() {
         m.score = board.toMove == Color::black ?
                 Alphabeta<ChessTraits, true, alphaBetaDepth>::go(state, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::max(), afterLastMove) :
                 Alphabeta<ChessTraits, false, alphaBetaDepth>::go(state, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::max(), afterLastMove);
+        insert(board.hash, {board.hash, m.score, alphaBetaDepth});
         board.unmakeMove(m);
         if (multiplier * m.score > multiplier * bestMove.score) {
             bestMove = m;
@@ -347,6 +358,7 @@ Move Engine::go() {
         }
         TRACELN(m);
     });
+    insert(board.hash, {board.hash, bestMove.score, alphaBetaDepth + 1});
     return bestMove;
 }
 

@@ -3,6 +3,15 @@
 template <typename GameTraits, bool isMin, int depth>
 struct Alphabeta {
     static int16_t go(typename GameTraits::State &state, int16_t alpha, int16_t beta, typename GameTraits::Move *spaceForMoves) {
+        ChessHashElement &hashed = GameTraits::scoreOf(state);
+        if (hashed.hash == state.first.hash && hashed.depth >= depth) {
+            static int hashHits = 0;
+            ++hashHits;
+            if (hashHits % 10000 == 0) {
+                std::cerr << std::dec << "hashHits - depth: " << depth << " -> "  << hashHits << std::hex << std::endl;
+            }
+            return hashed.score;
+        }
         typename GameTraits::Move *afterLastMove = GameTraits::generateMoves(state, spaceForMoves); // zlicza ruchy mozliwe do wykonania
         if (spaceForMoves == afterLastMove) {
             return GameTraits::scoreFinalPosition(state) + (isMin ? depth : -depth);
@@ -16,13 +25,10 @@ struct Alphabeta {
                 GameTraits::scoreMove(*move, GameTraits::scoreState(state)); //alfabeta(index, przeciwnik(kto_gra), GLEBOKOSC_INTERACYJNEGO_POGLEBIANIA, alpha, beta, wezel - 1);
                 GameTraits::unmakeMove(state, *move);
             }
-            // koniec przedoceny
-            // SORTOWANIE RUCHOW
-
-            std::sort(spaceForMoves, afterLastMove, [](const typename GameTraits::Move &m1, const typename GameTraits::Move &m2) {
+            static auto sortFun = [](const typename GameTraits::Move &m1, const typename GameTraits::Move &m2) {
                 return isMin ? GameTraits::scoreOf(m1) < GameTraits::scoreOf(m2) : GameTraits::scoreOf(m1) > GameTraits::scoreOf(m2);
-            });
-            //*************************************************************
+            };
+            std::sort(spaceForMoves, afterLastMove, sortFun);
         }
 
         for (typename GameTraits::Move *move = spaceForMoves; move < afterLastMove; ++move) {

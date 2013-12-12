@@ -76,15 +76,14 @@ void engineMasksTest() {
 
 void testEngine() {
     Engine engine;
-    std::list<std::string> moves{"e2e4", "a7a6", "d1h5"};
+    std::list<std::string> moves{"e2e4", "a7a6", "d2h4"};
+    std::list<std::string> moves2{"d2h4", "a7a6", "e2e4"};
 
-    std::cerr << "possible moves in start position" << std::endl;
-    engine.go();
-    for (auto &m : moves) {
-        engine.move(m);
-        std::cerr << "possible moves after: " << m << std::endl;
-        engine.go();
-    }
+    engine.move(moves);
+    std::cerr << "hash after moves: " << engine.board.hash <<std::endl;
+    engine.reset();
+    engine.move(moves2);
+    std::cerr << "hash after moves: " << engine.board.hash <<std::endl;
 }
 
 void hashUnitTest() {

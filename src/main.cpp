@@ -15,6 +15,7 @@
 #include "UciProtocol.h"
 
 int main() {
+    std::ios_base::sync_with_stdio(false);
     std::cerr << std::hex << std::boolalpha << std::uppercase << std::setfill('0') << std::setiosflags(std::ios::internal);
     Engine::initBitmasks();
 //    engineMasksTest();

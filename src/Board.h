@@ -48,6 +48,7 @@ static const EnumFlags<BoardFlags> castling = BoardFlags::K_castling | BoardFlag
 
 template <typename HashPolicy>
 struct Board : HashPolicy {
+    Board();
     Piece pieces[64] = {START_BOARD};
     Color piecesColors[64] = {START_COLORS};
     uint_fast64_t bitmask[2][6] = {
@@ -78,6 +79,11 @@ private:
 using BoardType = Board<ZobristHash<64, 2, 8>>;
 
 template <typename HashPolicy>
+Board<HashPolicy>::Board() {
+    initHash();
+}
+
+template <typename HashPolicy>
 uint64_t Board<HashPolicy>::piecesOf(Color color) const {
     return bitmask[toInt(color)][toInt(Piece::pawn)] | bitmask[toInt(color)][toInt(Piece::knight)] | bitmask[toInt(color)][toInt(Piece::bishop)] |
             bitmask[toInt(color)][toInt(Piece::rook)] | bitmask[toInt(color)][toInt(Piece::queen)] | bitmask[toInt(color)][toInt(Piece::king)];
@@ -101,9 +107,9 @@ void Board<HashPolicy>::disappearPiece(Piece piece, Color color, uint8_t from) {
 template <typename HashPolicy>
 void Board<HashPolicy>::appearPiece(Piece piece, Color color, uint8_t to) {
     // we can appear piece on square which is empty on opponents square (capture) or our square (promotion)
-    HashPolicy::update(to, toInt(piecesColors[to]), toInt(pieces[to]));
     pieces[to] = piece;
     piecesColors[to] = color;
+    HashPolicy::update(to, toInt(piecesColors[to]), toInt(pieces[to]));
     bit::set(bitmask[toInt(color)][toInt(piece)], to);
 }
 
@@ -114,9 +120,7 @@ void Board<HashPolicy>::takePiece(Piece piece, Color color, Piece capturedPiece,
 
     bit::unset(bitmask[toInt(opponent(color))][toInt(capturedPiece)], to); // disappear opponent's piece
     disappearPiece(piece, color, from);
-    if (capturedPiece != Piece::empty) {
-        HashPolicy::update(to, toInt(opponent(color)), toInt(capturedPiece));
-    }
+    HashPolicy::update(to, toInt(opponent(color)), toInt(capturedPiece));
     appearPiece(piece, color, to);
 }
 
@@ -126,9 +130,7 @@ void Board<HashPolicy>::untakePiece(Piece piece, Color color, Piece capturedPiec
             (int)from, (int)to, piece, color, capturedPiece, pieces[from], pieces[to]);
 
     bit::unset(bitmask[toInt(color)][toInt(piece)], to); // disappear our piece
-    if (capturedPiece != Piece::empty) {
-        HashPolicy::update(to, toInt(color), toInt(capturedPiece));
-    }
+    HashPolicy::update(to, toInt(color), toInt(piece));
     appearPiece(capturedPiece, opponent(color), to);
     appearPiece(piece, color, from);
 }
@@ -147,7 +149,6 @@ inline EnumFlags<BoardFlags> toBoardFlags(EnumFlags<MoveFlags> moveFlags) {
 
 template <typename HashPolicy>
 void Board<HashPolicy>::makeMove(const Move &move) {
-//    std::cerr << __FUNCTION__ << ": " << move << std::endl;
     ASSERT(piecesColors[move.from] == toMove, number2Notation(move.from), piecesColors[move.from], toMove);
     // TODO remove this variable as it is only for diagnostic purposes at the moment
     uint8_t newEnPassantSquare = pieces[move.from] == Piece::pawn && (move.to - move.from == 16 || move.from - move.to == 16) ? move.to : 0;
@@ -157,9 +158,7 @@ void Board<HashPolicy>::makeMove(const Move &move) {
         movePiece(pieces[move.from], toMove, move.from, move.to);
     }
     if (pieces[move.to] == Piece::king) {
-//        TRACELN("ruch krola");
         if (move.flags & MoveFlags::castling) {
-            TRACELN("roszada");
             ASSERT(flags & castling, flags);
             uint8_t startSquare = move.to > move.from ? 7 : 0;
             uint8_t offset = move.to > move.from ? -2 : 3;
@@ -167,12 +166,9 @@ void Board<HashPolicy>::makeMove(const Move &move) {
             movePiece(Piece::rook, toMove, startSquare + colorOffset, startSquare + colorOffset + offset);
         }
     } else if (move.flags & promotions) {
-        TRACELN("promocja: " << move.flags);
         disappearPiece(pieces[move.to], toMove, move.to);
         appearPiece(promotionPiece(move.flags & promotions), toMove, move.to);
     } else if (move.flags & MoveFlags::enPassantCapture) {
-//        TRACELN("bicie w przelocie");
-//        dump(std::cerr);
         ASSERT(enPassantSquare == (toMove == Color::white ? move.to - 8 : move.to + 8), move.to - 8, (int)enPassantSquare);
         disappearPiece(Piece::pawn, opponent(toMove), enPassantSquare);
     }
@@ -183,7 +179,6 @@ void Board<HashPolicy>::makeMove(const Move &move) {
 
 template <typename HashPolicy>
 void Board<HashPolicy>::unmakeMove(const Move &move) {
-//    std::cerr << __FUNCTION__ << ": " << move << std::endl;
     ASSERT(piecesColors[move.to] == opponent(toMove), toMove, piecesColors[move.to]);
     if (move.captured != Piece::empty) {
         untakePiece(pieces[move.to], opponent(toMove), move.captured, move.from, move.to);
@@ -280,6 +275,9 @@ void Board<HashPolicy>::dump(std::ostream &stream) const {
         case 6:
             dumpMask(stream, Piece::king);
             break;
+        case 0:
+            stream << "\thash\t" << (uint64_t)this->hash << std::endl;
+            break;
         }
         stream << std::endl;
     }
@@ -310,10 +308,12 @@ void Board<HashPolicy>::clear() {
 
     this->enPassantSquare = 0;
     this->flags = BoardFlags::empty;
+    this->hash = 0;
 }
 
 template <typename HashPolicy>
 void Board<HashPolicy>::initHash() {
+    this->hash = 0;
     for (int i = 0; i < 64; ++i) {
         if (pieces[i] != Piece::empty) {
             HashPolicy::update(i, toInt(piecesColors[i]), toInt(pieces[i]));

@@ -6,15 +6,13 @@
 #include "Move.h"
 #include "ChessHashElement.h"
 #include "ZobristHash.h"
+#include "HashContainer.h"
 
-class Engine {
+class Engine : public HashContainer<ChessHashElement, 26> {
 public:
     using PairList = std::list<std::pair<uint8_t, uint8_t>>;
     BoardType board;
     Move moves[1024];
-    const static int shortHashMask = 0xFF;
-//    const static int shortHashMask = 0x1FFFFFF;
-    ChessHashElement hashes[shortHashMask + 1];
     static Move *generateMoves(BoardType &board, Move *startMove);
     static Move *movesOfShortDistancePiece(BoardType &board, uint8_t square, uint64_t mask, Move *startMove);
     static Move *movesOfLongDistancePiece(BoardType &board, uint8_t square, uint64_t mask[64][4], Move *startMove);
