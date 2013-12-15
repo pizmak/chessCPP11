@@ -345,24 +345,33 @@ int16_t Engine::callAlphaBeta(Move *moveStorage) {
 }
 
 Move Engine::go() {
+    stopped.store(false);
     ScorePosition::updateStageOfGame(board);
     Move *afterLastMove = generateMoves(board, moves);
     ASSERT(afterLastMove > moves, "no moves");
     Move bestMove = moves[0];
     int multiplier = board.toMove == Color::white ? 1 : -1;
+    if (afterLastMove - moves == 1) {
+        return bestMove;
+    }
     bestMove.score = std::numeric_limits<int16_t>::max() * -multiplier;
-    std::for_each(moves, afterLastMove, [this, afterLastMove, &bestMove, multiplier](Move &m) {
-        board.makeMove(m);
-        m.score = board.toMove == Color::black ? callAlphaBeta<true>(afterLastMove) : callAlphaBeta<false>(afterLastMove);
-        insert(board.hash, {board.hash, m.score, alphaBetaDepth});
-        board.unmakeMove(m);
-        if (multiplier * m.score > multiplier * bestMove.score) {
-            bestMove = m;
-            std::cerr << "new bestmove whith score: " << m.score << std::endl;
+    for (Move *m = moves; m < afterLastMove; ++m) {
+        board.makeMove(*m);
+        m->score = board.toMove == Color::black ? callAlphaBeta<true>(afterLastMove) : callAlphaBeta<false>(afterLastMove);
+        insert(board.hash, {board.hash, m->score, alphaBetaDepth});
+        board.unmakeMove(*m);
+        if (multiplier * m->score > multiplier * bestMove.score) {
+            bestMove = *m;
+            std::cerr << "new bestmove whith score: " << m->score << std::endl;
         }
-        std::cerr << m << std::endl;
-    });
-    insert(board.hash, {board.hash, bestMove.score, uint8_t(alphaBetaDepth + 1)});
+        std::cerr << *m << std::endl;
+        if (stopped) {
+            break;
+        }
+    }
+    if (!stopped) {
+        insert(board.hash, {board.hash, bestMove.score, uint8_t(alphaBetaDepth + 1)});
+    }
     return bestMove;
 }
 
@@ -519,4 +528,8 @@ void Engine::setupFenPosition(BoardType &board, std::list<std::string> fenPositi
 
 void Engine::clearHash() {
     clear();
+}
+
+void Engine::stop() {
+    stopped = true;
 }

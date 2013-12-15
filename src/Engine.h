@@ -1,11 +1,12 @@
 #pragma once
 
-#include <list>
-
 #include "Board.h"
 #include "Move.h"
 #include "ZobristHash.h"
 #include "AlphaBetaHashContainer.h"
+
+#include <atomic>
+#include <list>
 
 class Engine : public AlphaBetaHashContainer<26> {
 public:
@@ -45,6 +46,7 @@ public:
     static void setupFenPosition(BoardType &board, std::list<std::string> fenPosition);
     void setupFenPosition(std::list<std::string> fenPosition);
     static void initBitmasks();
+    std::atomic<bool> stopped;
 public:
     static void init();
     void reset();
@@ -54,4 +56,5 @@ public:
     static bool isMoveValid(BoardType &board, const Move &m);
     Move go();
     void clearHash();
+    void stop();
 };
