@@ -4,15 +4,17 @@
 
 #include "Board.h"
 #include "Move.h"
-#include "ChessHashElement.h"
 #include "ZobristHash.h"
-#include "HashContainer.h"
+#include "AlphaBetaHashContainer.h"
 
-class Engine : public HashContainer<ChessHashElement, 26> {
+class Engine : public AlphaBetaHashContainer<26> {
 public:
     using PairList = std::list<std::pair<uint8_t, uint8_t>>;
     BoardType board;
     Move moves[1024];
+    uint8_t alphaBetaDepth = 5;
+    template <bool isMin>
+    int16_t callAlphaBeta(Move *moveStorage);
     static Move *generateMoves(BoardType &board, Move *startMove);
     static Move *movesOfShortDistancePiece(BoardType &board, uint8_t square, uint64_t mask, Move *startMove);
     static Move *movesOfLongDistancePiece(BoardType &board, uint8_t square, uint64_t mask[64][4], Move *startMove);
@@ -51,4 +53,5 @@ public:
     void move(const std::list<std::string> &moves);
     static bool isMoveValid(BoardType &board, const Move &m);
     Move go();
+    void clearHash();
 };

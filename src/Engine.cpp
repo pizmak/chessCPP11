@@ -1,16 +1,14 @@
 #include "Engine.h"
+#include "asserts.h"
+#include "notation.h"
+#include "ScorePosition.h"
+#include "utils.h"
+#include "Alphabeta.h"
 
 #include <string>
 #include <set>
 #include <algorithm>
 #include <cctype>
-
-#include "asserts.h"
-
-#include "notation.h"
-#include "ScorePosition.h"
-#include "utils.h"
-#include "Alphabeta.h"
 
 uint64_t Engine::pawnBitmask[2][64];
 uint64_t Engine::knightBitmask[64];
@@ -20,7 +18,6 @@ uint64_t Engine::kingBitmask[64];
 
 void Engine::reset() {
     board = BoardType();
-    std::cerr << "start hash: " << board.hash << std::endl;
 }
 
 void Engine::move(const std::string &move) {
@@ -47,15 +44,6 @@ void Engine::initBitmasks() {
 }
 
 Move *Engine::generateMoves(BoardType &board, Move *startMove) {
-    if (board.toMove == Color::white) {
-        bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::pawn)], [&board, &startMove](uint8_t pawn) {
-            startMove = generatePawnMoves<Color::white>(board, pawn, startMove);
-        });
-    } else {
-        bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::pawn)], [&board, &startMove](uint8_t pawn) {
-            startMove = generatePawnMoves<Color::black>(board, pawn, startMove);
-        });
-    }
     bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::knight)], [&board, &startMove](uint8_t knight) {
         startMove = generateKnightMoves(board, knight, startMove);
     });
@@ -71,6 +59,15 @@ Move *Engine::generateMoves(BoardType &board, Move *startMove) {
     bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::king)], [&board, &startMove](uint8_t king) {
         startMove = generateKingMoves(board, king, startMove);
     });
+    if (board.toMove == Color::white) {
+        bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::pawn)], [&board, &startMove](uint8_t pawn) {
+            startMove = generatePawnMoves<Color::white>(board, pawn, startMove);
+        });
+    } else {
+        bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::pawn)], [&board, &startMove](uint8_t pawn) {
+            startMove = generatePawnMoves<Color::black>(board, pawn, startMove);
+        });
+    }
     return startMove;
 }
 
@@ -289,8 +286,6 @@ Move *Engine::generateKingMoves(BoardType &board, uint8_t square, Move* startMov
     return afterLastMove;
 }
 
-static const int alphaBetaDepth = 7;
-
 struct ChessTraits {
     using State = std::pair<BoardType &, Engine &>;
     using Move = ::Move;
@@ -307,7 +302,9 @@ struct ChessTraits {
     static int16_t scoreOf(const Move &move) {
         return move.score;
     }
-    static ChessHashElement &scoreOf(const State &state) {
+    static AlphaBetaGenericHashElement &scoreOf(const State &state) {
+//        static AlphaBetaGenericHashElement el{0, 0, 0};
+//        return el;
         return state.second.get(state.first.hash);
     }
     static Move *generateMoves(State &state, Move *spaceForMoves) {
@@ -315,7 +312,7 @@ struct ChessTraits {
     }
     static int16_t scoreFinalPosition(State &state) {
         if (Engine::isSquareAttacked(state.first, bit::mostSignificantBit(state.first.bitmask[toInt(state.first.toMove)][toInt(Piece::king)]), opponent(state.first.toMove))) {
-            return state.first.toMove == Color::white ? std::numeric_limits<int16_t>::min() + alphaBetaDepth : std::numeric_limits<int16_t>::max() - alphaBetaDepth;
+            return state.first.toMove == Color::white ? std::numeric_limits<int16_t>::min() + state.second.alphaBetaDepth : std::numeric_limits<int16_t>::max() - state.second.alphaBetaDepth;
         } else {
             return 0;
         }
@@ -329,36 +326,43 @@ struct ChessTraits {
 };
 
 void Engine::init() {
-    std::cerr << __PRETTY_FUNCTION__ << std::endl;
     initBitmasks();
     ScorePosition::initialize();
+}
+
+#define CALL_ALPHA_BETA(i) \
+    case i: \
+        return Alphabeta<ChessTraits, isMin, i>::go(state, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::max(), moveStorage);
+
+template <bool isMin>
+int16_t Engine::callAlphaBeta(Move *moveStorage) {
+    ChessTraits::State state(board, *this);
+    switch (alphaBetaDepth) {
+        FOREACH(CALL_ALPHA_BETA, NO_SEPARATOR, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20);
+    }
+    std::cerr << "invalid value of alpha beta" << std::cerr;
+    return 0;
 }
 
 Move Engine::go() {
     ScorePosition::updateStageOfGame(board);
     Move *afterLastMove = generateMoves(board, moves);
-    if (moves == afterLastMove) {
-        std::cerr << "no valid moves" << std::endl;
-        return {notation2Number("e2"), notation2Number("e4") };
-    }
+    ASSERT(afterLastMove > moves, "no moves");
     Move bestMove = moves[0];
     int multiplier = board.toMove == Color::white ? 1 : -1;
     bestMove.score = std::numeric_limits<int16_t>::max() * -multiplier;
-    ChessTraits::State state(board, *this);
-    std::for_each(moves, afterLastMove, [this, &state, afterLastMove, &bestMove, multiplier](Move &m) {
+    std::for_each(moves, afterLastMove, [this, afterLastMove, &bestMove, multiplier](Move &m) {
         board.makeMove(m);
-        m.score = board.toMove == Color::black ?
-                Alphabeta<ChessTraits, true, alphaBetaDepth>::go(state, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::max(), afterLastMove) :
-                Alphabeta<ChessTraits, false, alphaBetaDepth>::go(state, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::max(), afterLastMove);
+        m.score = board.toMove == Color::black ? callAlphaBeta<true>(afterLastMove) : callAlphaBeta<false>(afterLastMove);
         insert(board.hash, {board.hash, m.score, alphaBetaDepth});
         board.unmakeMove(m);
         if (multiplier * m.score > multiplier * bestMove.score) {
             bestMove = m;
-            TRACELN("new bestmove whith score: " << m.score);
+            std::cerr << "new bestmove whith score: " << m.score << std::endl;
         }
-        TRACELN(m);
+        std::cerr << m << std::endl;
     });
-    insert(board.hash, {board.hash, bestMove.score, alphaBetaDepth + 1});
+    insert(board.hash, {board.hash, bestMove.score, uint8_t(alphaBetaDepth + 1)});
     return bestMove;
 }
 
@@ -511,4 +515,8 @@ void Engine::setupFenPosition(BoardType &board, std::list<std::string> fenPositi
     if (enPassant != "-") {
         board.enPassantSquare = notation2Number(enPassant);
     }
+}
+
+void Engine::clearHash() {
+    clear();
 }

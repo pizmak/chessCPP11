@@ -12,6 +12,9 @@ struct ZobristHash {
     uint64_t hash = 0;
     ZobristHash();
     template <typename ...IntTypes> void update(int field, IntTypes ...sizes);
+    void clearHash() {
+        hash = 0;
+    }
 };
 
 template <int BoardSize, int...AdditionalSizes>
@@ -21,7 +24,6 @@ template <int BoardSize, int...AdditionalSizes>
 ZobristHash<BoardSize, AdditionalSizes...>::ZobristHash() {
     static bool inited = false;
     if (!inited) {
-        std::cerr << "init hashes" << std::endl;
         initializeRandomHash();
         inited = true;
     }
@@ -42,4 +44,35 @@ template <typename ...IntTypes>
 void ZobristHash<BoardSize, AdditionalSizes...>::update(int field, IntTypes ...sizes) {
     static_assert(sizeof...(AdditionalSizes) == sizeof...(sizes), "invalid call to update functions");
     hash ^= Array::get(randomHash, field, sizes...);
+}
+
+template <int BoardSize, int...AdditionalSizes>
+struct ZobristHashWithPlayerInfo : ZobristHash<BoardSize, AdditionalSizes...> {
+    static uint64_t playerHash;
+    void initializePlayerHash();
+    ZobristHashWithPlayerInfo();
+    void switchPlayer() {
+        this->hash ^= playerHash;
+    }
+};
+
+template <int BoardSize, int...AdditionalSizes>
+uint64_t ZobristHashWithPlayerInfo<BoardSize, AdditionalSizes...>::playerHash;
+
+template <int BoardSize, int...AdditionalSizes>
+ZobristHashWithPlayerInfo<BoardSize, AdditionalSizes...>::ZobristHashWithPlayerInfo() {
+    static bool inited = false;
+    if (!inited) {
+        initializePlayerHash();
+        inited = true;
+    }
+}
+
+template <int BoardSize, int...AdditionalSizes>
+void ZobristHashWithPlayerInfo<BoardSize, AdditionalSizes...>::initializePlayerHash() {
+    std::mt19937 engine;
+    std::random_device rand;
+    engine.seed(rand());
+    std::uniform_int_distribution<uint64_t> distribution;
+    playerHash = distribution(engine);
 }

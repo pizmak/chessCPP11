@@ -11,6 +11,7 @@ class UciProtocol {
     void setupStartPosition(std::string data);
     void setupFenPosition(std::string data);
     void setupPosition(std::string command);
+    void setOption(std::string option);
 public:
     void start();
 };

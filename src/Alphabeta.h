@@ -3,13 +3,23 @@
 template <typename GameTraits, bool isMin, int depth>
 struct Alphabeta {
     static int16_t go(typename GameTraits::State &state, int16_t alpha, int16_t beta, typename GameTraits::Move *spaceForMoves) {
-        ChessHashElement &hashed = GameTraits::scoreOf(state);
-        if (hashed.hash == state.first.hash && hashed.depth >= depth) {
+#ifdef DEBUG_ALPHA_BETA
+        if (depth > state.second.alphaBetaDepth - 2) {
+            std::cerr << "go, alpha " << alpha << ", beta: " << beta << ", depth: " << depth << ", isMin: " << isMin << std::endl;
+            state.first.dump(std::cerr);
+        }
+#endif
+        AlphaBetaGenericHashElement &hashed = GameTraits::scoreOf(state);
+        if (hashed.hash == state.first.hash && hashed.depth == depth) {
+#ifdef DEBUG_ALPHA_BETA
+            state.first.dump(std::cerr);
+            std::cerr << "use hashed value " << hashed.score << ", hash:" << hashed.hash << std::endl;
             static int hashHits = 0;
             ++hashHits;
             if (hashHits % 10000 == 0) {
                 std::cerr << std::dec << "hashHits - depth: " << depth << " -> "  << hashHits << std::hex << std::endl;
             }
+#endif
             return hashed.score;
         }
         typename GameTraits::Move *afterLastMove = GameTraits::generateMoves(state, spaceForMoves); // zlicza ruchy mozliwe do wykonania
@@ -34,7 +44,7 @@ struct Alphabeta {
         for (typename GameTraits::Move *move = spaceForMoves; move < afterLastMove; ++move) {
             GameTraits::makeMove(state, *move);
             int16_t result = Alphabeta<GameTraits, !isMin, depth - 1>::go(state, alpha, beta, afterLastMove);
-            GameTraits::scoreState(state, result, depth);
+            GameTraits::scoreState(state, result, depth - 1);
             if (isMin) {
                 beta = std::min(beta, result);
             } else {
@@ -42,9 +52,14 @@ struct Alphabeta {
             }
             GameTraits::unmakeMove(state, *move);
             if (alpha >= beta) {
-                return isMin ? alpha : beta;
+                break;
             }
         }
+#ifdef DEBUG_ALPHA_BETA
+        if (depth > 3) {
+            std::cerr << "alphabeta return "<< (isMin ? beta : alpha) << std::endl;
+        }
+#endif
         return isMin ? beta : alpha;
     }
 };

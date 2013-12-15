@@ -7,6 +7,8 @@
 #include <list>
 #include <iostream>
 
+#include "NativeArray.h"
+
 void testMove(BoardType &b, const Move &m) {
     std::cerr << std::endl << "make move" << m << std::endl;
     b.makeMove(m);
@@ -98,4 +100,22 @@ void hashUnitTest() {
         std::cerr << std::endl;
     }
     std::cerr << NativeArray<uint64_t, 4,2,2>::get(hash.randomHash, 0,0,0) << std::endl;
+}
+
+#include <chrono>
+
+void nativeArrayTest() {
+    using ArrayType = NativeArray<int, 6, 6, 6>;
+    typename ArrayType::type arr;
+    auto fun = []() { static int i = 0; return ++i; };
+    ArrayType::initMulti(fun, arr);
+    std::chrono::system_clock c;
+    std::cout << c.to_time_t(c.now()) << std::endl;
+    int ret = 0;
+    int arg = c.to_time_t(c.now()) % 6;
+    for (int i = 0; i < 1000000000; ++i) {
+        ret += ArrayType::get(arr, arg, arg, arg);
+    }
+    std::cout << c.to_time_t(c.now()) << std::endl;
+    std::cout << "ret: " << ret << std::endl;
 }

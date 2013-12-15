@@ -2,6 +2,7 @@
 
 // can be use as separator (without parentheses)
 #define COMMA() ,
+#define NO_SEPARATOR()
 
 // helper macros that takes __VA_ARGS__ and return number of arguments
 // fake argument is needed if __VA_ARGS__ length is 0, in which case expansion gives "(," which is compiler error

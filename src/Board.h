@@ -76,7 +76,7 @@ private:
     void untakePiece(Piece piece, Color color, Piece opponentPiece, uint8_t from, uint8_t to);
 };
 
-using BoardType = Board<ZobristHash<64, 2, 8>>;
+using BoardType = Board<ZobristHashWithPlayerInfo<64, 2, 8>>;
 
 template <typename HashPolicy>
 Board<HashPolicy>::Board() {
@@ -175,6 +175,7 @@ void Board<HashPolicy>::makeMove(const Move &move) {
     flags &= ~toBoardFlags(move.flags);
     enPassantSquare = newEnPassantSquare;
     toMove = opponent(toMove);
+    HashPolicy::switchPlayer();
 }
 
 template <typename HashPolicy>
@@ -201,6 +202,7 @@ void Board<HashPolicy>::unmakeMove(const Move &move) {
     }
     flags |= toBoardFlags(move.flags);
     toMove = opponent(toMove);
+    HashPolicy::switchPlayer();
 }
 
 template <typename HashPolicy>
@@ -276,7 +278,7 @@ void Board<HashPolicy>::dump(std::ostream &stream) const {
             dumpMask(stream, Piece::king);
             break;
         case 0:
-            stream << "\thash\t" << (uint64_t)this->hash << std::endl;
+            stream << "\thash\t" << std::noshowbase << (uint64_t)this->hash << std::showbase;
             break;
         }
         stream << std::endl;
@@ -308,12 +310,12 @@ void Board<HashPolicy>::clear() {
 
     this->enPassantSquare = 0;
     this->flags = BoardFlags::empty;
-    this->hash = 0;
+    HashPolicy::clearHash();
 }
 
 template <typename HashPolicy>
 void Board<HashPolicy>::initHash() {
-    this->hash = 0;
+    HashPolicy::clearHash();
     for (int i = 0; i < 64; ++i) {
         if (pieces[i] != Piece::empty) {
             HashPolicy::update(i, toInt(piecesColors[i]), toInt(pieces[i]));
