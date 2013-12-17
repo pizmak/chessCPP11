@@ -54,24 +54,85 @@ template <Color color> int16_t ScorePosition::scorePawn(const BoardType &board, 
     ASSERT(square > 7 && square < 0x38, square);
     static_assert(color == Color::white || color == Color::black, "invalid color");
     constexpr uint8_t bonusLine = color == Color::white ? 7 : 2;
-    constexpr int8_t multiplier = color == Color::white ? 1 : -1;
-    int16_t ret = 0;
+    int16_t ret = piecesValues[toInt(Piece::pawn)] + centrumBonus(square);
     if (rank(square) == bonusLine) {
-        ret += oneButLastLineBonus * multiplier;
+        ret += oneButLastLineBonus;
     } else if (Engine::pawnBitmask[toInt(color)][square] & board.bitmask[toInt(color)][toInt(Piece::pawn)]) {
-        ret += neighboardPawnBonus * multiplier;
+        ret += neighboardPawnBonus;
     } else if (bit::isSet(board.bitmask[toInt(color)][toInt(Piece::pawn)], square - 8)) {
-        ret -= doubledPawnsPenalty * multiplier;
+        ret -= doubledPawnsPenalty;
     }
-    return ret;
+    return color == Color::white ? ret : -ret;
+}
+
+template <Color color> int16_t ScorePosition::scoreKnight(const BoardType &board __attribute__((unused)), uint8_t square, uint8_t king_position[2]) {
+    int16_t ret = piecesValues[toInt(Piece::knight)] + centrumBonus(square);
+    ret += knight_bonus[square];
+    ret -= 4 * distance[square][king_position[toInt(opponent(color))]]; // im wieksza odleglosc tym wieksza kara;
+    if (gameStage == StageOfGame::OPENING) {
+        if (color == Color::white) {
+            if (square == 1 || square == 6) {// kara za trzymanie skokow
+                ret -= 30;
+            }
+        } else {
+            if (square == 57 || square == 62) {// kara za trzymanie skokow
+                ret -= 30;
+            }
+        }
+    }
+    return color == Color::white ? ret : -ret;
+}
+
+template <Color color> int16_t ScorePosition::scoreBishop(const BoardType &board __attribute__((unused)), uint8_t square, uint8_t king_position[2]) {
+    int16_t ret = piecesValues[toInt(Piece::bishop)] + centrumBonus(square);
+    ret += bishop_bonus[square];
+    ret -= 2 * distance[square][king_position[toInt(opponent(color))]]; // im wieksza odleglosc tym wieksza kara;
+    return color == Color::white ? ret : -ret;
 }
 
 template <Color color> int16_t ScorePosition::scoreRook(const BoardType &board __attribute__((unused)), uint8_t square, uint8_t king_position[2]) {
     constexpr uint8_t penaltyRank = color == Color::white ? 1 : 6;
-    constexpr int8_t multiplier = color == Color::white ? 1 : -1;
-    int16_t ret =   -2 * distance[square][king_position[toInt(opponent(color))]] * multiplier;
-    ret -= int(rank(square) == penaltyRank) * 20 * multiplier;
-    return ret;
+    int16_t ret = piecesValues[toInt(Piece::rook)] + centrumBonus(square);
+    ret = -2 * distance[square][king_position[toInt(opponent(color))]];
+    ret -= int(rank(square) == penaltyRank) * 20;
+    return color == Color::white ? ret : -ret;
+}
+
+template <Color color> int16_t ScorePosition::scoreQueen(const BoardType &board __attribute__((unused)), uint8_t square, uint8_t king_position[2]) {
+    int16_t ret = piecesValues[toInt(Piece::queen)] + centrumBonus(square);
+    ret -= 3 * distance[square][king_position[toInt(opponent(color))]];
+    if (gameStage == StageOfGame::OPENING) {
+        ret += 3 * (distance[square][27] + distance[square][36]); //premia za trzymanie hetmana na wodzy
+    }
+    return color == Color::white ? ret : -ret;
+}
+
+template <Color color> int16_t ScorePosition::scoreKing(const BoardType &board __attribute__((unused)), uint8_t square, uint8_t king_position[2] __attribute__((unused))) {
+    int16_t ret = piecesValues[toInt(Piece::king)] + centrumBonus(square);
+    if (gameStage == StageOfGame::ENDGAME) {
+        ret += king_end_bonus[square];
+    } else { // jesli nie koncowka to krol w bezpiecznym miejscu
+//                if (color == Color::white) {
+//                    sum += white_king_start_bonus[square];
+//                    if (square > 60) { // po roszadzie krotkiej // stopien ochrony krola pionami
+//                        sum += (15 * (czy_biale_pole(53) + czy_biale_pole(54) + czy_biale_pole(55))
+//                                + 5 * (czy_biale_pole(46) + czy_biale_pole(47)));
+//                    } else if (square < 59) { // po dlugiej
+//                        sum += (15 * (czy_biale_pole(48) + czy_biale_pole(49) + czy_biale_pole(50))
+//                                + 5 * (czy_biale_pole(40) + czy_biale_pole(41)));
+//                    }
+//                } else { // stopien ochrony krola czarnego pionami
+//                    sum += black_king_start_bonus[square];
+//                    if (square > 4) { // po roszadzie krotkiej // stopien ochrony krola pionami
+//                        sum -= (15 * (czy_biale_pole(13) + czy_biale_pole(14) + czy_biale_pole(15))
+//                                + 5 * (czy_biale_pole(22) + czy_biale_pole(23)));
+//                    } else if (square < 3) { // po dlugiej
+//                        sum -= (15 * (czy_biale_pole(8) + czy_biale_pole(9) + czy_biale_pole(10))
+//                                + 5 * (czy_biale_pole(16) + czy_biale_pole(17)));
+//                    }
+//                }
+    }
+    return color == Color::white ? ret : -ret;
 }
 
 void ScorePosition::updateStageOfGame(const BoardType &board) {
@@ -101,12 +162,31 @@ StageOfGame ScorePosition::stageOfGame(const BoardType &board) {
 
 int16_t ScorePosition::scorePosition(const BoardType &board) {
     int16_t sum = 0;
-    Piece piece;
-    Color color;
-    short multiplier;
+//    Piece piece;
+//    Color color;
 
     TRACE(std::dec);
     uint8_t king_position[2] = {bit::mostSignificantBit(board.bitmask[toInt(Color::white)][toInt(Piece::king)]), bit::mostSignificantBit(board.bitmask[toInt(Color::black)][toInt(Piece::king)])};
+
+    bit::foreach_bit(board.bitmask[toInt(Color::white)][toInt(Piece::pawn)], [&board, &sum](uint8_t bit){ sum += scorePawn<Color::white>(board, bit);});
+    bit::foreach_bit(board.bitmask[toInt(Color::black)][toInt(Piece::pawn)], [&board, &sum](uint8_t bit){ sum += scorePawn<Color::black>(board, bit);});
+
+    bit::foreach_bit(board.bitmask[toInt(Color::white)][toInt(Piece::rook)], [&board, &sum, &king_position](uint8_t bit){ sum += scoreRook<Color::white>(board, bit, king_position);});
+    bit::foreach_bit(board.bitmask[toInt(Color::black)][toInt(Piece::rook)], [&board, &sum, &king_position](uint8_t bit){ sum += scoreRook<Color::black>(board, bit, king_position);});
+
+    bit::foreach_bit(board.bitmask[toInt(Color::white)][toInt(Piece::bishop)], [&board, &sum, &king_position](uint8_t bit){ sum += scoreBishop<Color::white>(board, bit, king_position);});
+    bit::foreach_bit(board.bitmask[toInt(Color::black)][toInt(Piece::bishop)], [&board, &sum, &king_position](uint8_t bit){ sum += scoreBishop<Color::black>(board, bit, king_position);});
+
+    bit::foreach_bit(board.bitmask[toInt(Color::white)][toInt(Piece::knight)], [&board, &sum, &king_position](uint8_t bit){ sum += scoreKnight<Color::white>(board, bit, king_position);});
+    bit::foreach_bit(board.bitmask[toInt(Color::black)][toInt(Piece::knight)], [&board, &sum, &king_position](uint8_t bit){ sum += scoreKnight<Color::black>(board, bit, king_position);});
+
+    bit::foreach_bit(board.bitmask[toInt(Color::white)][toInt(Piece::queen)], [&board, &sum, &king_position](uint8_t bit){ sum += scoreQueen<Color::white>(board, bit, king_position);});
+    bit::foreach_bit(board.bitmask[toInt(Color::black)][toInt(Piece::queen)], [&board, &sum, &king_position](uint8_t bit){ sum += scoreQueen<Color::black>(board, bit, king_position);});
+
+    bit::foreach_bit(board.bitmask[toInt(Color::white)][toInt(Piece::king)], [&board, &sum, &king_position](uint8_t bit){ sum += scoreKing<Color::white>(board, bit, king_position);});
+    bit::foreach_bit(board.bitmask[toInt(Color::black)][toInt(Piece::king)], [&board, &sum, &king_position](uint8_t bit){ sum += scoreKing<Color::black>(board, bit, king_position);});
+
+/*
     for (uint8_t square = 0; square < 64; square++) {
         piece = board.pieces[square];
         if (piece == Piece::empty) {
@@ -133,47 +213,31 @@ int16_t ScorePosition::scorePosition(const BoardType &board) {
             }
             break;
         case Piece::knight :
-            sum += knight_bonus[square] * multiplier;
-            sum -= 4 * distance[square][king_position[toInt(opponent(color))]] * multiplier; // im wieksza odleglosc tym wieksza kara;
-            if (gameStage == StageOfGame::OPENING) {
-                if (square == 1 || square == 6 || square == 57 || square == 62) {// kara za trzymanie skokow
-                    sum -= multiplier * 30;
-                }
+            if (color == Color::white) {
+                sum += scoreKnight<Color::white>(board, square, king_position);
+            } else {
+                sum += scoreKnight<Color::black>(board, square, king_position);
             }
             break;
         case Piece::bishop:
-            sum += bishop_bonus[square] * multiplier;
-            sum -= 2 * distance[square][king_position[toInt(opponent(color))]] * multiplier; // im wieksza odleglosc tym wieksza kara;
+            if (color == Color::white) {
+                sum += scoreBishop<Color::white>(board, square, king_position);
+            } else {
+                sum += scoreBishop<Color::black>(board, square, king_position);
+            }
             break;
         case Piece::queen:
-            if (gameStage == StageOfGame::OPENING) {
-                sum += 3 * (distance[square][27] + distance[square][36]) * multiplier; //premia za trzymanie hetmana na wodzy
+            if (color == Color::white) {
+                sum += scoreQueen<Color::white>(board, square, king_position);
+            } else {
+                sum += scoreQueen<Color::black>(board, square, king_position);
             }
-            sum -= 3 * distance[square][king_position[toInt(opponent(color))]] * multiplier; // im wieksza odleglosc tym wieksza kara;
             break;
         case Piece::king:
-            if (gameStage == StageOfGame::ENDGAME) {
-                sum += king_end_bonus[square] * multiplier;
-            } else { // jesli nie koncowka to krol w bezpiecznym miejscu
-//                if (color == Color::white) {
-//                    sum += white_king_start_bonus[square];
-//                    if (square > 60) { // po roszadzie krotkiej // stopien ochrony krola pionami
-//                        sum += (15 * (czy_biale_pole(53) + czy_biale_pole(54) + czy_biale_pole(55))
-//                                + 5 * (czy_biale_pole(46) + czy_biale_pole(47)));
-//                    } else if (square < 59) { // po dlugiej
-//                        sum += (15 * (czy_biale_pole(48) + czy_biale_pole(49) + czy_biale_pole(50))
-//                                + 5 * (czy_biale_pole(40) + czy_biale_pole(41)));
-//                    }
-//                } else { // stopien ochrony krola czarnego pionami
-//                    sum += black_king_start_bonus[square];
-//                    if (square > 4) { // po roszadzie krotkiej // stopien ochrony krola pionami
-//                        sum -= (15 * (czy_biale_pole(13) + czy_biale_pole(14) + czy_biale_pole(15))
-//                                + 5 * (czy_biale_pole(22) + czy_biale_pole(23)));
-//                    } else if (square < 3) { // po dlugiej
-//                        sum -= (15 * (czy_biale_pole(8) + czy_biale_pole(9) + czy_biale_pole(10))
-//                                + 5 * (czy_biale_pole(16) + czy_biale_pole(17)));
-//                    }
-//                }
+            if (color == Color::white) {
+                sum += scoreKing<Color::white>(board, square, king_position);
+            } else {
+                sum += scoreKing<Color::black>(board, square, king_position);
             }
             break;
         case Piece::empty:
@@ -181,6 +245,8 @@ int16_t ScorePosition::scorePosition(const BoardType &board) {
             break;
         }
     }
+    */
+
     TRACE(std::hex);
     return sum;
 }

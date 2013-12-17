@@ -30,4 +30,8 @@ private:
     static StageOfGame stageOfGame(const BoardType &board);
     template <Color color> static int16_t scorePawn(const BoardType &board, uint8_t square);
     template <Color color> static int16_t scoreRook(const BoardType &board, uint8_t square, uint8_t king_position[2]);
+    template <Color color> static int16_t scoreKnight(const BoardType &board, uint8_t square, uint8_t king_position[2]);
+    template <Color color> static int16_t scoreBishop(const BoardType &board, uint8_t square, uint8_t king_position[2]);
+    template <Color color> static int16_t scoreQueen(const BoardType &board, uint8_t square, uint8_t king_position[2]);
+    template <Color color> static int16_t scoreKing(const BoardType &board, uint8_t square, uint8_t king_position[2]);
 };
