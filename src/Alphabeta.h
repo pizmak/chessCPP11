@@ -10,7 +10,7 @@ struct Alphabeta {
         }
 #endif
         AlphaBetaGenericHashElement &hashed = GameTraits::scoreOf(state);
-        if (hashed.hash == state.first.hash && hashed.depth == depth) {
+        if (hashed.hash == state.first.hash && hashed.depth >= depth) {
 #ifdef DEBUG_ALPHA_BETA
             state.first.dump(std::cerr);
             std::cerr << "use hashed value " << hashed.score << ", hash:" << hashed.hash << std::endl;
@@ -22,17 +22,15 @@ struct Alphabeta {
 #endif
             return hashed.score;
         }
-        typename GameTraits::Move *afterLastMove = GameTraits::generateMoves(state, spaceForMoves); // zlicza ruchy mozliwe do wykonania
+        typename GameTraits::Move *afterLastMove = GameTraits::generateMoves(state, spaceForMoves);
         if (spaceForMoves == afterLastMove) {
             return GameTraits::scoreFinalPosition(state) + (isMin ? depth : -depth);
         }
 
-        //*************************************************************
         if (depth > 1) {
-            // przedocena pozycji .. iteracyjne poglebianie
             for (typename GameTraits::Move *move = spaceForMoves; move < afterLastMove; ++move) {
                 GameTraits::makeMove(state, *move);
-                GameTraits::scoreMove(*move, GameTraits::scoreState(state)); //alfabeta(index, przeciwnik(kto_gra), GLEBOKOSC_INTERACYJNEGO_POGLEBIANIA, alpha, beta, wezel - 1);
+                GameTraits::scoreMove(*move, GameTraits::scoreState(state));
                 GameTraits::unmakeMove(state, *move);
             }
             static auto sortFun = [](const typename GameTraits::Move &m1, const typename GameTraits::Move &m2) {
