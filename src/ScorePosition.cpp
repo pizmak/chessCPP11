@@ -93,7 +93,7 @@ template <Color color> int16_t ScorePosition::scoreBishop(const BoardType &board
 template <Color color> int16_t ScorePosition::scoreRook(const BoardType &board __attribute__((unused)), uint8_t square, uint8_t king_position[2]) {
     constexpr uint8_t penaltyRank = color == Color::white ? 1 : 6;
     int16_t ret = piecesValues[toInt(Piece::rook)] + centrumBonus(square);
-    ret = -2 * distance[square][king_position[toInt(opponent(color))]];
+    ret += -2 * distance[square][king_position[toInt(opponent(color))]];
     ret -= int(rank(square) == penaltyRank) * 20;
     return color == Color::white ? ret : -ret;
 }
