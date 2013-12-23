@@ -64,7 +64,13 @@ struct Alphabeta {
 
 template <typename GameTraits, bool isMin>
 struct Alphabeta<GameTraits, isMin, 0> {
-    static int16_t go(typename GameTraits::State &state, int16_t alpha __attribute__((unused)), int16_t beta __attribute__((unused)), typename GameTraits::Move *spaceForMoves __attribute__((unused))) {
-        return GameTraits::scoreState(state);
+    static inline int16_t go(typename GameTraits::State &state, int16_t alpha __attribute__((unused)), int16_t beta __attribute__((unused)), typename GameTraits::Move *spaceForMoves __attribute__((unused))) {
+        AlphaBetaGenericHashElement &hashed = GameTraits::scoreOf(state);
+        if (hashed.hash == state.first.hash) {
+            return hashed.score;
+        }
+        int16_t result = GameTraits::scoreState(state);
+        GameTraits::scoreState(state, result, 0);
+        return result;
     }
 };
