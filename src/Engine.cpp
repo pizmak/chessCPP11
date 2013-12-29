@@ -348,6 +348,7 @@ int16_t Engine::callAlphaBeta(Move *moveStorage) {
 Move Engine::go() {
     ScopeTimer timer("Move");
     stopped.store(false);
+    std::cerr << "number of calls to scorePosition: " << ScorePosition::numberOfCalls << std::endl;
     ScorePosition::updateStageOfGame(board);
     Move *afterLastMove = generateMoves(board, moves);
     ASSERT(afterLastMove > moves, "no moves");
@@ -374,6 +375,7 @@ Move Engine::go() {
     if (!stopped) {
         insert(board.hash, {board.hash, bestMove.score, uint8_t(alphaBetaDepth + 1)});
     }
+    std::cerr << "number of calls to scorePosition: " << ScorePosition::numberOfCalls << std::endl;
     return bestMove;
 }
 

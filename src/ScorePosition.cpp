@@ -160,8 +160,11 @@ StageOfGame ScorePosition::stageOfGame(const BoardType &board) {
     return StageOfGame::MIDDLEGAME;
 }
 
+int ScorePosition::numberOfCalls = 0;
+
 int16_t ScorePosition::scorePosition(const BoardType &board) {
     int16_t sum = 0;
+    ++numberOfCalls;
 //    Piece piece;
 //    Color color;
 

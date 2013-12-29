@@ -15,6 +15,7 @@ public:
     static int16_t scorePosition(const BoardType &board);
     static void updateStageOfGame(const BoardType &board);
     static void initialize();
+    static int numberOfCalls;
 private:
     static StageOfGame gameStage;
     static const int16_t piecesValues[];
