@@ -4,6 +4,7 @@
 #include "ScorePosition.h"
 #include "utils.h"
 #include "Alphabeta.h"
+#include "ScopeTimer.h"
 
 #include <string>
 #include <set>
@@ -345,6 +346,7 @@ int16_t Engine::callAlphaBeta(Move *moveStorage) {
 }
 
 Move Engine::go() {
+    ScopeTimer timer("Move");
     stopped.store(false);
     ScorePosition::updateStageOfGame(board);
     Move *afterLastMove = generateMoves(board, moves);
