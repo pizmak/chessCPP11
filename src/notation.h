@@ -7,6 +7,7 @@
 #include "bit.h"
 #include "logging.h"
 #include "Move.h"
+#include "Color.h"
 
 inline bool inRange(uint8_t _rank, uint8_t _file) {
     return _rank < 8 && _file < 8;

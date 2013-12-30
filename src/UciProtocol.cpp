@@ -56,7 +56,8 @@ uciok)";
         engine.stop();
         return "";
     }
-    std::cerr << "unsupported command: " << command << std::endl;
+    engine.move(command);
+    processGo();
     return "";
 }
 
