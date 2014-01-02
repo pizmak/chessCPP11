@@ -41,7 +41,20 @@ struct Alphabeta {
 
         for (typename GameTraits::Move *move = spaceForMoves; move < afterLastMove; ++move) {
             GameTraits::makeMove(state, *move);
-            int16_t result = Alphabeta<GameTraits, !isMin, depth - 1>::go(state, alpha, beta, afterLastMove);
+            int16_t result;
+            if (depth == 100 && move->captured != Piece::empty) {
+                static int max = 0;
+                static int deepeingCount;
+                ++deepeingCount;
+                if (deepeingCount > max) {
+                    std::cerr << "poglebianie! przy " << *move << " " << deepeingCount << std::endl;
+                    max = deepeingCount;
+                }
+                result = Alphabeta<GameTraits, !isMin, 1 /*2 plies deeper in case of capture*/>::go(state, alpha, beta, afterLastMove);
+                --deepeingCount;
+            } else {
+                result = Alphabeta<GameTraits, !isMin, depth - 1>::go(state, alpha, beta, afterLastMove);
+            }
             GameTraits::scoreState(state, result, depth - 1);
             if (isMin) {
                 beta = std::min(beta, result);

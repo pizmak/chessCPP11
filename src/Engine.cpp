@@ -27,6 +27,10 @@ void Engine::move(const std::string &move) {
     board.makeMove(m);
 }
 
+void Engine::move(const Move &m) {
+    board.makeMove(m);
+}
+
 void Engine::move(const std::list<std::string> &moves) {
     for (auto &m : moves) {
         move(m);
@@ -341,7 +345,7 @@ int16_t Engine::callAlphaBeta(Move *moveStorage) {
     switch (alphaBetaDepth) {
         FOREACH(CALL_ALPHA_BETA, NO_SEPARATOR, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20);
     }
-    std::cerr << "invalid value of alpha beta" << std::cerr;
+    std::cerr << "invalid value of alpha beta: " << alphaBetaDepth << std::endl;
     return 0;
 }
 

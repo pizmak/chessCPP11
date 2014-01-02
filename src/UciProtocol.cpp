@@ -79,6 +79,7 @@ void UciProtocol::goAsync() {
     std::cerr << "in new thread: " << std::this_thread::get_id() << std::endl;
     Move m = engine.go();
     std::cout << std::string("bestmove ") + move2String(m) << std::endl;
+    engine.move(m);
     searchInProgress.store(false);
 }
 

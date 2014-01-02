@@ -12,7 +12,7 @@ class Engine : public AlphaBetaHashContainer<26> {
 public:
     using PairList = std::list<std::pair<uint8_t, uint8_t>>;
     BoardType board;
-    Move moves[1024];
+    Move moves[4096];
     uint8_t alphaBetaDepth = 5;
     template <bool isMin>
     int16_t callAlphaBeta(Move *moveStorage);
@@ -51,6 +51,7 @@ public:
     static void init();
     void reset();
     // assume that from, to are set, rest fields will be set by engine
+    void move(const Move &m);
     void move(const std::string &move);
     void move(const std::list<std::string> &moves);
     static bool isMoveValid(BoardType &board, const Move &m);
