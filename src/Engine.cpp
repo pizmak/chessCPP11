@@ -343,10 +343,12 @@ void Engine::init() {
 
 #define CALL_ALPHA_BETA(i) \
     case i: \
-        return Alphabeta<ChessTraits, isMin, i>::go(state, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::max(), moveStorage);
+        return Alphabeta<ChessTraits, isMin, i>::go(state, \
+                isMin ? alphaOrBeta : std::numeric_limits<int16_t>::min(), \
+                !isMin ? alphaOrBeta : std::numeric_limits<int16_t>::max(), moveStorage);
 
 template <bool isMin>
-int16_t Engine::callAlphaBeta(Move *moveStorage) {
+int16_t Engine::callAlphaBeta(Move *moveStorage, int16_t alphaOrBeta) {
     ChessTraits::State state(board, *this);
     switch (alphaBetaDepth) {
         FOREACH(CALL_ALPHA_BETA, NO_SEPARATOR, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20);
@@ -370,8 +372,8 @@ Move Engine::go() {
     bestMove.score = std::numeric_limits<int16_t>::max() * -multiplier;
     for (Move *m = moves; m < afterLastMove; ++m) {
         board.makeMove(*m);
-        m->score = board.toMove == Color::black ? callAlphaBeta<true>(afterLastMove) : callAlphaBeta<false>(afterLastMove);
-        insert(board.hash, {board.hash, m->score, alphaBetaDepth});
+        m->score = board.toMove == Color::black ? callAlphaBeta<true>(afterLastMove, bestMove.score) : callAlphaBeta<false>(afterLastMove, bestMove.score);
+//        insert(board.hash, {board.hash, m->score, alphaBetaDepth});
         board.unmakeMove(*m);
         if (multiplier * m->score > multiplier * bestMove.score) {
             bestMove = *m;
