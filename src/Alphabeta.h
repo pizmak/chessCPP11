@@ -3,23 +3,8 @@
 template <typename GameTraits, bool isMin, int depth>
 struct Alphabeta {
     static int16_t go(typename GameTraits::State &state, int16_t alpha, int16_t beta, typename GameTraits::Move *spaceForMoves) {
-#ifdef DEBUG_ALPHA_BETA
-        if (depth > state.second.alphaBetaDepth - 2) {
-            std::cerr << "go, alpha " << alpha << ", beta: " << beta << ", depth: " << depth << ", isMin: " << isMin << std::endl;
-            state.first.dump(std::cerr);
-        }
-#endif
         AlphaBetaGenericHashElement &hashed = GameTraits::scoreOf(state);
-        if (hashed.hash == state.first.hash && hashed.depth >= depth) {
-#ifdef DEBUG_ALPHA_BETA
-            state.first.dump(std::cerr);
-            std::cerr << "use hashed value " << hashed.score << ", hash:" << hashed.hash << std::endl;
-            static int hashHits = 0;
-            ++hashHits;
-            if (hashHits % 10000 == 0) {
-                std::cerr << "hashHits - depth: " << depth << " -> "  << hashHits << std::endl;
-            }
-#endif
+        if (hashed.hash == state.first.hash && hashed.depth == depth) {
             return hashed.score;
         }
         typename GameTraits::Move *afterLastMove = GameTraits::generateMoves(state, spaceForMoves);
@@ -42,16 +27,8 @@ struct Alphabeta {
         for (typename GameTraits::Move *move = spaceForMoves; move < afterLastMove; ++move) {
             GameTraits::makeMove(state, *move);
             int16_t result;
-            if (depth == 100 && move->captured != Piece::empty) {
-                static int max = 0;
-                static int deepeingCount;
-                ++deepeingCount;
-                if (deepeingCount > max) {
-                    std::cerr << "poglebianie! przy " << *move << " " << deepeingCount << std::endl;
-                    max = deepeingCount;
-                }
-                result = Alphabeta<GameTraits, !isMin, 1 /*2 plies deeper in case of capture*/>::go(state, alpha, beta, afterLastMove);
-                --deepeingCount;
+            if (depth == 1 && move->captured != Piece::empty) {
+                result = Alphabeta<GameTraits, !isMin, 1 /* check deeper in case of capture */>::go(state, alpha, beta, afterLastMove);
             } else {
                 result = Alphabeta<GameTraits, !isMin, depth - 1>::go(state, alpha, beta, afterLastMove);
             }
@@ -66,11 +43,6 @@ struct Alphabeta {
                 break;
             }
         }
-#ifdef DEBUG_ALPHA_BETA
-        if (depth > 3) {
-            std::cerr << "alphabeta return "<< (isMin ? beta : alpha) << std::endl;
-        }
-#endif
         return isMin ? beta : alpha;
     }
 };
