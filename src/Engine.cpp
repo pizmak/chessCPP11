@@ -375,11 +375,12 @@ Move Engine::go() {
         m->score = board.toMove == Color::black ? callAlphaBeta<true>(afterLastMove, bestMove.score) : callAlphaBeta<false>(afterLastMove, bestMove.score);
 //        insert(board.hash, {board.hash, m->score, alphaBetaDepth});
         board.unmakeMove(*m);
+        std::cerr << *m;
         if (multiplier * m->score > multiplier * bestMove.score) {
             bestMove = *m;
-            std::cerr << "new bestmove whith score: " << m->score << std::endl;
+            std::cerr << " - new best";
         }
-        std::cerr << *m << std::endl;
+        std::cerr << std::endl;
         if (stopped) {
             break;
         }
