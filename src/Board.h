@@ -253,7 +253,7 @@ void Board<HashPolicy>::dumpMask(std::ostream &stream, Piece piece) const {
 
 template <typename HashPolicy>
 void Board<HashPolicy>::dump(std::ostream &stream) const {
-    stream << std::showbase << std::endl << "__________\tpiece\twhite\t\t\t\tblack" << std::endl;
+    stream << std::hex << std::showbase << std::endl << "__________\tpiece\twhite\t\t\t\tblack" << std::endl;
     for (uint8_t rank = 7; /*rank >= 0 && */rank < 8; --rank) {
         stream << "|";
         dumpRank(stream, rank);
@@ -290,7 +290,7 @@ void Board<HashPolicy>::dump(std::ostream &stream) const {
     if (enPassantSquare != 0) {
         stream << ", e.p. on: " << (int)enPassantSquare;
     }
-    stream << std::endl << std::endl;;
+    stream << std::dec << std::endl << std::endl;;
 }
 
 template <typename HashPolicy>

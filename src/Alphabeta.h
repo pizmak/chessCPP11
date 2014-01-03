@@ -17,7 +17,7 @@ struct Alphabeta {
             static int hashHits = 0;
             ++hashHits;
             if (hashHits % 10000 == 0) {
-                std::cerr << std::dec << "hashHits - depth: " << depth << " -> "  << hashHits << std::hex << std::endl;
+                std::cerr << "hashHits - depth: " << depth << " -> "  << hashHits << std::endl;
             }
 #endif
             return hashed.score;

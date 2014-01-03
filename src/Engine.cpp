@@ -287,7 +287,6 @@ Move *Engine::generateKingMoves(BoardType &board, uint8_t square, Move* startMov
             ++afterLastMove;
         }
     }
-
     return afterLastMove;
 }
 
@@ -379,7 +378,7 @@ Move Engine::go() {
     if (!stopped) {
         insert(board.hash, {board.hash, bestMove.score, uint8_t(alphaBetaDepth + 1)});
     }
-    std::cerr << "number of calls to scorePosition: " << std::dec << ScorePosition::numberOfCalls << "(" << ScorePosition::numberOfCalls - numberOfCalls << ")" << std::hex << std::endl;
+    std::cerr << "number of calls to scorePosition: " << ScorePosition::numberOfCalls << "(" << ScorePosition::numberOfCalls - numberOfCalls << ")" << std::endl;
     return bestMove;
 }
 

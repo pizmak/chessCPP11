@@ -165,10 +165,7 @@ int ScorePosition::numberOfCalls = 0;
 int16_t ScorePosition::scorePosition(const BoardType &board) {
     int16_t sum = 0;
     ++numberOfCalls;
-//    Piece piece;
-//    Color color;
 
-    TRACE(std::dec);
     uint8_t king_position[2] = {bit::mostSignificantBit(board.bitmask[toInt(Color::white)][toInt(Piece::king)]), bit::mostSignificantBit(board.bitmask[toInt(Color::black)][toInt(Piece::king)])};
 
     bit::foreach_bit(board.bitmask[toInt(Color::white)][toInt(Piece::pawn)], [&board, &sum](uint8_t bit){ sum += scorePawn<Color::white>(board, bit);});
@@ -189,68 +186,6 @@ int16_t ScorePosition::scorePosition(const BoardType &board) {
     bit::foreach_bit(board.bitmask[toInt(Color::white)][toInt(Piece::king)], [&board, &sum, &king_position](uint8_t bit){ sum += scoreKing<Color::white>(board, bit, king_position);});
     bit::foreach_bit(board.bitmask[toInt(Color::black)][toInt(Piece::king)], [&board, &sum, &king_position](uint8_t bit){ sum += scoreKing<Color::black>(board, bit, king_position);});
 
-/*
-    for (uint8_t square = 0; square < 64; square++) {
-        piece = board.pieces[square];
-        if (piece == Piece::empty) {
-            continue;
-        }
-        color = board.piecesColors[square];
-        multiplier = color == Color::white ? 1 : -1;
-
-        sum += (piecesValues[toInt(piece)] + centrumBonus(square)) * multiplier; // obliczenie materialu
-
-        switch (piece) {
-        case Piece::pawn:
-            if (color == Color::white) {
-                sum += scorePawn<Color::white>(board, square);
-            } else {
-                sum += scorePawn<Color::black>(board, square);
-            }
-            break;
-        case Piece::rook:
-            if (color == Color::white) {
-                sum += scoreRook<Color::white>(board, square, king_position);
-            } else {
-                sum += scoreRook<Color::black>(board, square, king_position);
-            }
-            break;
-        case Piece::knight :
-            if (color == Color::white) {
-                sum += scoreKnight<Color::white>(board, square, king_position);
-            } else {
-                sum += scoreKnight<Color::black>(board, square, king_position);
-            }
-            break;
-        case Piece::bishop:
-            if (color == Color::white) {
-                sum += scoreBishop<Color::white>(board, square, king_position);
-            } else {
-                sum += scoreBishop<Color::black>(board, square, king_position);
-            }
-            break;
-        case Piece::queen:
-            if (color == Color::white) {
-                sum += scoreQueen<Color::white>(board, square, king_position);
-            } else {
-                sum += scoreQueen<Color::black>(board, square, king_position);
-            }
-            break;
-        case Piece::king:
-            if (color == Color::white) {
-                sum += scoreKing<Color::white>(board, square, king_position);
-            } else {
-                sum += scoreKing<Color::black>(board, square, king_position);
-            }
-            break;
-        case Piece::empty:
-            ASSERT(false, piece);
-            break;
-        }
-    }
-    */
-
-    TRACE(std::hex);
     return sum;
 }
 
