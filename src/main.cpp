@@ -19,10 +19,11 @@ int main() {
     std::cerr << std::boolalpha << std::uppercase << std::setfill('0') << std::setiosflags(std::ios::internal) ;
     Engine::initBitmasks();
 //    nativeArrayTest();
-    //    engineMasksTest();
+//    engineMasksTest();
 //    testEngine();
 //    testArena();
 //    hashUnitTest();
+//    boardUnitTest();
 //    return 0;
     while (true) {
         std::string command;
