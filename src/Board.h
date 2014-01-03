@@ -229,6 +229,14 @@ void Board<HashPolicy>::checkIntegrity() const {
     }
     ASSERT(enPassantSquare == 0 || (toMove == Color::black && enPassantSquare >= 24 && enPassantSquare < 32) ||
                                    (toMove == Color::white && enPassantSquare >= 32 && enPassantSquare < 40), toMove, (int)enPassantSquare);
+    ASSERT(!(flags & BoardFlags::K_castling) || (pieces[ 4] == Piece::king && pieces[ 7] == Piece::rook &&
+            piecesColors[ 4] == Color::white && piecesColors[ 7] == Color::white), pieces[ 4], pieces[ 7], piecesColors[ 4], piecesColors[ 7], flags);
+    ASSERT(!(flags & BoardFlags::Q_castling) || (pieces[ 4] == Piece::king && pieces[ 0] == Piece::rook &&
+            piecesColors[ 4] == Color::white && piecesColors[ 0] == Color::white), pieces[ 4], pieces[ 0], piecesColors[ 4], piecesColors[ 0], flags);
+    ASSERT(!(flags & BoardFlags::k_castling) || (pieces[60] == Piece::king && pieces[63] == Piece::rook &&
+            piecesColors[60] == Color::black && piecesColors[63] == Color::black), pieces[60], pieces[63], piecesColors[60], piecesColors[63], flags);
+    ASSERT(!(flags & BoardFlags::q_castling) || (pieces[60] == Piece::king && pieces[56] == Piece::rook &&
+            piecesColors[60] == Color::black && piecesColors[56] == Color::black), pieces[60], pieces[56], piecesColors[60], piecesColors[56], flags);
 }
 
 template <typename HashPolicy>
