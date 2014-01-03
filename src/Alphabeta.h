@@ -4,7 +4,7 @@ template <typename GameTraits, bool isMin, int depth>
 struct Alphabeta {
     static int16_t go(typename GameTraits::State &state, int16_t alpha, int16_t beta, typename GameTraits::Move *spaceForMoves) {
         AlphaBetaGenericHashElement &hashed = GameTraits::scoreOf(state);
-        if (hashed.hash == state.first.hash && hashed.depth == depth) {
+        if (false && hashed.hash == state.first.hash && hashed.depth == depth) {
             return hashed.score;
         }
         typename GameTraits::Move *afterLastMove = GameTraits::generateMoves(state, spaceForMoves);
@@ -32,7 +32,7 @@ struct Alphabeta {
             } else {
                 result = Alphabeta<GameTraits, !isMin, depth - 1>::go(state, alpha, beta, afterLastMove);
             }
-            GameTraits::scoreState(state, result, depth - 1);
+//            GameTraits::scoreState(state, result, depth - 1);
             if (isMin) {
                 beta = std::min(beta, result);
             } else {
