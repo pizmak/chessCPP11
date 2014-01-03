@@ -105,7 +105,7 @@ void Engine::fillMoveFlags(BoardType &board, Move &m) {
             m.flags |= MoveFlags::K_castling;
         } else if (m.from == 0 && board.flags & BoardFlags::Q_castling) {
             m.flags |= MoveFlags::Q_castling;
-        } else if (m.from == 0x3E && board.flags & BoardFlags::k_castling) {
+        } else if (m.from == 0x3F && board.flags & BoardFlags::k_castling) {
             m.flags |= MoveFlags::k_castling;
         } else if (m.from == 0x38 && board.flags & BoardFlags::q_castling) {
             m.flags |= MoveFlags::q_castling;
@@ -230,7 +230,7 @@ Move *Engine::generateRookMoves(BoardType &board, uint8_t square, Move *startMov
         std::for_each(startMove, afterLastMove, KcastFun);
     } else if (square == 0x38 && board.flags & BoardFlags::q_castling) {
         std::for_each(startMove, afterLastMove, qcastFun);
-    } else if (square == 0x3E && board.flags & BoardFlags::k_castling) {
+    } else if (square == 0x3F && board.flags & BoardFlags::k_castling) {
         std::for_each(startMove, afterLastMove, kcastFun);
     }
     return afterLastMove;
@@ -257,33 +257,40 @@ Move *Engine::generateKingMoves(BoardType &board, uint8_t square, Move* startMov
     };
     if (square == 4 && board.flags & BoardFlags::K_castling) {
         std::for_each(startMove, afterLastMove, KcastFun);
-        if (board.piecesColors[5] == Color::empty && board.piecesColors[6] == Color::empty &&
+        if (board.piecesColors[5] == Color::empty && board.piecesColors[6] == Color::empty && board.pieces[7] == Piece::rook && board.piecesColors[7] == Color::white &&
                 !isSquareAttacked(board, 4, Color::black) && !isSquareAttacked(board, 5, Color::black) && !isSquareAttacked(board, 6, Color::black)) {
-            *afterLastMove = {4, 6, board.enPassantSquare, Piece::empty, MoveFlags::K_castling};
+            *afterLastMove = {4, 6, board.enPassantSquare, Piece::empty, MoveFlags::K_castling | MoveFlags::castling};
             ++afterLastMove;
         }
     }
     if (square == 4 && board.flags & BoardFlags::Q_castling) {
         std::for_each(startMove, afterLastMove, QcastFun);
-        if (board.piecesColors[3] == Color::empty && board.piecesColors[2] == Color::empty && board.piecesColors[1] == Color::empty &&
+        if (board.piecesColors[3] == Color::empty && board.piecesColors[2] == Color::empty && board.piecesColors[1] == Color::empty &&  board.pieces[0] == Piece::rook && board.piecesColors[0] == Color::white &&
                 !isSquareAttacked(board, 4, Color::black) && !isSquareAttacked(board, 3, Color::black) && !isSquareAttacked(board, 2, Color::black)) {
-            *afterLastMove = {4, 2, board.enPassantSquare, Piece::empty, MoveFlags::Q_castling};
+            *afterLastMove = {4, 2, board.enPassantSquare, Piece::empty, MoveFlags::Q_castling | MoveFlags::castling};
+            if (board.flags & BoardFlags::K_castling) {
+                afterLastMove->flags |= MoveFlags::K_castling;
+            }
             ++afterLastMove;
         }
+        return afterLastMove;
     }
     if (square == 0x3C && board.flags & BoardFlags::k_castling) {
         std::for_each(startMove, afterLastMove, kcastFun);
-        if (board.piecesColors[0x3D] == Color::empty && board.piecesColors[0x3E] == Color::empty &&
+        if (board.piecesColors[0x3D] == Color::empty && board.piecesColors[0x3E] == Color::empty && board.pieces[0x3F] == Piece::rook && board.piecesColors[0x3F] == Color::white &&
                 !isSquareAttacked(board, 0x3C, Color::white) && !isSquareAttacked(board, 0x3D, Color::white) && !isSquareAttacked(board, 0x3E, Color::white)) {
-            *afterLastMove = {0x3C, 0x3E, board.enPassantSquare, Piece::empty, MoveFlags::k_castling};
+            *afterLastMove = {0x3C, 0x3E, board.enPassantSquare, Piece::empty, MoveFlags::k_castling | MoveFlags::castling};
             ++afterLastMove;
         }
     }
     if (square == 0x3C && board.flags & BoardFlags::q_castling) {
         std::for_each(startMove, afterLastMove, qcastFun);
-        if (board.piecesColors[0x3B] == Color::empty && board.piecesColors[0x3A] == Color::empty && board.piecesColors[0x39] == Color::empty &&
+        if (board.piecesColors[0x3B] == Color::empty && board.piecesColors[0x3A] == Color::empty && board.piecesColors[0x39] == Color::empty &&  board.pieces[0x38] == Piece::rook && board.piecesColors[0x38] == Color::white &&
                 !isSquareAttacked(board, 0x3C, Color::white) && !isSquareAttacked(board, 0x3B, Color::white) && !isSquareAttacked(board, 0x3A, Color::white)) {
-            *afterLastMove = {0x3C, 0x3A, board.enPassantSquare, Piece::empty, MoveFlags::q_castling};
+            *afterLastMove = {0x3C, 0x3A, board.enPassantSquare, Piece::empty, MoveFlags::q_castling | MoveFlags::castling};
+            if (board.flags & BoardFlags::k_castling) {
+                afterLastMove->flags |= MoveFlags::k_castling;
+            }
             ++afterLastMove;
         }
     }
