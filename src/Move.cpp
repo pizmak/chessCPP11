@@ -5,9 +5,7 @@
 #include "notation.h"
 
 std::ostream &operator<<(std::ostream &stream, const Move &move) {
-    stream << "Move(from, to, flags, enPassant, captured, score) = (";
-    print(stream, number2Notation(move.from), number2Notation(move.to), move.flags, (int)move.enPassantSquare, move.captured, move.score);
-    stream << ")";
+    print(stream, number2Notation(move.from), number2Notation(move.to), move.flags, move.enPassantSquare ? number2Notation(move.enPassantSquare) : "-", move.captured, move.score);
     return stream;
 }
 
