@@ -49,6 +49,8 @@ static const EnumFlags<BoardFlags> castling = BoardFlags::K_castling | BoardFlag
 template <typename HashPolicy>
 struct Board : HashPolicy {
     Board();
+    static const int16_t piecesValues[];
+    uint64_t materialDifference = 0;
     Piece pieces[64] = {START_BOARD};
     Color piecesColors[64] = {START_COLORS};
     uint_fast64_t bitmask[2][6] = {
@@ -77,6 +79,9 @@ private:
 };
 
 using BoardType = Board<ZobristHashWithPlayerInfo<64, 2, 8>>;
+
+template <typename HashPolicy>
+const int16_t Board<HashPolicy>::piecesValues[] = {100, 300, 300, 500, 900, 9000, 0}; // indexed by Piece
 
 template <typename HashPolicy>
 Board<HashPolicy>::Board() {
@@ -118,6 +123,7 @@ void Board<HashPolicy>::takePiece(Piece piece, Color color, Piece capturedPiece,
     ASSERT(pieces[from] == piece && piecesColors[from] == color && pieces[to] == capturedPiece && piecesColors[to] == opponent(color),
             (int)from, (int)to, piece, color, capturedPiece, pieces[from], pieces[to]);
 
+    this->materialDifference += piecesValues[toInt(capturedPiece)] * (color == Color::white ? 1 : -1);
     bit::unset(bitmask[toInt(opponent(color))][toInt(capturedPiece)], to); // disappear opponent's piece
     disappearPiece(piece, color, from);
     HashPolicy::update(to, toInt(opponent(color)), toInt(capturedPiece));
@@ -129,6 +135,7 @@ void Board<HashPolicy>::untakePiece(Piece piece, Color color, Piece capturedPiec
     ASSERT(pieces[to] == piece && piecesColors[to] == color && pieces[from] == Piece::empty && piecesColors[from] == Color::empty,
             (int)from, (int)to, piece, color, capturedPiece, pieces[from], pieces[to]);
 
+    this->materialDifference -= piecesValues[toInt(capturedPiece)] * (color == Color::white ? 1 : -1);
     bit::unset(bitmask[toInt(color)][toInt(piece)], to); // disappear our piece
     HashPolicy::update(to, toInt(color), toInt(piece));
     appearPiece(capturedPiece, opponent(color), to);
