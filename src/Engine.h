@@ -14,7 +14,7 @@ public:
     Move moves[4096];
     uint8_t alphaBetaDepth = 5;
     template <bool isMin>
-    int16_t callAlphaBeta(Move *moveStorage, int16_t alphaOrBeta);
+    int16_t callAlphaBeta(Move *moveStorage, int16_t alphaOrBeta, uint8_t depth);
 
     static void fillMoveFlags(BoardType &board, Move &m);
 
