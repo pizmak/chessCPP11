@@ -3,8 +3,8 @@
 #include "Color.h"
 #include "notation.h"
 #include "Piece.h"
-#include "Engine.h"
 #include "logging.h"
+#include "MoveGenerator.h"
 
 int16_t ScorePosition::distance[64][64];
 StageOfGame ScorePosition::gameStage = StageOfGame::OPENING;
@@ -57,7 +57,7 @@ template <Color color> int16_t ScorePosition::scorePawn(const BoardType &board, 
     int16_t ret = piecesValues[toInt(Piece::pawn)] + centrumBonus(square);
     if (rank(square) == bonusLine) {
         ret += oneButLastLineBonus;
-    } else if (Engine::pawnBitmask[toInt(color)][square] & board.bitmask[toInt(color)][toInt(Piece::pawn)]) {
+    } else if (MoveGenerator::pawnBitmask[toInt(color)][square] & board.bitmask[toInt(color)][toInt(Piece::pawn)]) {
         ret += neighboardPawnBonus;
     } else if (bit::isSet(board.bitmask[toInt(color)][toInt(Piece::pawn)], square - 8)) {
         ret -= doubledPawnsPenalty;

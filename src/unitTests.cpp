@@ -4,10 +4,11 @@
 #include "notation.h"
 #include "ZobristHash.h"
 #include "Engine.h"
+#include "MoveGenerator.h"
+#include "NativeArray.h"
+
 #include <list>
 #include <iostream>
-
-#include "NativeArray.h"
 
 void testMove(BoardType &b, const Move &m) {
     std::cerr << std::endl << "make move" << m << std::endl;
@@ -59,19 +60,19 @@ void boardUnitTest() {
 void engineMasksTest() {
     for (int i = 0; i < 64; ++i) {
         std::cerr << i << ", black pawn: " << std::endl;
-        printBitmaskAsBoard(Engine::pawnBitmask[toInt(Color::black)][i], std::cerr);
+        printBitmaskAsBoard(MoveGenerator::pawnBitmask[toInt(Color::black)][i], std::cerr);
         std::cerr << std::endl;
         std::cerr << i << ", knight: " << std::endl;
-        printBitmaskAsBoard(Engine::knightBitmask[i], std::cerr);
+        printBitmaskAsBoard(MoveGenerator::knightBitmask[i], std::cerr);
         std::cerr << std::endl;
         std::cerr << i << ", bishop[1]: " << std::endl;
-        printBitmaskAsBoard(Engine::bishopBitmask[i][1], std::cerr);
+        printBitmaskAsBoard(MoveGenerator::bishopBitmask[i][1], std::cerr);
         std::cerr << std::endl;
         std::cerr << i << ", rook[2]: " << std::endl;
-        printBitmaskAsBoard(Engine::rookBitmask[i][2], std::cerr);
+        printBitmaskAsBoard(MoveGenerator::rookBitmask[i][2], std::cerr);
         std::cerr << std::endl;
         std::cerr << i << ", king: " << std::endl;
-        printBitmaskAsBoard(Engine::kingBitmask[i], std::cerr);
+        printBitmaskAsBoard(MoveGenerator::kingBitmask[i], std::cerr);
         std::cerr << std::endl;
     }
 }
