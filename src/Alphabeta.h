@@ -15,7 +15,7 @@ struct Alphabeta {
         if (depth > 1) {
             for (typename GameTraits::Move *move = spaceForMoves; move < afterLastMove; ++move) {
                 GameTraits::makeMove(state, *move);
-                GameTraits::scoreMove(*move, GameTraits::scoreState(state));
+                GameTraits::scoreMove(*move, GameTraits::simpleScoreState(state));
                 GameTraits::unmakeMove(state, *move);
             }
             static auto sortFun = [](const typename GameTraits::Move &m1, const typename GameTraits::Move &m2) {

@@ -75,6 +75,10 @@ struct ChessTraits {
         int16_t score = ScorePosition::scorePosition(state.first);
         return score;
     }
+    static int16_t simpleScoreState(State &state) {
+        return state.first.materialDifference;
+    }
+
     static void scoreState(State &state, int16_t score, uint8_t level) {
         state.second.insert(state.first.hash, {state.first.hash, score, level});
     }
