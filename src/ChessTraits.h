@@ -4,6 +4,7 @@
 #include "Move.h"
 #include "Engine.h"
 #include "MoveGenerator.h"
+#include "ChessEvaluator.h"
 #include "bit.h"
 #include <climits>
 
@@ -11,8 +12,7 @@ struct ChessTraits {
     using State = std::pair<BoardType &, Engine &>;
     using Move = ::Move;
     static int16_t scoreState(State &state) {
-        int16_t score = ScorePosition::scorePosition(state.first);
-        return score;
+        return ChessEvaluator::evaluate(state.first);
     }
     static int16_t simpleScoreState(State &state) {
         return state.first.materialDifference;

@@ -1,7 +1,7 @@
 #include "Engine.h"
 #include "asserts.h"
 #include "notation.h"
-#include "ScorePosition.h"
+#include "ChessEvaluator.h"
 #include "utils.h"
 #include "Alphabeta.h"
 #include "ScopeTimer.h"
@@ -88,8 +88,8 @@ int16_t Engine::callAlphaBeta(Move *moveStorage, int16_t alphaOrBeta, uint8_t de
 Move Engine::go() {
     ScopeTimer timer("Move");
     stopped.store(false);
-    uint64_t numberOfCalls = ScorePosition::numberOfCalls;
-    ScorePosition::updateStageOfGame(board);
+    uint64_t numberOfCalls = ChessEvaluator::numberOfCalls;
+    ChessEvaluator::updateStageOfGame(board);
     Move *afterLastMove = MoveGenerator::generateMoves(board, moves);
     ASSERT(afterLastMove > moves, "no moves");
 
@@ -130,7 +130,7 @@ Move Engine::go() {
     if (!stopped) {
         insert(board.hash, {board.hash, bestMove.score, uint8_t(alphaBetaDepth + 1)});
     }
-    std::cerr << "number of calls to scorePosition: " << ScorePosition::numberOfCalls << "(" << ScorePosition::numberOfCalls - numberOfCalls << ")" << std::endl;
+    std::cerr << "number of calls to scorePosition: " << ChessEvaluator::numberOfCalls << "(" << ChessEvaluator::numberOfCalls - numberOfCalls << ")" << std::endl;
     return bestMove;
 }
 

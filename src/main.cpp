@@ -6,7 +6,7 @@
 #include "MoveGenerator.h"
 #include "unitTests.h"
 #include "UciProtocol.h"
-#include "ScorePosition.h"
+#include "ChessEvaluator.h"
 
 #include <iostream>
 #include <iomanip>
@@ -18,7 +18,7 @@ int main() {
     std::ios_base::sync_with_stdio(false);
     std::cerr << std::boolalpha << std::uppercase << std::setfill('0') << std::setiosflags(std::ios::internal) ;
     MoveGenerator::initBitmasks();
-    ScorePosition::initialize();
+    ChessEvaluator::initialize();
     while (true) {
         std::string command;
         std::getline(std::cin, command);

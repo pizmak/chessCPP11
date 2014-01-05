@@ -9,10 +9,10 @@ ENUM(StageOfGame, uint8_t,
         ENDGAME, 2
 )
 
-class ScorePosition {
+class ChessEvaluator {
 public:
-    ScorePosition() = delete;
-    static int16_t scorePosition(const BoardType &board);
+    ChessEvaluator() = delete;
+    static int16_t evaluate(const BoardType &board);
     static void updateStageOfGame(const BoardType &board);
     static void initialize();
     static int numberOfCalls;
@@ -29,10 +29,10 @@ private:
     static constexpr int16_t neighboardPawnBonus = 3;
     static constexpr int16_t doubledPawnsPenalty = 20;
     static StageOfGame stageOfGame(const BoardType &board);
-    template <Color color> static int16_t scorePawn(const BoardType &board, uint8_t square);
-    template <Color color> static int16_t scoreRook(const BoardType &board, uint8_t square, uint8_t king_position[2]);
-    template <Color color> static int16_t scoreKnight(const BoardType &board, uint8_t square, uint8_t king_position[2]);
-    template <Color color> static int16_t scoreBishop(const BoardType &board, uint8_t square, uint8_t king_position[2]);
-    template <Color color> static int16_t scoreQueen(const BoardType &board, uint8_t square, uint8_t king_position[2]);
-    template <Color color> static int16_t scoreKing(const BoardType &board, uint8_t square, uint8_t king_position[2]);
+    template <Color color> static int16_t evaluatePawn(const BoardType &board, uint8_t square);
+    template <Color color> static int16_t evaluateRook(const BoardType &board, uint8_t square, uint8_t king_position[2]);
+    template <Color color> static int16_t evaluateKnight(const BoardType &board, uint8_t square, uint8_t king_position[2]);
+    template <Color color> static int16_t evaluateBishop(const BoardType &board, uint8_t square, uint8_t king_position[2]);
+    template <Color color> static int16_t evaluateQueen(const BoardType &board, uint8_t square, uint8_t king_position[2]);
+    template <Color color> static int16_t evaluateKing(const BoardType &board, uint8_t square, uint8_t king_position[2]);
 };
