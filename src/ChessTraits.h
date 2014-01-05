@@ -11,29 +11,30 @@
 struct ChessTraits {
     using State = std::pair<BoardType &, Engine &>;
     using Move = ::Move;
-    static int16_t scoreState(State &state) {
+    static int16_t evaluate(State &state) {
         return ChessEvaluator::evaluate(state.first);
     }
-    static int16_t simpleScoreState(State &state) {
+    static int16_t evaluateSimple(State &state) {
         return state.first.materialDifference;
     }
-
-    static void scoreState(State &state, int16_t score, uint8_t level) {
+    static void storeStateScore(State &state, int16_t score, uint8_t level) {
         state.second.insert(state.first.hash, {state.first.hash, score, level});
     }
-    static void scoreMove(Move &move, int16_t score) {
+    static AlphaBetaGenericHashElement &getStateScore(const State &state, uint8_t minLevel) {
+        static AlphaBetaGenericHashElement empty;
+        AlphaBetaGenericHashElement &ret = state.second.get(state.first.hash);
+        return ret.hash == state.first.hash && ret.depth == minLevel ? ret : empty;
+    }
+    static void storeMoveScore(Move &move, int16_t score) {
         move.score = score;
     }
-    static int16_t scoreOf(const Move &move) {
+    static int16_t getMoveScore(const Move &move) {
         return move.score;
-    }
-    static AlphaBetaGenericHashElement &scoreOf(const State &state) {
-        return state.second.get(state.first.hash);
     }
     static Move *generateMoves(State &state, Move *spaceForMoves) {
         return MoveGenerator::generateMoves(state.first, spaceForMoves);
     }
-    static int16_t scoreFinalPosition(State &state) {
+    static int16_t evaluateFinalPosition(State &state) {
         if (MoveGenerator::isSquareAttacked(state.first, bit::mostSignificantBit(state.first.bitmask[toInt(state.first.toMove)][toInt(Piece::king)]), opponent(state.first.toMove))) {
             return state.first.toMove == Color::white ? std::numeric_limits<int16_t>::min() + state.second.getAlphaBetaDepth() : std::numeric_limits<int16_t>::max() - state.second.getAlphaBetaDepth();
         } else {
