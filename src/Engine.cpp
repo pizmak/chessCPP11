@@ -134,12 +134,26 @@ Move Engine::go() {
     ScorePosition::updateStageOfGame(board);
     Move *afterLastMove = MoveGenerator::generateMoves(board, moves);
     ASSERT(afterLastMove > moves, "no moves");
+
     Move bestMove = moves[0];
     int multiplier = board.toMove == Color::white ? 1 : -1;
     if (afterLastMove - moves == 1) {
         return bestMove;
     }
     bestMove.score = std::numeric_limits<int16_t>::max() * -multiplier;
+
+    for (Move *m = moves; m < afterLastMove; ++m) {
+        board.makeMove(*m);
+        m->score = board.toMove == Color::black ? callAlphaBeta<true>(afterLastMove, bestMove.score, 1) : callAlphaBeta<false>(afterLastMove, bestMove.score, 1);
+//        insert(board.hash, {board.hash, m->score, alphaBetaDepth});
+        board.unmakeMove(*m);
+    }
+
+    static auto sortFun = [this](const Move &m1, const Move &m2) {
+        return board.toMove == Color::black ? m1.score < m2.score : m1.score > m2.score;
+    };
+    std::sort(moves, afterLastMove, sortFun);
+
     for (Move *m = moves; m < afterLastMove; ++m) {
         board.makeMove(*m);
         m->score = board.toMove == Color::black ? callAlphaBeta<true>(afterLastMove, bestMove.score, alphaBetaDepth) : callAlphaBeta<false>(afterLastMove, bestMove.score, alphaBetaDepth);
