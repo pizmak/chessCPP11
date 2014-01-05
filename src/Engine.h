@@ -1,8 +1,7 @@
 #pragma once
 
-#include "Board.h"
+#include "ChessBoardDefines.h"
 #include "Move.h"
-#include "ZobristHash.h"
 #include "AlphaBetaHashContainer.h"
 
 #include <atomic>

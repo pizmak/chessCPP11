@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Board.h"
+#include "ChessBoardDefines.h"
 #include "enums.h"
 
 ENUM(StageOfGame, uint8_t,

@@ -1,4 +1,4 @@
-#include "Board.h"
+#include "ChessBoard.h"
 #include "Move.h"
 #include "notation.h"
 #include "bit.h"

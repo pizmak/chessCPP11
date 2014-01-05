@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Board.h"
+#include "ChessBoardDefines.h"
+
 #include <list>
 
 struct MoveGenerator {

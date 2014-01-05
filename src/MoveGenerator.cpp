@@ -1,4 +1,6 @@
 #include "MoveGenerator.h"
+#include "Move.h"
+#include "notation.h"
 
 #include <algorithm>
 

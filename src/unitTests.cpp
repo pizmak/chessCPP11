@@ -1,5 +1,5 @@
 #include "unitTests.h"
-#include "Board.h"
+#include "ChessBoard.h"
 #include "Move.h"
 #include "notation.h"
 #include "ZobristHash.h"

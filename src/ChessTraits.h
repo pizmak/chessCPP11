@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Board.h"
+#include "ChessBoard.h"
 #include "Move.h"
 #include "Engine.h"
 #include "MoveGenerator.h"
