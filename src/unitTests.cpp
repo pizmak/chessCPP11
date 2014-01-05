@@ -83,10 +83,10 @@ void testEngine() {
     std::list<std::string> moves2{"d2h4", "a7a6", "e2e4"};
 
     engine.move(moves);
-    std::cerr << "hash after moves: " << engine.board.hash <<std::endl;
+    std::cerr << "hash after moves: " << engine.getBoard().hash <<std::endl;
     engine.reset();
     engine.move(moves2);
-    std::cerr << "hash after moves: " << engine.board.hash <<std::endl;
+    std::cerr << "hash after moves: " << engine.getBoard().hash <<std::endl;
 }
 
 void hashUnitTest() {

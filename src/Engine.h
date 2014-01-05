@@ -8,17 +8,13 @@
 #include <list>
 
 class Engine : public AlphaBetaHashContainer<26> {
-public:
     BoardType board;
     Move moves[4096];
     uint8_t alphaBetaDepth = 5;
     template <bool isMin>
     int16_t callAlphaBeta(Move *moveStorage, int16_t alphaOrBeta, uint8_t depth);
-
-    static void fillMoveFlags(BoardType &board, Move &m);
-
-    static void setupFenPosition(BoardType &board, std::list<std::string> fenPosition);
-    void setupFenPosition(std::list<std::string> fenPosition);
+    void fillMoveFlags(BoardType &board, Move &m);
+    void setupFenPosition(BoardType &board, std::list<std::string> fenPosition);
     std::atomic<bool> stopped;
 public:
     void reset();
@@ -29,4 +25,8 @@ public:
     Move go();
     void clearHash();
     void stop();
+    void setupFenPosition(std::list<std::string> fenPosition);
+    uint8_t getAlphaBetaDepth();
+    void setAlphaBetaDepth(uint8_t alphaBetaDepth);
+    const BoardType &getBoard();
 };

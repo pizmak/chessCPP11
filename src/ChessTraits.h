@@ -35,7 +35,7 @@ struct ChessTraits {
     }
     static int16_t scoreFinalPosition(State &state) {
         if (MoveGenerator::isSquareAttacked(state.first, bit::mostSignificantBit(state.first.bitmask[toInt(state.first.toMove)][toInt(Piece::king)]), opponent(state.first.toMove))) {
-            return state.first.toMove == Color::white ? std::numeric_limits<int16_t>::min() + state.second.alphaBetaDepth : std::numeric_limits<int16_t>::max() - state.second.alphaBetaDepth;
+            return state.first.toMove == Color::white ? std::numeric_limits<int16_t>::min() + state.second.getAlphaBetaDepth() : std::numeric_limits<int16_t>::max() - state.second.getAlphaBetaDepth();
         } else {
             return 0;
         }

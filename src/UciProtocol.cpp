@@ -151,7 +151,7 @@ void UciProtocol::setOption(std::string option) {
     }
     if (optionName == "alphaBetaDepth") {
         int alphaBetaDepth = atoi(optionValue.c_str());
-        engine.alphaBetaDepth = alphaBetaDepth;
+        engine.setAlphaBetaDepth(alphaBetaDepth);
     } else if (optionName == "Clear Hash") {
         engine.clearHash();
     } else if (optionName == "Hash") {

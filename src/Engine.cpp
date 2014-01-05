@@ -198,3 +198,15 @@ void Engine::clearHash() {
 void Engine::stop() {
     stopped = true;
 }
+
+uint8_t Engine::getAlphaBetaDepth() {
+    return alphaBetaDepth;
+}
+
+void Engine::setAlphaBetaDepth(uint8_t alphaBetaDepth) {
+    this->alphaBetaDepth = alphaBetaDepth;
+}
+
+const BoardType &Engine::getBoard() {
+    return board;
+}
