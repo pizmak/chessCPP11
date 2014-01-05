@@ -85,9 +85,11 @@ void ChessBoard::makeMove(const Move &move) {
     } else if (move.flags & promotions) {
         disappearPiece(pieces[move.to], toMove, move.to);
         appearPiece(promotionPiece(move.flags & promotions), toMove, move.to);
+        materialDifference += (piecesValues[toInt(promotionPiece(move.flags & promotions))] - piecesValues[toInt(Piece::pawn)]) * (toMove == Color::white ? 1 : -1);
     } else if (move.flags & MoveFlags::enPassantCapture) {
         ASSERT(enPassantSquare == (toMove == Color::white ? move.to - 8 : move.to + 8), move.to - 8, (int)enPassantSquare);
         disappearPiece(Piece::pawn, opponent(toMove), enPassantSquare);
+        materialDifference += piecesValues[toInt(Piece::pawn)] * (toMove == Color::white ? 1 : -1);
     }
     flags &= ~toBoardFlags(move.flags);
     enPassantSquare = newEnPassantSquare;
@@ -112,8 +114,10 @@ void ChessBoard::unmakeMove(const Move &move) {
     } else if (move.flags & promotions) {
         disappearPiece(pieces[move.from], opponent(toMove), move.from);
         appearPiece(Piece::pawn, opponent(toMove), move.from);
+        materialDifference += (piecesValues[toInt(promotionPiece(move.flags & promotions))] - piecesValues[toInt(Piece::pawn)]) * (toMove == Color::white ? 1 : -1);
     } else if (move.flags & MoveFlags::enPassantCapture) { // pion zbity w przelocie pojawia sie
         appearPiece(Piece::pawn, toMove, move.enPassantSquare);
+        materialDifference += piecesValues[toInt(Piece::pawn)] * (toMove == Color::white ? 1 : -1);
     }
     flags |= toBoardFlags(move.flags);
     toMove = opponent(toMove);
