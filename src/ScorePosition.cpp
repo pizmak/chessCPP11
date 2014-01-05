@@ -9,52 +9,56 @@
 int16_t ScorePosition::distance[64][64];
 StageOfGame ScorePosition::gameStage = StageOfGame::OPENING;
 const int16_t ScorePosition::piecesValues[] = {100, 300, 300, 500, 900, 9000, 0}; // indexed by Piece
+
 const int16_t ScorePosition::knight_bonus[] = {
-        -10, -15, -10, -10, -10, -10, -15, -10,
-        -10, 0, 0, 0, 0, 0, 0, -10,
-        -10, 0, 5, 5, 5, 5, 0, -10,
-        -10, 0, 5, 10, 10, 5, 0, -10,
-        -10, 0, 5, 10, 10, 5, 0, -10,
-        -10, 0, 5, 5, 5, 5, 0, -10,
-        -10, 0, 0, 0, 0, 0, 0, -10,
-        -10, -15, -10, -10, -10, -10, -15, -10
+    -10, -15, -10, -10, -10, -10, -15, -10,
+    -10,   0,   0,   0,   0,   0,   0, -10,
+    -10,   0,   5,   5,   5,   5,   0, -10,
+    -10,   0,   5,  10,  10,   5,   0, -10,
+    -10,   0,   5,  10,  10,   5,   0, -10,
+    -10,   0,   5,   5,   5,   5,   0, -10,
+    -10,   0,   0,   0,   0,   0,   0, -10,
+    -10, -15, -10, -10, -10, -10, -15, -10
 };
 
 const int16_t ScorePosition::bishop_bonus[] = {
-        -10, -10, -10, -10, -10, -10, -10, -10,
-        -10, 7, 0, 0, 0, 0, 7, -10,
-        -10, 0, 5, 5, 5, 5, 0, -10,
-        -10, 0, 5, 10, 10, 5, 0, -10,
-        -10, 0, 5, 10, 10, 5, 0, -10,
-        -10, 0, 5, 5, 5, 5, 0, -10,
-        -10, 7, 0, 0, 0, 0, 7, -10,
-        -10, -10, -10, -10, -10, -10, -10, -10
+    -10, -10, -10, -10, -10, -10, -10, -10,
+    -10,   7,   0,   0,   0,   0,   7, -10,
+    -10,   0,   5,   5,   5,   5,   0, -10,
+    -10,   0,   5,  10,  10,   5,   0, -10,
+    -10,   0,   5,  10,  10,   5,   0, -10,
+    -10,   0,   5,   5,   5,   5,   0, -10,
+    -10,   7,   0,   0,   0,   0,   7, -10,
+    -10, -10, -10, -10, -10, -10, -10, -10
 };
 
 const int16_t ScorePosition::king_end_bonus[] = {
-        0, 10, 20, 30, 30, 20, 10, 0,
-        10, 20, 30, 40, 40, 30, 20, 10,
-        20, 30, 40, 50, 50, 40, 30, 20,
-        30, 40, 50, 60, 60, 50, 40, 30,
-        30, 40, 50, 60, 60, 50, 40, 30,
-        20, 30, 40, 50, 50, 40, 30, 20,
-        10, 20, 30, 40, 40, 30, 20, 10,
-        0, 10, 20, 30, 30, 20, 10, 0
+     0, 10, 20, 30, 30, 20, 10,  0,
+    10, 20, 30, 40, 40, 30, 20, 10,
+    20, 30, 40, 50, 50, 40, 30, 20,
+    30, 40, 50, 60, 60, 50, 40, 30,
+    30, 40, 50, 60, 60, 50, 40, 30,
+    20, 30, 40, 50, 50, 40, 30, 20,
+    10, 20, 30, 40, 40, 30, 20, 10,
+     0, 10, 20, 30, 30, 20, 10,  0
 };
 
-uint16_t ScorePosition::centrumBonus(uint8_t square) {
-    if (square >= 18 && square <= 45 && file(square) >= 2 && file(square) <= 5) {
-        return square >= 26 && square <= 37 ? 20 : 10;
-    } else {
-        return 0;
-    }
-}
+const int16_t ScorePosition::centrum_bonus[] = {
+    0, 0,  0,  0,  0,  0, 0, 0,
+    0, 0,  0,  0,  0,  0, 0, 0,
+    0, 0, 10, 10, 10, 10, 0, 0,
+    0, 0, 20, 20, 20, 20, 0, 0,
+    0, 0, 20, 20, 20, 20, 0, 0,
+    0, 0, 10, 10, 10, 10, 0, 0,
+    0, 0,  0,  0,  0,  0, 0, 0,
+    0, 0,  0,  0,  0,  0, 0, 0
+};
 
 template <Color color> int16_t ScorePosition::scorePawn(const BoardType &board, uint8_t square) {
     ASSERT(square > 7 && square < 0x38, square);
     static_assert(color == Color::white || color == Color::black, "invalid color");
     constexpr uint8_t bonusLine = color == Color::white ? 7 : 2;
-    int16_t ret = centrumBonus(square);
+    int16_t ret = centrum_bonus[square];
     if (rank(square) == bonusLine) {
         ret += oneButLastLineBonus;
     } else if (MoveGenerator::pawnBitmask[toInt(color)][square] & board.bitmask[toInt(color)][toInt(Piece::pawn)]) {
@@ -66,7 +70,7 @@ template <Color color> int16_t ScorePosition::scorePawn(const BoardType &board, 
 }
 
 template <Color color> int16_t ScorePosition::scoreKnight(const BoardType &board __attribute__((unused)), uint8_t square, uint8_t king_position[2]) {
-    int16_t ret = centrumBonus(square);
+    int16_t ret = centrum_bonus[square];
     ret += knight_bonus[square];
     ret -= 4 * distance[square][king_position[toInt(opponent(color))]]; // im wieksza odleglosc tym wieksza kara;
     if (gameStage == StageOfGame::OPENING) {
@@ -84,7 +88,7 @@ template <Color color> int16_t ScorePosition::scoreKnight(const BoardType &board
 }
 
 template <Color color> int16_t ScorePosition::scoreBishop(const BoardType &board __attribute__((unused)), uint8_t square, uint8_t king_position[2]) {
-    int16_t ret = centrumBonus(square);
+    int16_t ret = centrum_bonus[square];
     ret += bishop_bonus[square];
     ret -= 2 * distance[square][king_position[toInt(opponent(color))]]; // im wieksza odleglosc tym wieksza kara;
     return color == Color::white ? ret : -ret;
@@ -92,14 +96,14 @@ template <Color color> int16_t ScorePosition::scoreBishop(const BoardType &board
 
 template <Color color> int16_t ScorePosition::scoreRook(const BoardType &board __attribute__((unused)), uint8_t square, uint8_t king_position[2]) {
     constexpr uint8_t penaltyRank = color == Color::white ? 1 : 6;
-    int16_t ret = centrumBonus(square);
+    int16_t ret = centrum_bonus[square];
     ret += -2 * distance[square][king_position[toInt(opponent(color))]];
     ret -= int(rank(square) == penaltyRank) * 20;
     return color == Color::white ? ret : -ret;
 }
 
 template <Color color> int16_t ScorePosition::scoreQueen(const BoardType &board __attribute__((unused)), uint8_t square, uint8_t king_position[2]) {
-    int16_t ret = centrumBonus(square);
+    int16_t ret = centrum_bonus[square];
     ret -= 3 * distance[square][king_position[toInt(opponent(color))]];
     if (gameStage == StageOfGame::OPENING) {
         ret += 3 * (distance[square][27] + distance[square][36]); //premia za trzymanie hetmana na wodzy
@@ -108,7 +112,7 @@ template <Color color> int16_t ScorePosition::scoreQueen(const BoardType &board 
 }
 
 template <Color color> int16_t ScorePosition::scoreKing(const BoardType &board __attribute__((unused)), uint8_t square, uint8_t king_position[2] __attribute__((unused))) {
-    int16_t ret = centrumBonus(square);
+    int16_t ret = centrum_bonus[square];
     if (gameStage == StageOfGame::ENDGAME) {
         ret += king_end_bonus[square];
     } else { // jesli nie koncowka to krol w bezpiecznym miejscu
