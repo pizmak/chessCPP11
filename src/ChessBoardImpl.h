@@ -8,33 +8,46 @@
 #include <cstdint>
 #include <iosfwd>
 
-const int16_t ChessBoard::piecesValues[] = {100, 300, 300, 500, 900, 9000, 0}; // indexed by Piece
+template <typename HashPolicy>
+const int16_t ChessBoard<HashPolicy>::piecesValues[] = {100, 300, 300, 500, 900, 9000, 0}; // indexed by Piece
 
-uint64_t ChessBoard::piecesOf(Color color) const {
+template <typename HashPolicy>
+ChessBoard<HashPolicy>::ChessBoard() {
+    initHash();
+}
+
+template <typename HashPolicy>
+uint64_t ChessBoard<HashPolicy>::piecesOf(Color color) const {
     return bitmask[toInt(color)][toInt(Piece::pawn)] | bitmask[toInt(color)][toInt(Piece::knight)] | bitmask[toInt(color)][toInt(Piece::bishop)] |
             bitmask[toInt(color)][toInt(Piece::rook)] | bitmask[toInt(color)][toInt(Piece::queen)] | bitmask[toInt(color)][toInt(Piece::king)];
 }
 
-uint64_t ChessBoard::allPieces() const {
+template <typename HashPolicy>
+uint64_t ChessBoard<HashPolicy>::allPieces() const {
     return piecesOf(Color::white) | piecesOf(Color::black);
 }
 
-void ChessBoard::disappearPiece(Piece piece, Color color, uint8_t from) {
+template <typename HashPolicy>
+void ChessBoard<HashPolicy>::disappearPiece(Piece piece, Color color, uint8_t from) {
     ASSERT(pieces[from] == piece && piecesColors[from] == color,
             number2Notation(from), pieces[from], piece, piecesColors[from], color);
+    HashPolicy::update(from, toInt(piecesColors[from]), toInt(pieces[from]));
     pieces[from] = Piece::empty;
     piecesColors[from] = Color::empty;
     bit::unset(bitmask[toInt(color)][toInt(piece)], from);
 }
 
-void ChessBoard::appearPiece(Piece piece, Color color, uint8_t to) {
+template <typename HashPolicy>
+void ChessBoard<HashPolicy>::appearPiece(Piece piece, Color color, uint8_t to) {
     // we can appear piece on square which is empty on opponents square (capture) or our square (promotion)
     pieces[to] = piece;
     piecesColors[to] = color;
     bit::set(bitmask[toInt(color)][toInt(piece)], to);
+    HashPolicy::update(to, toInt(piecesColors[to]), toInt(pieces[to]));
 }
 
-void ChessBoard::takePiece(Piece piece, Color color, Piece capturedPiece, uint8_t from, uint8_t to) {
+template <typename HashPolicy>
+void ChessBoard<HashPolicy>::takePiece(Piece piece, Color color, Piece capturedPiece, uint8_t from, uint8_t to) {
     ASSERT(pieces[from] == piece && piecesColors[from] == color && pieces[to] == capturedPiece && piecesColors[to] == opponent(color),
             (int)from, (int)to, piece, color, capturedPiece, pieces[from], pieces[to]);
 
@@ -42,19 +55,23 @@ void ChessBoard::takePiece(Piece piece, Color color, Piece capturedPiece, uint8_
     bit::unset(bitmask[toInt(opponent(color))][toInt(capturedPiece)], to); // disappear opponent's piece
     disappearPiece(piece, color, from);
     appearPiece(piece, color, to);
+    HashPolicy::update(to, toInt(opponent(color)), toInt(capturedPiece));
 }
 
-void ChessBoard::untakePiece(Piece piece, Color color, Piece capturedPiece, uint8_t from, uint8_t to) {
+template <typename HashPolicy>
+void ChessBoard<HashPolicy>::untakePiece(Piece piece, Color color, Piece capturedPiece, uint8_t from, uint8_t to) {
     ASSERT(pieces[to] == piece && piecesColors[to] == color && pieces[from] == Piece::empty && piecesColors[from] == Color::empty,
             (int)from, (int)to, piece, color, capturedPiece, pieces[from], pieces[to]);
 
+    HashPolicy::update(to, toInt(color), toInt(piece));
     this->materialDifference -= piecesValues[toInt(capturedPiece)] * (color == Color::white ? 1 : -1);
     bit::unset(bitmask[toInt(color)][toInt(piece)], to); // disappear our piece
     appearPiece(capturedPiece, opponent(color), to);
     appearPiece(piece, color, from);
 }
 
-void ChessBoard::movePiece(Piece piece, Color color, uint8_t from, uint8_t to) {
+template <typename HashPolicy>
+void ChessBoard<HashPolicy>::movePiece(Piece piece, Color color, uint8_t from, uint8_t to) {
     disappearPiece(piece, color, from);
     appearPiece(piece, color, to);
 }
@@ -65,7 +82,8 @@ inline EnumFlags<BoardFlags> toBoardFlags(EnumFlags<MoveFlags> moveFlags) {
     return BoardFlags(toInt(moveFlags) & toInt(castling));
 }
 
-void ChessBoard::makeMove(const Move &move) {
+template <typename HashPolicy>
+void ChessBoard<HashPolicy>::makeMove(const Move &move) {
     ASSERT(piecesColors[move.from] == toMove, number2Notation(move.from), piecesColors[move.from], toMove);
     // TODO remove this variable as it is only for diagnostic purposes at the moment
     uint8_t newEnPassantSquare = pieces[move.from] == Piece::pawn && (move.to - move.from == 16 || move.from - move.to == 16) ? move.to : 0;
@@ -94,9 +112,11 @@ void ChessBoard::makeMove(const Move &move) {
     flags &= ~toBoardFlags(move.flags);
     enPassantSquare = newEnPassantSquare;
     toMove = opponent(toMove);
+    HashPolicy::switchPlayer();
 }
 
-void ChessBoard::unmakeMove(const Move &move) {
+template <typename HashPolicy>
+void ChessBoard<HashPolicy>::unmakeMove(const Move &move) {
     ASSERT(piecesColors[move.to] == opponent(toMove), toMove, piecesColors[move.to]);
     if (move.captured != Piece::empty) {
         untakePiece(pieces[move.to], opponent(toMove), move.captured, move.from, move.to);
@@ -121,9 +141,11 @@ void ChessBoard::unmakeMove(const Move &move) {
     }
     flags |= toBoardFlags(move.flags);
     toMove = opponent(toMove);
+    HashPolicy::switchPlayer();
 }
 
-void ChessBoard::checkIntegrity() const {
+template <typename HashPolicy>
+void ChessBoard<HashPolicy>::checkIntegrity() const {
 #ifndef DEBUG
     return;
 #endif
@@ -156,7 +178,8 @@ void ChessBoard::checkIntegrity() const {
             piecesColors[60] == Color::black && piecesColors[56] == Color::black), pieces[60], pieces[56], piecesColors[60], piecesColors[56], flags);
 }
 
-void ChessBoard::dumpRank(std::ostream &stream, uint8_t rank) const {
+template <typename HashPolicy>
+void ChessBoard<HashPolicy>::dumpRank(std::ostream &stream, uint8_t rank) const {
     ASSERT(/*rank >= 0 && */rank < 8, rank);
     for (uint8_t file = 0; file < 8; ++file) {
         switch (piecesColors[number(rank, file)]) {
@@ -169,12 +192,14 @@ void ChessBoard::dumpRank(std::ostream &stream, uint8_t rank) const {
     }
 }
 
-void ChessBoard::dumpMask(std::ostream &stream, Piece piece) const {
+template <typename HashPolicy>
+void ChessBoard<HashPolicy>::dumpMask(std::ostream &stream, Piece piece) const {
     stream << "\t" << piece << "\t" << std::setw(18) << bitmask[toInt(Color::white)][toInt(piece)] <<
         "\t\t" << std::setw(18) << bitmask[toInt(Color::black)][toInt(piece)];
 }
 
-void ChessBoard::dump(std::ostream &stream) const {
+template <typename HashPolicy>
+void ChessBoard<HashPolicy>::dump(std::ostream &stream) const {
     stream << std::hex << std::showbase << std::endl << "__________\tpiece\twhite\t\t\t\tblack" << std::endl;
     for (uint8_t rank = 7; /*rank >= 0 && */rank < 8; --rank) {
         stream << "|";
@@ -214,7 +239,8 @@ void ChessBoard::dump(std::ostream &stream) const {
     stream << std::dec << std::endl << std::endl;;
 }
 
-void ChessBoard::clear() {
+template <typename HashPolicy>
+void ChessBoard<HashPolicy>::clear() {
     for(auto &p: this->pieces) {
         p = Piece::empty;
     }
@@ -230,4 +256,15 @@ void ChessBoard::clear() {
 
     this->enPassantSquare = 0;
     this->flags = BoardFlags::empty;
+    HashPolicy::clearHash();
+}
+
+template <typename HashPolicy>
+void ChessBoard<HashPolicy>::initHash() {
+    HashPolicy::clearHash();
+    for (int i = 0; i < 64; ++i) {
+        if (pieces[i] != Piece::empty) {
+            HashPolicy::update(i, toInt(piecesColors[i]), toInt(pieces[i]));
+        }
+    }
 }

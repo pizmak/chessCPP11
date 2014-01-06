@@ -37,7 +37,8 @@ static const EnumFlags<BoardFlags> castling = BoardFlags::K_castling | BoardFlag
     Color::black, Color::black, Color::black, Color::black, Color::black, Color::black, Color::black, Color::black,\
     Color::black, Color::black, Color::black, Color::black, Color::black, Color::black, Color::black, Color::black
 
-struct ChessBoard {
+template <typename HashPolicy>
+struct ChessBoard : HashPolicy {
     static const int16_t piecesValues[];
     uint64_t materialDifference = 0;
     Piece pieces[64] = {START_BOARD};
@@ -49,20 +50,23 @@ struct ChessBoard {
     EnumFlags<BoardFlags> flags = castling;
     Color toMove = Color::white;
     uint8_t enPassantSquare = 0;
-    virtual void makeMove(const Move &r); // only move pieces around, no check for move validity
-    virtual void unmakeMove(const Move &r);
+    void makeMove(const Move &r); // only move pieces around, no check for move validity
+    void unmakeMove(const Move &r);
     void checkIntegrity() const;
-    virtual void dump(std::ostream &stream) const;
+    void dump(std::ostream &stream) const;
     uint64_t piecesOf(Color color) const;
     uint64_t allPieces() const;
-    virtual void disappearPiece(Piece piece, Color color, uint8_t from);
-    virtual void appearPiece(Piece piece, Color color, uint8_t to);
-    virtual void clear();
-    virtual ~ChessBoard() = default;
+    void disappearPiece(Piece piece, Color color, uint8_t from);
+    void appearPiece(Piece piece, Color color, uint8_t to);
+    void clear();
+    ChessBoard();
 protected:
+    void initHash();
     void dumpRank(std::ostream &stream, uint8_t rank) const;
     void dumpMask(std::ostream &stream, Piece piece) const;
-    virtual void movePiece(Piece piece, Color color, uint8_t from, uint8_t to);
-    virtual void takePiece(Piece piece, Color color, Piece opponentPiece, uint8_t from, uint8_t to);
-    virtual void untakePiece(Piece piece, Color color, Piece opponentPiece, uint8_t from, uint8_t to);
+    void movePiece(Piece piece, Color color, uint8_t from, uint8_t to);
+    void takePiece(Piece piece, Color color, Piece opponentPiece, uint8_t from, uint8_t to);
+    void untakePiece(Piece piece, Color color, Piece opponentPiece, uint8_t from, uint8_t to);
 };
+
+#include "ChessBoardImpl.h"
