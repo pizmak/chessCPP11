@@ -1,5 +1,8 @@
 #include <algorithm>
 
+static uint8_t maxDeepeningLevel = 5;
+static uint8_t currentDepeningLevel = 0;
+
 template <typename GameTraits, bool isMin, int depth>
 struct Alphabeta {
     static int16_t go(typename GameTraits::State &state, int16_t alpha, int16_t beta, typename GameTraits::Move *spaceForMoves) {
@@ -27,7 +30,11 @@ struct Alphabeta {
             GameTraits::makeMove(state, *move);
             int16_t result;
             if (depth == 1 && move->captured != Piece::empty) {
-                result = Alphabeta<GameTraits, !isMin, 1 /* check deeper in case of capture */>::go(state, alpha, beta, afterLastMove);
+                ++currentDepeningLevel;
+                result = currentDepeningLevel > maxDeepeningLevel ?
+                        isMin ? std::numeric_limits<int16_t>::max() : std::numeric_limits<int16_t>::min() :
+                        Alphabeta<GameTraits, !isMin, 1 /* check deeper in case of capture */>::go(state, alpha, beta, afterLastMove);
+                --currentDepeningLevel;
             } else {
                 result = Alphabeta<GameTraits, !isMin, depth - 1>::go(state, alpha, beta, afterLastMove);
             }
