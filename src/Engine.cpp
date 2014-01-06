@@ -128,7 +128,7 @@ Move Engine::go() {
         }
     }
     if (!stopped) {
-        insert(board.hash, {board.hash, bestMove.score, uint8_t(alphaBetaDepth + 1)});
+//        insert(board.getHash(), {board.getHash(), bestMove.score, uint8_t(alphaBetaDepth + 1)});
     }
     std::cerr << "number of calls to scorePosition: " << ChessEvaluator::numberOfCalls << "(" << ChessEvaluator::numberOfCalls - numberOfCalls << ")" << std::endl;
     return bestMove;

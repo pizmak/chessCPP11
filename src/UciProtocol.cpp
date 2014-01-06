@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <thread>
+#include <cstdlib>
 
 bool isFile(char file) {
     return file >= 'a' && file <= 'h';

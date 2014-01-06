@@ -83,10 +83,10 @@ void testEngine() {
     std::list<std::string> moves2{"d2h4", "a7a6", "e2e4"};
 
     engine.move(moves);
-    std::cerr << "hash after moves: " << engine.getBoard().hash <<std::endl;
+    std::cerr << "hash after moves: " << engine.getBoard().getHash() <<std::endl;
     engine.reset();
     engine.move(moves2);
-    std::cerr << "hash after moves: " << engine.getBoard().hash <<std::endl;
+    std::cerr << "hash after moves: " << engine.getBoard().getHash() <<std::endl;
 }
 
 void hashUnitTest() {
@@ -94,13 +94,13 @@ void hashUnitTest() {
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 2; ++j) {
             for (int k = 0; k < 2; ++k) {
-                std::cerr << hash.randomHash[i][j][k] << " ";
+//                std::cerr << hash.randomHash[i][j][k] << " ";
             }
             std::cerr << std::endl;
         }
         std::cerr << std::endl;
     }
-    std::cerr << NativeArray<uint64_t, 4,2,2>::get(hash.randomHash, 0,0,0) << std::endl;
+//    std::cerr << NativeArray<uint64_t, 4,2,2>::get(hash.randomHash, 0,0,0) << std::endl;
 }
 
 #include <chrono>

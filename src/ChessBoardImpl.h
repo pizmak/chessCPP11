@@ -225,6 +225,7 @@ void ChessBoard<HashPolicy>::dump(std::ostream &stream) const {
             dumpMask(stream, Piece::king);
             break;
         case 0:
+            stream << "\thash\t" << std::noshowbase << (uint64_t)this->getHash() << std::showbase;
             break;
         }
         stream << std::endl;

@@ -18,12 +18,12 @@ struct ChessTraits {
         return state.first.materialDifference;
     }
     static void storeStateScore(State &state, int16_t score, uint8_t level) {
-        state.second.insert(state.first.hash, {state.first.hash, score, level});
+        state.second.insert(state.first.getHash(), {state.first.getHash(), score, level});
     }
     static AlphaBetaGenericHashElement &getStateScore(const State &state, uint8_t minLevel) {
         static AlphaBetaGenericHashElement empty;
-        AlphaBetaGenericHashElement &ret = state.second.get(state.first.hash);
-        return ret.hash == state.first.hash && ret.depth == minLevel ? ret : empty;
+        AlphaBetaGenericHashElement &ret = state.second.get(state.first.getHash());
+        return ret.hash == state.first.getHash() && ret.depth == minLevel ? ret : empty;
     }
     static void storeMoveScore(Move &move, int16_t score) {
         move.score = score;

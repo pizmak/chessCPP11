@@ -7,14 +7,19 @@
 template <int BoardSize, int...AdditionalSizes>
 struct ZobristHash {
     using Array = NativeArray<uint64_t, BoardSize, AdditionalSizes...>;
-    static typename Array::type randomHash;
-    void initializeRandomHash();
-    uint64_t hash = 0;
     ZobristHash();
     template <typename ...IntTypes> void update(int field, IntTypes ...sizes);
     void clearHash() {
         hash = 0;
     }
+    inline uint64_t getHash() const {
+        return hash;
+    }
+protected:
+    uint64_t hash = 0;
+private:
+    static typename Array::type randomHash;
+    void initializeRandomHash();
 };
 
 template <int BoardSize, int...AdditionalSizes>
