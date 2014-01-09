@@ -29,7 +29,7 @@ struct Alphabeta {
         for (typename GameTraits::Move *move = spaceForMoves; move < afterLastMove; ++move) {
             GameTraits::makeMove(state, *move);
             int16_t result;
-            if (depth == 1 && move->captured != Piece::empty) {
+            if (depth == 1 && (move->captured != Piece::empty || afterLastMove - spaceForMoves < 8 /*to jest prawie na pewno szach, a nawet jak nie to sie przyda*/)) {
                 ++currentDepeningLevel;
                 result = currentDepeningLevel > maxDeepeningLevel ?
                         isMin ? std::numeric_limits<int16_t>::max() : std::numeric_limits<int16_t>::min() :

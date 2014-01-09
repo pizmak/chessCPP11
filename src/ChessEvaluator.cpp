@@ -76,11 +76,11 @@ template <Color color> int16_t ChessEvaluator::evaluateKnight(const BoardType &b
     if (gameStage == StageOfGame::OPENING) {
         if (color == Color::white) {
             if (square == 1 || square == 6) {// kara za trzymanie skokow
-                ret -= 30;
+                ret -= 15;
             }
         } else {
             if (square == 57 || square == 62) {// kara za trzymanie skokow
-                ret -= 30;
+                ret -= 15;
             }
         }
     }
