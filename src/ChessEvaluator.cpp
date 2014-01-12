@@ -11,25 +11,25 @@ StageOfGame ChessEvaluator::gameStage = StageOfGame::OPENING;
 const int16_t ChessEvaluator::piecesValues[] = {100, 300, 300, 500, 900, 9000, 0}; // indexed by Piece
 
 const int16_t ChessEvaluator::knight_bonus[] = {
-    -10, -15, -10, -10, -10, -10, -15, -10,
+    -20, -15, -10, -10, -10, -10, -15, -20,
     -10,   0,   0,   0,   0,   0,   0, -10,
     -10,   0,   5,   5,   5,   5,   0, -10,
     -10,   0,   5,  10,  10,   5,   0, -10,
     -10,   0,   5,  10,  10,   5,   0, -10,
     -10,   0,   5,   5,   5,   5,   0, -10,
     -10,   0,   0,   0,   0,   0,   0, -10,
-    -10, -15, -10, -10, -10, -10, -15, -10
+    -20, -15, -10, -10, -10, -10, -15, -20
 };
 
 const int16_t ChessEvaluator::bishop_bonus[] = {
-    -10, -10, -10, -10, -10, -10, -10, -10,
-    -10,   7,   0,   0,   0,   0,   7, -10,
-    -10,   0,   5,   5,   5,   5,   0, -10,
+      5, -10, -20, -10, -10, -20, -10,   5,
+    -10,  10,   0,   0,   0,   0,  10, -10,
+    -10,   0,   7,   5,   5,   7,   0, -10,
     -10,   0,   5,  10,  10,   5,   0, -10,
     -10,   0,   5,  10,  10,   5,   0, -10,
-    -10,   0,   5,   5,   5,   5,   0, -10,
-    -10,   7,   0,   0,   0,   0,   7, -10,
-    -10, -10, -10, -10, -10, -10, -10, -10
+    -10,   0,   7,   5,   5,   7,   0, -10,
+    -10,  10,   0,   0,   0,   0,  10, -10,
+      5, -10, -20, -10, -10, -20, -10,   5
 };
 
 const int16_t ChessEvaluator::king_end_bonus[] = {
@@ -41,6 +41,17 @@ const int16_t ChessEvaluator::king_end_bonus[] = {
     20, 30, 40, 50, 50, 40, 30, 20,
     10, 20, 30, 40, 40, 30, 20, 10,
      0, 10, 20, 30, 30, 20, 10,  0
+};
+
+const int16_t ChessEvaluator::king_start_bonus[] = {
+    5, 15,  10,   0,   0,  10, 15, 0,
+    0,  0,   0, -20, -20,   0,  0, 0,
+    0,  0, -10, -10, -10, -10,  0, 0,
+    0,  0, -20, -20, -20, -20,  0, 0,
+    0,  0, -20, -20, -20, -20,  0, 0,
+    0,  0, -10, -10, -20, -10,  0, 0,
+    0,  0,   0, -20, -20,   0,  0, 0,
+    5, 15,  10,   0,   0,  10, 15, 0
 };
 
 const int16_t ChessEvaluator::centrum_bonus[] = {
@@ -73,17 +84,19 @@ template <Color color> int16_t ChessEvaluator::evaluateKnight(const BoardType &b
     int16_t ret = centrum_bonus[square];
     ret += knight_bonus[square];
     ret -= 4 * distance[square][king_position[toInt(opponent(color))]]; // im wieksza odleglosc tym wieksza kara;
-    if (gameStage == StageOfGame::OPENING) {
+/*    if (gameStage == StageOfGame::OPENING) {
         if (color == Color::white) {
-            if (square == 1 || square == 6) {// kara za trzymanie skokow
-                ret -= 15;
+            static_assert(n2N("b1") == 1 && n2N("g1") == 6);
+            if (square == n2N("b1") || square == n2N("g1")) {// kara za trzymanie skokow
+                ret -= 10;
             }
         } else {
-            if (square == 57 || square == 62) {// kara za trzymanie skokow
-                ret -= 15;
+            static_assert(n2N("b8") == 57 && n2N("g8") == 62);
+            if (square == n2N("b8") || square == n2N("g8")) {// kara za trzymanie skokow
+                ret -= 10;
             }
         }
-    }
+    }*/
     return color == Color::white ? ret : -ret;
 }
 
@@ -112,29 +125,12 @@ template <Color color> int16_t ChessEvaluator::evaluateQueen(const BoardType &bo
 }
 
 template <Color color> int16_t ChessEvaluator::evaluateKing(const BoardType &board __attribute__((unused)), uint8_t square, uint8_t king_position[2] __attribute__((unused))) {
-    int16_t ret = centrum_bonus[square];
+    int16_t ret = 0;
     if (gameStage == StageOfGame::ENDGAME) {
         ret += king_end_bonus[square];
     } else { // jesli nie koncowka to krol w bezpiecznym miejscu
-//                if (color == Color::white) {
-//                    sum += white_king_start_bonus[square];
-//                    if (square > 60) { // po roszadzie krotkiej // stopien ochrony krola pionami
-//                        sum += (15 * (czy_biale_pole(53) + czy_biale_pole(54) + czy_biale_pole(55))
-//                                + 5 * (czy_biale_pole(46) + czy_biale_pole(47)));
-//                    } else if (square < 59) { // po dlugiej
-//                        sum += (15 * (czy_biale_pole(48) + czy_biale_pole(49) + czy_biale_pole(50))
-//                                + 5 * (czy_biale_pole(40) + czy_biale_pole(41)));
-//                    }
-//                } else { // stopien ochrony krola czarnego pionami
-//                    sum += black_king_start_bonus[square];
-//                    if (square > 4) { // po roszadzie krotkiej // stopien ochrony krola pionami
-//                        sum -= (15 * (czy_biale_pole(13) + czy_biale_pole(14) + czy_biale_pole(15))
-//                                + 5 * (czy_biale_pole(22) + czy_biale_pole(23)));
-//                    } else if (square < 3) { // po dlugiej
-//                        sum -= (15 * (czy_biale_pole(8) + czy_biale_pole(9) + czy_biale_pole(10))
-//                                + 5 * (czy_biale_pole(16) + czy_biale_pole(17)));
-//                    }
-//                }
+        ret += king_start_bonus[square];
+        //bit::isSet(board.bitmask[toInt(color)][toInt(Piece::pawn)])
     }
     return color == Color::white ? ret : -ret;
 }
