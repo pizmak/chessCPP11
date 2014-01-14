@@ -130,7 +130,20 @@ template <Color color> int16_t ChessEvaluator::evaluateKing(const BoardType &boa
         ret += king_end_bonus[square];
     } else { // jesli nie koncowka to krol w bezpiecznym miejscu
         ret += king_start_bonus[square];
-        //bit::isSet(board.bitmask[toInt(color)][toInt(Piece::pawn)])
+        if (color == Color::white) { // po roszadzie
+            if (square >= n2N("f1") && square <= n2N("h1")) {
+                ret += 20 * ((board.piecesColors[n2N("f2")] == color) + (board.piecesColors[n2N("g2")] == color) + (board.piecesColors[n2N("h2")] == color));
+            } else if (square < n2N("d1")) {
+                ret += 20 * ((board.piecesColors[n2N("a2")] == color) + (board.piecesColors[n2N("b2")] == color) + (board.piecesColors[n2N("c2")] == color));
+            }
+        }
+        else /*black*/ {  // po roszadzie
+            if (square >= n2N("a8") && square <= n2N("c8")) {
+                ret += 20 * ((board.piecesColors[n2N("a7")] == color) + (board.piecesColors[n2N("b7")] == color) + (board.piecesColors[n2N("c7")] == color));
+            } else if (square > n2N("e8")) {
+                ret += 20 * ((board.piecesColors[n2N("f7")] == color) + (board.piecesColors[n2N("g7")] == color) + (board.piecesColors[n2N("h7")] == color));
+            }
+        }
     }
     return color == Color::white ? ret : -ret;
 }
