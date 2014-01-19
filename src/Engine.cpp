@@ -103,7 +103,6 @@ Move Engine::go() {
     for (Move *m = moves; m < afterLastMove; ++m) {
         board.makeMove(*m);
         m->score = board.toMove == Color::black ? callAlphaBeta<true>(afterLastMove, bestMove.score, 1) : callAlphaBeta<false>(afterLastMove, bestMove.score, 1);
-//        insert(board.hash, {board.hash, m->score, alphaBetaDepth});
         board.unmakeMove(*m);
     }
 
@@ -115,7 +114,6 @@ Move Engine::go() {
     for (Move *m = moves; m < afterLastMove; ++m) {
         board.makeMove(*m);
         m->score = board.toMove == Color::black ? callAlphaBeta<true>(afterLastMove, bestMove.score, alphaBetaDepth) : callAlphaBeta<false>(afterLastMove, bestMove.score, alphaBetaDepth);
-//        insert(board.hash, {board.hash, m->score, alphaBetaDepth});
         board.unmakeMove(*m);
         std::cerr << *m;
         if (multiplier * m->score > multiplier * bestMove.score) {
@@ -127,9 +125,8 @@ Move Engine::go() {
             break;
         }
     }
-    if (!stopped) {
-//        insert(board.getHash(), {board.getHash(), bestMove.score, uint8_t(alphaBetaDepth + 1)});
-    }
+    ScoreAccuracy scoreAccuracy = !stopped ? ScoreAccuracy::exact : board.toMove == Color::white ? ScoreAccuracy::lowerBound : ScoreAccuracy::upperBound;
+    insert(board.getHash(), {board.getHash(), bestMove.score, uint8_t(alphaBetaDepth + 1), scoreAccuracy});
     std::cerr << "number of calls to scorePosition: " << ChessEvaluator::numberOfCalls << "(" << ChessEvaluator::numberOfCalls - numberOfCalls << ")" << std::endl;
     return bestMove;
 }

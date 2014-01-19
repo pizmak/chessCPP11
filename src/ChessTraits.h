@@ -17,13 +17,31 @@ struct ChessTraits {
     static int16_t evaluateSimple(State &state) {
         return state.first.materialDifference;
     }
-    static void storeStateScore(State &state, int16_t score, uint8_t level) {
-        state.second.insert(state.first.getHash(), {state.first.getHash(), score, level});
+    static void storeStateScore(State &state, int16_t score, uint8_t level, ScoreAccuracy accuracy) {
+        AlphaBetaGenericHashElement &hashedValue = state.second.get(state.first.getHash());
+        if (accuracy != ScoreAccuracy::exact && hashedValue.accuracy == ScoreAccuracy::exact) {
+            return;
+        }
+        if (hashedValue.depth > level) {
+            return;
+        }
+        state.second.insert(state.first.getHash(), {state.first.getHash(), score, level, accuracy});
     }
-    static AlphaBetaGenericHashElement &getStateScore(const State &state, uint8_t minLevel) {
+    static AlphaBetaGenericHashElement &getStateScore(const State &state, uint8_t minLevel, int16_t alpha, int16_t beta) {
         static AlphaBetaGenericHashElement empty;
         AlphaBetaGenericHashElement &ret = state.second.get(state.first.getHash());
-        return ret.hash == state.first.getHash() && ret.depth == minLevel ? ret : empty;
+        if (ret.hash != state.first.getHash() || ret.depth < minLevel) {
+            return empty;
+        }
+        switch (ret.accuracy) {
+        case ScoreAccuracy::exact:
+            return ret;
+        case ScoreAccuracy::lowerBound:
+            return beta < ret.score ? ret : empty;
+        case ScoreAccuracy::upperBound:
+            return alpha > ret.score ? ret : empty;
+        }
+        return empty;
     }
     static void storeMoveScore(Move &move, int16_t score) {
         move.score = score;
