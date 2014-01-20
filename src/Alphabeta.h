@@ -28,6 +28,7 @@ struct Alphabeta {
 
         ScoreAccuracy accuracy = ScoreAccuracy::exact;
         int16_t startValueOfAlphaBeta = isMin ? beta : alpha;
+        int16_t bestResult = isMin ? std::numeric_limits<int16_t>::max() : std::numeric_limits<int16_t>::min();
         for (typename GameTraits::Move *move = spaceForMoves; move < afterLastMove; ++move) {
             GameTraits::makeMove(state, *move);
             int16_t result;
@@ -43,8 +44,10 @@ struct Alphabeta {
             GameTraits::unmakeMove(state, *move);
             if (isMin) {
                 beta = std::min(beta, result);
+                bestResult = std::min(bestResult, result);
             } else {
                 alpha = std::max(alpha, result);
+                bestResult = std::max(bestResult, result);
             }
             if (alpha >= beta) {
                 accuracy = isMin ? ScoreAccuracy::upperBound : ScoreAccuracy::lowerBound;
@@ -60,8 +63,8 @@ struct Alphabeta {
                 accuracy = ScoreAccuracy::upperBound;
             }
         }
-        GameTraits::storeStateScore(state, isMin ? beta : alpha, depth, accuracy);
-        return isMin ? beta : alpha;
+        GameTraits::storeStateScore(state, bestResult, depth, accuracy);
+        return bestResult;
     }
 };
 
