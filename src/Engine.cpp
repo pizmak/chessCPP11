@@ -115,19 +115,19 @@ Move Engine::go() {
         board.makeMove(*m);
         m->score = board.toMove == Color::black ? callAlphaBeta<true>(afterLastMove, bestMove.score, alphaBetaDepth) : callAlphaBeta<false>(afterLastMove, bestMove.score, alphaBetaDepth);
         board.unmakeMove(*m);
-        std::cerr << *m;
         if (multiplier * m->score > multiplier * bestMove.score) {
             bestMove = *m;
-            std::cerr << " - new best";
+            std::cerr << "\n" << *m << " - new best\n";
+        } else {
+            std::cerr << ".";
         }
-        std::cerr << std::endl;
         if (stopped) {
             break;
         }
     }
     ScoreAccuracy scoreAccuracy = !stopped ? ScoreAccuracy::exact : board.toMove == Color::white ? ScoreAccuracy::lowerBound : ScoreAccuracy::upperBound;
     insert(board.getHash(), {board.getHash(), bestMove.score, uint8_t(alphaBetaDepth + 1), scoreAccuracy});
-    std::cerr << "number of calls to scorePosition: " << ChessEvaluator::numberOfCalls << "(" << ChessEvaluator::numberOfCalls - numberOfCalls << ")" << std::endl;
+    std::cerr << "\nnumber of calls to scorePosition: " << ChessEvaluator::numberOfCalls << "(" << ChessEvaluator::numberOfCalls - numberOfCalls << ")" << std::endl;
     return bestMove;
 }
 

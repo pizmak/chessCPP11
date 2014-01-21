@@ -57,6 +57,10 @@ uciok)";
         engine.stop();
         return "";
     }
+    if (command.find("s") == 0) {
+        engine.getBoard().print();
+        return "";
+    }
     engine.move(command);
     processGo();
     return "";

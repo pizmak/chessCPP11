@@ -60,6 +60,7 @@ struct ChessBoard : HashPolicy {
     void appearPiece(Piece piece, Color color, uint8_t to);
     void clear();
     ChessBoard();
+    void print() const;
 protected:
     void initHash();
     void dumpRank(std::ostream &stream, uint8_t rank) const;

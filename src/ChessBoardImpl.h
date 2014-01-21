@@ -58,6 +58,33 @@ void ChessBoard<HashPolicy>::takePiece(Piece piece, Color color, Piece capturedP
     HashPolicy::update(to, toInt(opponent(color)), toInt(capturedPiece));
 }
 
+template<typename HashPolicy>
+void ChessBoard<HashPolicy>::print() const {
+    std::cerr << "\n";
+    for (int8_t file = 0, rank = 7; rank >= 0;) {
+        if (file == 0) {
+            std::cerr << rank + 1 << ' ';
+        }
+        char toPrint = piece2Notation(pieces[rank * 8 + file], piecesColors[rank * 8 + file]);
+        if (toPrint != ' ') {
+            std::cerr << toPrint;
+        } else {
+            if ((rank + file) & 1) {
+                std::cerr << toPrint;
+            } else {
+                std::cerr << '*';
+            }
+        }
+        ++file;
+        if (file > 7) {
+            file = 0;
+            --rank;
+            std::cerr << std::endl;
+        }
+    }
+    std::cerr << "\n  abcdefgh\n";
+}
+
 template <typename HashPolicy>
 void ChessBoard<HashPolicy>::untakePiece(Piece piece, Color color, Piece capturedPiece, uint8_t from, uint8_t to) {
     ASSERT(pieces[to] == piece && piecesColors[to] == color && pieces[from] == Piece::empty && piecesColors[from] == Color::empty,
