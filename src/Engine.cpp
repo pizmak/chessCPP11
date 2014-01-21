@@ -127,7 +127,8 @@ Move Engine::go() {
     }
     ScoreAccuracy scoreAccuracy = !stopped ? ScoreAccuracy::exact : board.toMove == Color::white ? ScoreAccuracy::lowerBound : ScoreAccuracy::upperBound;
     insert(board.getHash(), {board.getHash(), bestMove.score, uint8_t(alphaBetaDepth + 1), scoreAccuracy});
-    std::cerr << "\nnumber of calls to scorePosition: " << ChessEvaluator::numberOfCalls << "(" << ChessEvaluator::numberOfCalls - numberOfCalls << ")" << std::endl;
+    std::cerr << "\nnumber of calls to scorePosition, hashH, hashM: " << ChessEvaluator::numberOfCalls << "(" << ChessEvaluator::numberOfCalls - numberOfCalls << ")"
+            << ", " << ChessEvaluator::hashHits << ", "<< ChessEvaluator::hashMisses << std::endl;
     return bestMove;
 }
 

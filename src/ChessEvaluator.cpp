@@ -174,6 +174,8 @@ StageOfGame ChessEvaluator::stageOfGame(const BoardType &board) {
 }
 
 int ChessEvaluator::numberOfCalls = 0;
+int ChessEvaluator::hashHits = 0;
+int ChessEvaluator::hashMisses = 0;
 
 int16_t ChessEvaluator::evaluate(const BoardType &board) {
     int16_t sum = board.materialDifference;

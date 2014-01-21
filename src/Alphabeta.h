@@ -7,8 +7,10 @@ template <typename GameTraits, bool isMin, int depth>
 struct Alphabeta {
     static int16_t go(typename GameTraits::State &state, int16_t alpha, int16_t beta, typename GameTraits::Move *spaceForMoves) {
         if (AlphaBetaGenericHashElement &hashed = GameTraits::getStateScore(state, depth, alpha, beta)) {
+            ++ChessEvaluator::hashHits;
             return hashed.score;
         }
+        ++ChessEvaluator::hashMisses;
         typename GameTraits::Move *afterLastMove = GameTraits::generateMoves(state, spaceForMoves);
         if (spaceForMoves == afterLastMove) {
             return GameTraits::evaluateFinalPosition(state) + (isMin ? depth : -depth);
@@ -72,8 +74,10 @@ template <typename GameTraits, bool isMin>
 struct Alphabeta<GameTraits, isMin, 0> {
     static inline int16_t go(typename GameTraits::State &state, int16_t alpha __attribute__((unused)), int16_t beta __attribute__((unused)), typename GameTraits::Move *spaceForMoves __attribute__((unused))) {
         if (AlphaBetaGenericHashElement &hashed = GameTraits::getStateScore(state, 0, alpha, beta)) {
+            ++ChessEvaluator::hashHits;
             return hashed.score;
         }
+        ++ChessEvaluator::hashMisses;
         int16_t result = GameTraits::evaluate(state);
         GameTraits::storeStateScore(state, result, 0, ScoreAccuracy::exact);
         return result;
