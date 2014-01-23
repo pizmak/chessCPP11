@@ -8,7 +8,7 @@
 
 int16_t ChessEvaluator::distance[64][64];
 StageOfGame ChessEvaluator::gameStage = StageOfGame::OPENING;
-const int16_t ChessEvaluator::piecesValues[] = {100, 300, 300, 500, 900, 9000, 0}; // indexed by Piece
+const int16_t ChessEvaluator::piecesValues[] = {100, 300, 320, 500, 900, 9000, 0}; // indexed by Piece
 
 const int16_t ChessEvaluator::knight_bonus[] = {
     -20, -15, -10, -10, -10, -10, -15, -20,
@@ -49,7 +49,7 @@ const int16_t ChessEvaluator::king_start_bonus[] = {
     0,  0, -10, -10, -10, -10,  0, 0,
     0,  0, -20, -20, -20, -20,  0, 0,
     0,  0, -20, -20, -20, -20,  0, 0,
-    0,  0, -10, -10, -20, -10,  0, 0,
+    0,  0, -10, -10, -10, -10,  0, 0,
     0,  0,   0, -20, -20,   0,  0, 0,
     5, 15,  10,   0,   0,  10, 15, 0
 };
@@ -66,9 +66,9 @@ const int16_t ChessEvaluator::centrum_bonus[] = {
 };
 
 template <Color color> int16_t ChessEvaluator::evaluatePawn(const BoardType &board, uint8_t square) {
-    ASSERT(square > 7 && square < 0x38, square);
+    ASSERT(square >= n2N("a2") && square <= n2N("h7"), square);
     static_assert(color == Color::white || color == Color::black, "invalid color");
-    constexpr uint8_t bonusLine = color == Color::white ? 7 : 2;
+    constexpr uint8_t bonusLine = color == Color::white ? rank2N("7") : rank2N("1");
     int16_t ret = centrum_bonus[square];
     if (rank(square) == bonusLine) {
         ret += oneButLastLineBonus;
@@ -108,10 +108,11 @@ template <Color color> int16_t ChessEvaluator::evaluateBishop(const BoardType &b
 }
 
 template <Color color> int16_t ChessEvaluator::evaluateRook(const BoardType &board __attribute__((unused)), uint8_t square, uint8_t king_position[2]) {
-    constexpr uint8_t penaltyRank = color == Color::white ? 1 : 6;
+    constexpr uint8_t penaltyRank = color == Color::white ? rank2N("7") : rank2N("2");
     int16_t ret = centrum_bonus[square];
     ret += -2 * distance[square][king_position[toInt(opponent(color))]];
-    ret -= int(rank(square) == penaltyRank) * 20;
+    ret += int(rank(square) == penaltyRank) * rookOnOneButLastRankBonus;
+    // TODO rooks connected and rooks on open files
     return color == Color::white ? ret : -ret;
 }
 
@@ -119,7 +120,7 @@ template <Color color> int16_t ChessEvaluator::evaluateQueen(const BoardType &bo
     int16_t ret = centrum_bonus[square];
     ret -= 3 * distance[square][king_position[toInt(opponent(color))]];
     if (gameStage == StageOfGame::OPENING) {
-        ret += 3 * (distance[square][27] + distance[square][36]); //premia za trzymanie hetmana na wodzy
+        ret += 3 * (distance[square][n2N("e4")] + distance[square][n2N("e5")]); //premia za trzymanie hetmana na wodzy
     }
     return color == Color::white ? ret : -ret;
 }
@@ -131,17 +132,17 @@ template <Color color> int16_t ChessEvaluator::evaluateKing(const BoardType &boa
     } else { // jesli nie koncowka to krol w bezpiecznym miejscu
         ret += king_start_bonus[square];
         if (color == Color::white) { // po roszadzie
-            if (square >= n2N("f1") && square <= n2N("h1") && board.pieces[n2N("h1")] != Piece::rook) {
-                ret += 20 * ((board.piecesColors[n2N("f2")] == color) + (board.piecesColors[n2N("g2")] == color) + (board.piecesColors[n2N("h2")] == color));
-            } else if (square < n2N("d1") && board.pieces[n2N("a1")] != Piece::rook) {
-                ret += 20 * ((board.piecesColors[n2N("a2")] == color) + (board.piecesColors[n2N("b2")] == color) + (board.piecesColors[n2N("c2")] == color));
+            if (square >= n2N("f1") && square <= n2N("h1") && board.pieces[n2N("h1")] != Piece::rook && board.pieces[n2N("g1")] != Piece::rook) {
+                ret += castlePawnBonus * ((board.piecesColors[n2N("f2")] == color) + (board.piecesColors[n2N("g2")] == color) + (board.piecesColors[n2N("h2")] == color));
+            } else if (square < n2N("d1") && board.pieces[n2N("a1")] != Piece::rook && board.pieces[n2N("b1")] != Piece::rook) {
+                ret += castlePawnBonus * ((board.piecesColors[n2N("a2")] == color) + (board.piecesColors[n2N("b2")] == color) + (board.piecesColors[n2N("c2")] == color));
             }
         }
         else /*black*/ {  // po roszadzie
-            if (square >= n2N("a8") && square <= n2N("c8") && board.pieces[n2N("a8")] != Piece::rook) {
-                ret += 20 * ((board.piecesColors[n2N("a7")] == color) + (board.piecesColors[n2N("b7")] == color) + (board.piecesColors[n2N("c7")] == color));
-            } else if (square > n2N("e8") && board.pieces[n2N("h8")] != Piece::rook) {
-                ret += 20 * ((board.piecesColors[n2N("f7")] == color) + (board.piecesColors[n2N("g7")] == color) + (board.piecesColors[n2N("h7")] == color));
+            if (square >= n2N("a8") && square <= n2N("c8") && board.pieces[n2N("a8")] != Piece::rook && board.pieces[n2N("b8")] != Piece::rook) {
+                ret += castlePawnBonus * ((board.piecesColors[n2N("a7")] == color) + (board.piecesColors[n2N("b7")] == color) + (board.piecesColors[n2N("c7")] == color));
+            } else if (square > n2N("e8") && board.pieces[n2N("h8")] != Piece::rook && board.pieces[n2N("g8")] != Piece::rook) {
+                ret += castlePawnBonus * ((board.piecesColors[n2N("f7")] == color) + (board.piecesColors[n2N("g7")] == color) + (board.piecesColors[n2N("h7")] == color));
             }
         }
     }
@@ -210,8 +211,8 @@ void ChessEvaluator::initialize() {
         return;
     }
     initialized = true;
-    for (uint8_t x = 0; x < 64; x++) {
-        for (uint8_t y = 0; y < 64; y++) {
+    for (uint8_t x = n2N("a1"); x <= n2N("h8"); x++) {
+        for (uint8_t y = n2N("a1"); y <= n2N("h8"); y++) {
             distance[x][y] = std::max(std::max(file(x), file(y)) - std::min(file(x), file(y)), std::max(rank(x), rank(y)) - std::min(rank(x), rank(y)));
         }
     }

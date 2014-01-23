@@ -20,6 +20,14 @@ inline uint8_t notation2Number(const std::string &s) {
 constexpr uint8_t n2N(const char* c) {
     return (*(c) - 'a') + (*(c+1) - '1') * 8;
 }
+
+constexpr uint8_t rank2N(const char* c) {
+    return (*(c) - '1');
+}
+
+constexpr uint8_t file2N(const char* c) {
+    return (*(c) - 'a');
+}
 // kolumny od 0 do 7
 inline uint8_t file(uint8_t number) {
     ASSERT(/*number >= 0 && */number < 64, number);
