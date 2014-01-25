@@ -84,19 +84,6 @@ template <Color color> int16_t ChessEvaluator::evaluateKnight(const BoardType &b
     int16_t ret = centrum_bonus[square];
     ret += knight_bonus[square];
     ret -= 4 * distance[square][king_position[toInt(opponent(color))]]; // im wieksza odleglosc tym wieksza kara;
-/*    if (gameStage == StageOfGame::OPENING) {
-        if (color == Color::white) {
-            static_assert(n2N("b1") == 1 && n2N("g1") == 6);
-            if (square == n2N("b1") || square == n2N("g1")) {// kara za trzymanie skokow
-                ret -= 10;
-            }
-        } else {
-            static_assert(n2N("b8") == 57 && n2N("g8") == 62);
-            if (square == n2N("b8") || square == n2N("g8")) {// kara za trzymanie skokow
-                ret -= 10;
-            }
-        }
-    }*/
     return color == Color::white ? ret : -ret;
 }
 
@@ -134,14 +121,14 @@ template <Color color> int16_t ChessEvaluator::evaluateKing(const BoardType &boa
         if (color == Color::white) { // po roszadzie
             if (square >= n2N("f1") && square <= n2N("h1") && board.pieces[n2N("h1")] != Piece::rook && board.pieces[n2N("g1")] != Piece::rook) {
                 ret += castlePawnBonus * ((board.piecesColors[n2N("f2")] == color) + (board.piecesColors[n2N("g2")] == color) + (board.piecesColors[n2N("h2")] == color));
-            } else if (square < n2N("d1") && board.pieces[n2N("a1")] != Piece::rook && board.pieces[n2N("b1")] != Piece::rook) {
+            } else if (square <= n2N("c1") && board.pieces[n2N("a1")] != Piece::rook && board.pieces[n2N("b1")] != Piece::rook) {
                 ret += castlePawnBonus * ((board.piecesColors[n2N("a2")] == color) + (board.piecesColors[n2N("b2")] == color) + (board.piecesColors[n2N("c2")] == color));
             }
         }
         else /*black*/ {  // po roszadzie
             if (square >= n2N("a8") && square <= n2N("c8") && board.pieces[n2N("a8")] != Piece::rook && board.pieces[n2N("b8")] != Piece::rook) {
                 ret += castlePawnBonus * ((board.piecesColors[n2N("a7")] == color) + (board.piecesColors[n2N("b7")] == color) + (board.piecesColors[n2N("c7")] == color));
-            } else if (square > n2N("e8") && board.pieces[n2N("h8")] != Piece::rook && board.pieces[n2N("g8")] != Piece::rook) {
+            } else if (square >= n2N("f8") && board.pieces[n2N("h8")] != Piece::rook && board.pieces[n2N("g8")] != Piece::rook) {
                 ret += castlePawnBonus * ((board.piecesColors[n2N("f7")] == color) + (board.piecesColors[n2N("g7")] == color) + (board.piecesColors[n2N("h7")] == color));
             }
         }
