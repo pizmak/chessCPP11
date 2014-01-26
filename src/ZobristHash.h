@@ -4,38 +4,31 @@
 #include <functional>
 #include <random>
 
-template <int BoardSize, int...AdditionalSizes>
-struct ZobristHash {
-    using Array = NativeArray<uint64_t, BoardSize, AdditionalSizes...>;
-    ZobristHash();
-    template <typename ...IntTypes> void update(int field, IntTypes ...sizes);
-    void clearHash() {
-        hash = 0;
-    }
-    inline uint64_t getHash() const {
-        return hash;
-    }
-protected:
-    uint64_t hash = 0;
-private:
+template <int...Sizes>
+struct ZobristArray {
+    using Array = NativeArray<uint64_t, Sizes...>;
+    static const int DIMENSIONS = sizeof...(Sizes);
+    template <typename ...IntTypes>
+    static inline uint64_t getRandomHash(IntTypes...indices);
     static typename Array::type randomHash;
-    void initializeRandomHash();
+    static void initializeRandomHash();
 };
 
-template <int BoardSize, int...AdditionalSizes>
-typename NativeArray<uint64_t, BoardSize, AdditionalSizes...>::type ZobristHash<BoardSize, AdditionalSizes...>::randomHash;
+template <int...Sizes>
+typename NativeArray<uint64_t, Sizes...>::type ZobristArray<Sizes...>::randomHash;
 
-template <int BoardSize, int...AdditionalSizes>
-ZobristHash<BoardSize, AdditionalSizes...>::ZobristHash() {
-    static bool inited = false;
-    if (!inited) {
-        initializeRandomHash();
-        inited = true;
-    }
+template <int...Sizes>
+template <typename ...IntTypes> inline uint64_t ZobristArray<Sizes...>::getRandomHash(IntTypes...indices) {
+    return Array::get(randomHash, indices...);
 }
 
-template <int BoardSize, int...AdditionalSizes>
-void ZobristHash<BoardSize, AdditionalSizes...>::initializeRandomHash() {
+template <int...Sizes>
+void ZobristArray<Sizes...>::initializeRandomHash() {
+    static bool inited = false;
+    if (inited) {
+        return;
+    }
+    inited = true;
     std::mt19937 engine;
     std::random_device rand;
     engine.seed(rand());
@@ -44,40 +37,29 @@ void ZobristHash<BoardSize, AdditionalSizes...>::initializeRandomHash() {
     Array::initMulti(dist, randomHash);
 }
 
-template <int BoardSize, int...AdditionalSizes>
-template <typename ...IntTypes>
-void ZobristHash<BoardSize, AdditionalSizes...>::update(int field, IntTypes ...sizes) {
-    static_assert(sizeof...(AdditionalSizes) == sizeof...(sizes), "invalid call to update functions");
-    hash ^= Array::get(randomHash, field, sizes...);
-}
-
-template <int BoardSize, int...AdditionalSizes>
-struct ZobristHashWithPlayerInfo : ZobristHash<BoardSize, AdditionalSizes...> {
-    static uint64_t playerHash;
-    void initializePlayerHash();
-    ZobristHashWithPlayerInfo();
-    void switchPlayer() {
-        this->hash ^= playerHash;
-    }
+template <int...Sizes>
+struct ZobristHash: ZobristArray<Sizes...> {
+    template <typename ...IntTypes>
+    void update(int field, IntTypes ...sizes);
+    void clearHash();
+    inline uint64_t getHash() const;
+protected:
+    uint64_t hash = 0;
 };
 
-template <int BoardSize, int...AdditionalSizes>
-uint64_t ZobristHashWithPlayerInfo<BoardSize, AdditionalSizes...>::playerHash;
-
-template <int BoardSize, int...AdditionalSizes>
-ZobristHashWithPlayerInfo<BoardSize, AdditionalSizes...>::ZobristHashWithPlayerInfo() {
-    static bool inited = false;
-    if (!inited) {
-        initializePlayerHash();
-        inited = true;
-    }
+template <int...Sizes>
+void ZobristHash<Sizes...>::clearHash() {
+    hash = 0;
 }
 
-template <int BoardSize, int...AdditionalSizes>
-void ZobristHashWithPlayerInfo<BoardSize, AdditionalSizes...>::initializePlayerHash() {
-    std::mt19937 engine;
-    std::random_device rand;
-    engine.seed(rand());
-    std::uniform_int_distribution<uint64_t> distribution;
-    playerHash = distribution(engine);
+template <int...Sizes>
+inline uint64_t ZobristHash<Sizes...>::getHash() const {
+    return hash;
+}
+
+template <int...Sizes>
+template <typename ...IntTypes>
+void ZobristHash<Sizes...>::update(int field, IntTypes ...sizes) {
+    static_assert(sizeof...(Sizes) == sizeof...(sizes) + 1, "invalid call to update functions");
+    hash ^= ZobristArray<Sizes...>::Array::get(this->randomHash, field, sizes...);
 }

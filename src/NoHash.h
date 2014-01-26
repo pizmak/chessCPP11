@@ -4,12 +4,12 @@
 
 struct NoHash {
     template <typename ...IntTypes>
-    void update(IntTypes ...) {
+    void updatePiece(IntTypes ...) {
     }
     uint64_t getHash() const {
         return 0;
     }
-    void switchPlayer() {
+    void setPlayer(int) {
     }
     void clearHash() {
     }

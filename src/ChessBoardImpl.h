@@ -32,7 +32,7 @@ template <typename HashPolicy>
 void ChessBoard<HashPolicy>::disappearPiece(Piece piece, Color color, uint8_t from) {
     ASSERT(pieces[from] == piece && piecesColors[from] == color,
             number2Notation(from), pieces[from], piece, piecesColors[from], color);
-    HashPolicy::update(from, toInt(piecesColors[from]), toInt(pieces[from]));
+    HashPolicy::updatePiece(from, toInt(piecesColors[from]), toInt(pieces[from]));
     pieces[from] = Piece::empty;
     piecesColors[from] = Color::empty;
     bit::unset(bitmask[toInt(color)][toInt(piece)], from);
@@ -44,7 +44,7 @@ void ChessBoard<HashPolicy>::appearPiece(Piece piece, Color color, uint8_t to) {
     pieces[to] = piece;
     piecesColors[to] = color;
     bit::set(bitmask[toInt(color)][toInt(piece)], to);
-    HashPolicy::update(to, toInt(piecesColors[to]), toInt(pieces[to]));
+    HashPolicy::updatePiece(to, toInt(piecesColors[to]), toInt(pieces[to]));
 }
 
 template <typename HashPolicy>
@@ -56,7 +56,7 @@ void ChessBoard<HashPolicy>::takePiece(Piece piece, Color color, Piece capturedP
     bit::unset(bitmask[toInt(opponent(color))][toInt(capturedPiece)], to); // disappear opponent's piece
     disappearPiece(piece, color, from);
     appearPiece(piece, color, to);
-    HashPolicy::update(to, toInt(opponent(color)), toInt(capturedPiece));
+    HashPolicy::updatePiece(to, toInt(opponent(color)), toInt(capturedPiece));
 }
 
 template<typename HashPolicy>
@@ -91,7 +91,7 @@ void ChessBoard<HashPolicy>::untakePiece(Piece piece, Color color, Piece capture
     ASSERT(pieces[to] == piece && piecesColors[to] == color && pieces[from] == Piece::empty && piecesColors[from] == Color::empty,
             (int)from, (int)to, piece, color, capturedPiece, pieces[from], pieces[to]);
 
-    HashPolicy::update(to, toInt(color), toInt(piece));
+    HashPolicy::updatePiece(to, toInt(color), toInt(piece));
     this->materialDifference -= piecesValues[toInt(capturedPiece)] * (color == Color::white ? 1 : -1);
     bit::unset(bitmask[toInt(color)][toInt(piece)], to); // disappear our piece
     appearPiece(capturedPiece, opponent(color), to);
@@ -113,7 +113,10 @@ inline EnumFlags<BoardFlags> toBoardFlags(EnumFlags<MoveFlags> moveFlags) {
 template <typename HashPolicy>
 void ChessBoard<HashPolicy>::makeMove(const Move &move) {
     ASSERT(piecesColors[move.from] == toMove, number2Notation(move.from), piecesColors[move.from], toMove);
-    // TODO remove this variable as it is only for diagnostic purposes at the moment
+    if (enPassantSquare != 0) {
+        HashPolicy::updateEnPassantFile(file(enPassantSquare));
+    }
+    HashPolicy::updateCastlingCapabilities(toInt(flags));
     uint8_t newEnPassantSquare = pieces[move.from] == Piece::pawn && (move.to - move.from == 16 || move.from - move.to == 16) ? move.to : 0;
     if (move.captured != Piece::empty) {
         takePiece(pieces[move.from], toMove, move.captured, move.from, move.to);
@@ -141,13 +144,21 @@ void ChessBoard<HashPolicy>::makeMove(const Move &move) {
     enPassantSquare = newEnPassantSquare;
     toMove = opponent(toMove);
     HashPolicy::switchPlayer();
+    if (enPassantSquare != 0) {
+        HashPolicy::updateEnPassantFile(file(enPassantSquare));
+    }
+    HashPolicy::updateCastlingCapabilities(toInt(flags));
     history.push(*this, move.captured != Piece::empty || pieces[move.to] == Piece::pawn);
 }
 
 template <typename HashPolicy>
 void ChessBoard<HashPolicy>::unmakeMove(const Move &move) {
-    history.pop();
     ASSERT(piecesColors[move.to] == opponent(toMove), toMove, piecesColors[move.to]);
+    history.pop();
+    if (enPassantSquare != 0) {
+        HashPolicy::updateEnPassantFile(file(enPassantSquare));
+    }
+    HashPolicy::updateCastlingCapabilities(toInt(flags));
     if (move.captured != Piece::empty) {
         untakePiece(pieces[move.to], opponent(toMove), move.captured, move.from, move.to);
     } else {
@@ -171,6 +182,10 @@ void ChessBoard<HashPolicy>::unmakeMove(const Move &move) {
     }
     flags |= toBoardFlags(move.flags);
     toMove = opponent(toMove);
+    if (enPassantSquare != 0) {
+        HashPolicy::updateEnPassantFile(file(enPassantSquare));
+    }
+    HashPolicy::updateCastlingCapabilities(toInt(flags));
     HashPolicy::switchPlayer();
 }
 
@@ -296,7 +311,7 @@ void ChessBoard<HashPolicy>::initHash() {
     HashPolicy::clearHash();
     for (int i = 0; i < 64; ++i) {
         if (pieces[i] != Piece::empty) {
-            HashPolicy::update(i, toInt(piecesColors[i]), toInt(pieces[i]));
+            HashPolicy::updatePiece(i, toInt(piecesColors[i]), toInt(pieces[i]));
         }
     }
 }
