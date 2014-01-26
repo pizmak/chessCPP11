@@ -4,6 +4,7 @@
 #include "Color.h"
 #include "EnumFlags.h"
 #include "common.h"
+#include "History.h"
 
 struct Move;
 
@@ -39,6 +40,7 @@ static const EnumFlags<BoardFlags> castling = BoardFlags::K_castling | BoardFlag
 
 template <typename HashPolicy>
 struct ChessBoard : HashPolicy {
+    using ThisType = ChessBoard<HashPolicy>;
     static const int16_t piecesValues[];
     uint64_t materialDifference = 0;
     Piece pieces[64] = {START_BOARD};
@@ -50,6 +52,8 @@ struct ChessBoard : HashPolicy {
     EnumFlags<BoardFlags> flags = castling;
     Color toMove = Color::white;
     uint8_t enPassantSquare = 0;
+    History<ThisType> history;
+    bool isDraw(); // returns true if there were 50 moves without capture or pawn moves or or position was three times repeated
     void makeMove(const Move &r); // only move pieces around, no check for move validity
     void unmakeMove(const Move &r);
     void checkIntegrity() const;

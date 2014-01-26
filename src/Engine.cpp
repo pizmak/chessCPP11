@@ -129,6 +129,7 @@ Move Engine::go() {
     insert(board.getHash(), {board.getHash(), bestMove.score, uint8_t(alphaBetaDepth + 1), scoreAccuracy});
     std::cerr << "\nnumber of calls to scorePosition, hashH, hashM: " << ChessEvaluator::numberOfCalls << "(" << ChessEvaluator::numberOfCalls - numberOfCalls << ")"
             << ", " << ChessEvaluator::hashHits << ", "<< ChessEvaluator::hashMisses << std::endl;
+    board.history.printHistory();
     return bestMove;
 }
 

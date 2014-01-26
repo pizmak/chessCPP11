@@ -14,6 +14,7 @@ const int16_t ChessBoard<HashPolicy>::piecesValues[] = {100, 300, 300, 500, 900,
 template <typename HashPolicy>
 ChessBoard<HashPolicy>::ChessBoard() {
     initHash();
+    history.clear(*this);
 }
 
 template <typename HashPolicy>
@@ -140,10 +141,12 @@ void ChessBoard<HashPolicy>::makeMove(const Move &move) {
     enPassantSquare = newEnPassantSquare;
     toMove = opponent(toMove);
     HashPolicy::switchPlayer();
+    history.push(*this, move.captured != Piece::empty || pieces[move.to] == Piece::pawn);
 }
 
 template <typename HashPolicy>
 void ChessBoard<HashPolicy>::unmakeMove(const Move &move) {
+    history.pop();
     ASSERT(piecesColors[move.to] == opponent(toMove), toMove, piecesColors[move.to]);
     if (move.captured != Piece::empty) {
         untakePiece(pieces[move.to], opponent(toMove), move.captured, move.from, move.to);
@@ -284,6 +287,7 @@ void ChessBoard<HashPolicy>::clear() {
 
     this->enPassantSquare = 0;
     this->flags = BoardFlags::empty;
+    this->history.clear(*this);
     HashPolicy::clearHash();
 }
 
@@ -295,4 +299,9 @@ void ChessBoard<HashPolicy>::initHash() {
             HashPolicy::update(i, toInt(piecesColors[i]), toInt(pieces[i]));
         }
     }
+}
+
+template <typename HashPolicy>
+bool ChessBoard<HashPolicy>::isDraw() {
+    return this->history.isDraw();
 }

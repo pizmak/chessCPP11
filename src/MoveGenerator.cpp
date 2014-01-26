@@ -61,6 +61,10 @@ Move *MoveGenerator::movesOfLongDistancePiece(BoardType &board, uint8_t square, 
 }
 
 Move *MoveGenerator::generateMoves(BoardType &board, Move *startMove) {
+    if (board.isDraw()) { // no valid moves due to position repetition or 50 moves rule
+        std::cerr << "draw" << std::endl;
+        return startMove;
+    }
     bit::foreach_bit(board.bitmask[toInt(board.toMove)][toInt(Piece::knight)], [&board, &startMove](uint8_t knight) {
         startMove = MoveGenerator::generateKnightMoves(board, knight, startMove);
     });
