@@ -1,7 +1,7 @@
 #include "UciProtocol.h"
-#include "logging.h"
+#include "utils/logging.h"
 #include "notation.h"
-#include "utils.h"
+#include "utils/split.h"
 
 #include <fstream>
 #include <iostream>

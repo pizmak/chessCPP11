@@ -5,7 +5,7 @@
 #include "ZobristHash.h"
 #include "Engine.h"
 #include "MoveGenerator.h"
-#include "NativeArray.h"
+#include "utils/NativeArray.h"
 
 #include <list>
 #include <iostream>

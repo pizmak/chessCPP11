@@ -2,7 +2,7 @@
 
 #include "Piece.h"
 #include "Color.h"
-#include "EnumFlags.h"
+#include "utils/EnumFlags.h"
 #include "common.h"
 #include "History.h"
 

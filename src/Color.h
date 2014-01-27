@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cstdint>
-#include "enums.h"
-#include "asserts.h"
+#include "utils/enums.h"
+#include "utils/asserts.h"
 
 // values of this enum are used as indices in arrays and cannot be changed
 ENUM(Color, uint8_t,

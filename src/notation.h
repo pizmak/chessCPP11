@@ -3,9 +3,9 @@
 #include <iostream>
 #include <string>
 
-#include "asserts.h"
-#include "bit.h"
-#include "logging.h"
+#include "utils/asserts.h"
+#include "utils/bit.h"
+#include "utils/logging.h"
 #include "Move.h"
 #include "Color.h"
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include "enums.h"
+#include "utils/enums.h"
 
 // values of this enum are used as indices in arrays and cannot be changed
 ENUM(Piece, uint8_t,

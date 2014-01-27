@@ -1,10 +1,10 @@
 #include "Engine.h"
-#include "asserts.h"
+#include "utils/asserts.h"
 #include "notation.h"
 #include "ChessEvaluator.h"
-#include "utils.h"
+#include "utils/split.h"
 #include "Alphabeta.h"
-#include "ScopeTimer.h"
+#include "utils/ScopeTimer.h"
 #include "MoveGenerator.h"
 #include "ChessTraits.h"
 

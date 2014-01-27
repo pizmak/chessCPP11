@@ -3,7 +3,7 @@
 #include "Color.h"
 #include "notation.h"
 #include "Piece.h"
-#include "logging.h"
+#include "utils/logging.h"
 #include "MoveGenerator.h"
 
 int16_t ChessEvaluator::distance[64][64];

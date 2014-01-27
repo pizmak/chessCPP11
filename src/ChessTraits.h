@@ -5,7 +5,7 @@
 #include "Engine.h"
 #include "MoveGenerator.h"
 #include "ChessEvaluator.h"
-#include "bit.h"
+#include "utils/bit.h"
 #include <climits>
 
 struct ChessTraits {

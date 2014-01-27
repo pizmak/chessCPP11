@@ -3,7 +3,7 @@
 #include <cstdint>
 
 #include "common.h"
-#include "EnumFlags.h"
+#include "utils/EnumFlags.h"
 #include "Piece.h"
 
 ENUM(MoveFlags, uint16_t,

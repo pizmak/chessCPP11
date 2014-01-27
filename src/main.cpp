@@ -1,10 +1,10 @@
 #include "ChessBoard.h"
 #include "Move.h"
 #include "notation.h"
-#include "bit.h"
+#include "utils/bit.h"
 #include "Engine.h"
 #include "MoveGenerator.h"
-#include "unitTests.h"
+#include "test/unitTests.h"
 #include "UciProtocol.h"
 #include "ChessEvaluator.h"
 

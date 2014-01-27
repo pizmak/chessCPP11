@@ -1,9 +1,9 @@
 #include "ChessBoard.h"
 #include "Move.h"
-#include "asserts.h"
+#include "utils/asserts.h"
 #include "notation.h"
-#include "bit.h"
-#include "logging.h"
+#include "utils/bit.h"
+#include "utils/logging.h"
 #include <iomanip>
 #include <cstdint>
 #include <iosfwd>

@@ -3,7 +3,7 @@
 #include <iosfwd>
 #include <vector>
 
-#include "asserts.h"
+#include "utils/asserts.h"
 
 template <typename BoardType>
 class History {

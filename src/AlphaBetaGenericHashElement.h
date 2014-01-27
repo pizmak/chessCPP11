@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enums.h"
+#include "utils/enums.h"
 #include <cstdint>
 
 ENUM(ScoreAccuracy, uint8_t,
