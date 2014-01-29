@@ -103,6 +103,7 @@ Move Engine::go() {
     for (Move *m = moves; m < afterLastMove; ++m) {
         board.makeMove(*m);
         m->score = board.toMove == Color::black ? callAlphaBeta<true>(afterLastMove, bestMove.score, 1) : callAlphaBeta<false>(afterLastMove, bestMove.score, 1);
+        // TODO tutaj poglebianie ma sens? poza tym nie wiem czy nie lepiej dac np glebokosc 3 - powinno byc praktycznie tak samo szybko, a beda lepiej posortowane ruchy 
         board.unmakeMove(*m);
     }
 
@@ -114,6 +115,7 @@ Move Engine::go() {
     for (Move *m = moves; m < afterLastMove; ++m) {
         board.makeMove(*m);
         m->score = board.toMove == Color::black ? callAlphaBeta<true>(afterLastMove, bestMove.score, alphaBetaDepth) : callAlphaBeta<false>(afterLastMove, bestMove.score, alphaBetaDepth);
+        // TODO w najprostszej opcji tutaj trzeba chyba po prostu sprawdzic w historii, czy to jest 3-cie powtorzenie i jesli tak, dac temu ruchowi 0, nie?
         board.unmakeMove(*m);
         if (multiplier * m->score > multiplier * bestMove.score) {
             bestMove = *m;
@@ -129,6 +131,7 @@ Move Engine::go() {
     insert(board.getHash(), {board.getHash(), bestMove.score, uint8_t(alphaBetaDepth + 1), scoreAccuracy});
     std::cerr << "\nnumber of calls to scorePosition, hashH, hashM: " << ChessEvaluator::numberOfCalls << "(" << ChessEvaluator::numberOfCalls - numberOfCalls << ")"
             << ", " << ChessEvaluator::hashHits << ", "<< ChessEvaluator::hashMisses << std::endl;
+    // TODO watki operacje odczytu globalnych zmiennych i opracje ++ na nich powinny wykonywac bez synchronizacji?
     board.history.printHistory();
     return bestMove;
 }
