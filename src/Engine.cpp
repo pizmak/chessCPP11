@@ -89,6 +89,8 @@ Move Engine::go() {
     ScopeTimer timer("Move");
     stopped.store(false);
     uint64_t numberOfCalls = ChessEvaluator::numberOfCalls;
+    uint64_t hashHits = ChessEvaluator::hashHits;
+    uint64_t hashMisses = ChessEvaluator::hashMisses;
     ChessEvaluator::updateStageOfGame(board);
     Move *afterLastMove = MoveGenerator::generateMoves(board, moves);
     ASSERT(afterLastMove > moves, "no moves");
@@ -136,10 +138,12 @@ Move Engine::go() {
     }
     ScoreAccuracy scoreAccuracy = !stopped ? ScoreAccuracy::exact : board.toMove == Color::white ? ScoreAccuracy::lowerBound : ScoreAccuracy::upperBound;
     insert(board.getHash(), {board.getHash(), bestMove.score, uint8_t(alphaBetaDepth + 1), scoreAccuracy});
-    std::cerr << "\nnumber of calls to scorePosition, hashH, hashM: " << ChessEvaluator::numberOfCalls << "(" << ChessEvaluator::numberOfCalls - numberOfCalls << ")"
-            << ", " << ChessEvaluator::hashHits << ", "<< ChessEvaluator::hashMisses << std::endl;
-    // TODO watki operacje odczytu globalnych zmiennych i opracje ++ na nich powinny wykonywac bez synchronizacji?
-    board.history.printHistory();
+    std::cerr << "\nnumber of calls to scorePosition, hashH, hashM: "
+            << ChessEvaluator::numberOfCalls << "(" << ChessEvaluator::numberOfCalls - numberOfCalls << ")"
+            << ", " << ChessEvaluator::hashHits << "(" << ChessEvaluator::hashHits - hashHits << ")"
+            << ", " << ChessEvaluator::hashMisses << "(" << ChessEvaluator::hashMisses - hashMisses << ")" << std::endl;
+// TODO watki operacje odczytu globalnych zmiennych i opracje ++ na nich powinny wykonywac bez synchronizacji?
+//    board.history.printHistory();
     return bestMove;
 }
 
