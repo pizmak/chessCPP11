@@ -180,23 +180,25 @@ void Engine::setupFenPosition(BoardType &board, std::list<std::string> fenPositi
 
     std::string castles = fenPosition.front();
     fenPosition.pop_front();
+    EnumFlags<BoardFlags> flags;
     if (castles.find("K") != std::string::npos) {
-        board.flags |= BoardFlags::K_castling;
+        flags |= BoardFlags::K_castling;
     }
     if (castles.find("Q") != std::string::npos) {
-        board.flags |= BoardFlags::Q_castling;
+        flags |= BoardFlags::Q_castling;
     }
     if (castles.find("k") != std::string::npos) {
-        board.flags |= BoardFlags::k_castling;
+        flags |= BoardFlags::k_castling;
     }
     if (castles.find("q") != std::string::npos) {
-        board.flags |= BoardFlags::q_castling;
+        flags |= BoardFlags::q_castling;
     }
+    board.setFlags(flags);
 
     std::string enPassant = fenPosition.front();
     fenPosition.pop_front();
     if (enPassant != "-") {
-        board.enPassantSquare = notation2Number(enPassant);
+        board.setEnPassantSquare(notation2Number(enPassant));
     }
     board.initHistory();
 }

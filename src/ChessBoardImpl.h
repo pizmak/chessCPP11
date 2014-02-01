@@ -113,10 +113,6 @@ inline EnumFlags<BoardFlags> toBoardFlags(EnumFlags<MoveFlags> moveFlags) {
 template <typename HashPolicy>
 void ChessBoard<HashPolicy>::makeMove(const Move &move) {
     ASSERT(piecesColors[move.from] == toMove, number2Notation(move.from), piecesColors[move.from], toMove);
-    if (enPassantSquare != 0) {
-        HashPolicy::updateEnPassantFile(file(enPassantSquare));
-    }
-    HashPolicy::updateCastlingCapabilities(toInt(flags));
     uint8_t newEnPassantSquare = pieces[move.from] == Piece::pawn && (move.to - move.from == 16 || move.from - move.to == 16) ? move.to : 0;
     if (move.captured != Piece::empty) {
         takePiece(pieces[move.from], toMove, move.captured, move.from, move.to);
@@ -140,14 +136,10 @@ void ChessBoard<HashPolicy>::makeMove(const Move &move) {
         disappearPiece(Piece::pawn, opponent(toMove), enPassantSquare);
         materialDifference += piecesValues[toInt(Piece::pawn)] * (toMove == Color::white ? 1 : -1);
     }
-    flags &= ~toBoardFlags(move.flags);
-    enPassantSquare = newEnPassantSquare;
+    setFlags(flags & ~toBoardFlags(move.flags));
+    setEnPassantSquare(newEnPassantSquare);
     toMove = opponent(toMove);
     HashPolicy::switchPlayer();
-    if (enPassantSquare != 0) {
-        HashPolicy::updateEnPassantFile(file(enPassantSquare));
-    }
-    HashPolicy::updateCastlingCapabilities(toInt(flags));
     history.push(HashPolicy::getHash(), move.captured != Piece::empty || pieces[move.to] == Piece::pawn);
 }
 
@@ -155,16 +147,12 @@ template <typename HashPolicy>
 void ChessBoard<HashPolicy>::unmakeMove(const Move &move) {
     ASSERT(piecesColors[move.to] == opponent(toMove), toMove, piecesColors[move.to]);
     history.pop();
-    if (enPassantSquare != 0) {
-        HashPolicy::updateEnPassantFile(file(enPassantSquare));
-    }
-    HashPolicy::updateCastlingCapabilities(toInt(flags));
     if (move.captured != Piece::empty) {
         untakePiece(pieces[move.to], opponent(toMove), move.captured, move.from, move.to);
     } else {
         movePiece(pieces[move.to], opponent(toMove), move.to, move.from);
     }
-    enPassantSquare = move.enPassantSquare;
+    setEnPassantSquare(move.enPassantSquare);
     if (pieces[move.from] == Piece::king) {
         if (move.flags & MoveFlags::castling) {
             uint8_t startSquare = move.to > move.from ? 7 : 0;
@@ -180,12 +168,8 @@ void ChessBoard<HashPolicy>::unmakeMove(const Move &move) {
         appearPiece(Piece::pawn, toMove, move.enPassantSquare);
         materialDifference += piecesValues[toInt(Piece::pawn)] * (toMove == Color::white ? 1 : -1);
     }
-    flags |= toBoardFlags(move.flags);
+    setFlags(flags | toBoardFlags(move.flags));
     toMove = opponent(toMove);
-    if (enPassantSquare != 0) {
-        HashPolicy::updateEnPassantFile(file(enPassantSquare));
-    }
-    HashPolicy::updateCastlingCapabilities(toInt(flags));
     HashPolicy::switchPlayer();
 }
 
@@ -300,7 +284,7 @@ void ChessBoard<HashPolicy>::clear() {
         }
     }
 
-    this->enPassantSquare = 0;
+    this->setEnPassantSquare(0);
     this->flags = BoardFlags::empty;
     HashPolicy::clearHash();
 }
@@ -313,11 +297,34 @@ void ChessBoard<HashPolicy>::initHash() {
             HashPolicy::updatePiece(i, toInt(piecesColors[i]), toInt(pieces[i]));
         }
     }
+    HashPolicy::updateCastlingCapabilities(toInt(flags));
 }
 
 template <typename HashPolicy>
 bool ChessBoard<HashPolicy>::isDraw() {
     return this->history.isDraw();
+}
+
+template <typename HashPolicy>
+void ChessBoard<HashPolicy>::setEnPassantSquare(uint8_t enPassantSquare) {
+    if (this->enPassantSquare != enPassantSquare) {
+        if (this->enPassantSquare != 0) {
+            HashPolicy::updateEnPassantFile(file(this->enPassantSquare));
+        }
+        if (enPassantSquare != 0) {
+            HashPolicy::updateEnPassantFile(file(enPassantSquare));
+        }
+        this->enPassantSquare = enPassantSquare;
+    }
+}
+
+template <typename HashPolicy>
+void ChessBoard<HashPolicy>::setFlags(EnumFlags<BoardFlags> flags) {
+    if (this->flags != flags) {
+        HashPolicy::updateCastlingCapabilities(toInt(this->flags));
+        HashPolicy::updateCastlingCapabilities(toInt(flags));
+        this->flags = flags;
+    }
 }
 
 template <typename HashPolicy>
