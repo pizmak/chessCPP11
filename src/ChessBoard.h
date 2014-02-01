@@ -16,7 +16,7 @@ ENUM(BoardFlags, uint16_t,
     q_castling, q_CASTLING
 )
 
-static const EnumFlags<BoardFlags> castling = BoardFlags::K_castling | BoardFlags::Q_castling | BoardFlags::k_castling | BoardFlags::q_castling;
+static const EnumFlags<BoardFlags> allCastlings = BoardFlags::K_castling | BoardFlags::Q_castling | BoardFlags::k_castling | BoardFlags::q_castling;
 
 #define START_BOARD \
     Piece::rook,  Piece::knight, Piece::bishop, Piece::queen, Piece::king,  Piece::bishop, Piece::knight, Piece::rook,\
@@ -49,7 +49,7 @@ struct ChessBoard : HashPolicy {
         {0x000000000000FF00ULL, 0x0000000000000042ULL, 0x0000000000000024ULL, 0x0000000000000081ULL, 0x0000000000000008ULL, 0x0000000000000010ULL},
         {0x00FF000000000000ULL, 0x4200000000000000ULL, 0x2400000000000000ULL, 0x8100000000000000ULL, 0x0800000000000000ULL, 0x1000000000000000ULL}
     };
-    EnumFlags<BoardFlags> flags = castling;
+    EnumFlags<BoardFlags> flags = allCastlings;
     Color toMove = Color::white;
     uint8_t enPassantSquare = 0;
     History<ThisType> history;

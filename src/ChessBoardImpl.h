@@ -107,7 +107,7 @@ void ChessBoard<HashPolicy>::movePiece(Piece piece, Color color, uint8_t from, u
 // not very nice but fast way to convert MoveFlags to BoardFlags
 // with assumption that correspondent enums has same values
 inline EnumFlags<BoardFlags> toBoardFlags(EnumFlags<MoveFlags> moveFlags) {
-    return BoardFlags(toInt(moveFlags) & toInt(castling));
+    return BoardFlags(toInt(moveFlags) & toInt(allCastlings));
 }
 
 template <typename HashPolicy>
