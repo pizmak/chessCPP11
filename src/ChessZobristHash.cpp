@@ -16,3 +16,19 @@ void ChessZobristHash::updateCastlingCapabilities(uint8_t castlingCapabilities) 
 void ChessZobristHash::updateEnPassantFile(uint8_t enPassantFile) {
     update<EN_PASSANT>(enPassantFile);
 }
+
+void ChessZobristHash::setRepetition(bool repeated) {
+    if (repetition != repeated) {
+        update<REPETITION>(repetition);
+        update<REPETITION>(repeated);
+        repetition = repeated;
+    }
+}
+
+void ChessZobristHash::resetRepetition() {
+    setRepetition(false);
+}
+
+void ChessZobristHash::initRepetition() {
+    update<REPETITION>(false);
+}

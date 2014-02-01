@@ -140,7 +140,9 @@ void ChessBoard<HashPolicy>::makeMove(const Move &move) {
     setEnPassantSquare(newEnPassantSquare);
     toMove = opponent(toMove);
     HashPolicy::switchPlayer();
+    HashPolicy::resetRepetition();
     history.push(HashPolicy::getHash(), move.captured != Piece::empty || pieces[move.to] == Piece::pawn);
+    HashPolicy::setRepetition(history.isTopPositionRepeated(2));
 }
 
 template <typename HashPolicy>
@@ -298,6 +300,7 @@ void ChessBoard<HashPolicy>::initHash() {
         }
     }
     HashPolicy::updateCastlingCapabilities(toInt(flags));
+    HashPolicy::initRepetition();
 }
 
 template <typename HashPolicy>
