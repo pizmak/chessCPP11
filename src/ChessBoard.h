@@ -52,7 +52,7 @@ struct ChessBoard : HashPolicy {
     EnumFlags<BoardFlags> flags = allCastlings;
     Color toMove = Color::white;
     uint8_t enPassantSquare = 0;
-    History<ThisType> history;
+    History history;
     bool isDraw(); // returns true if there were 50 moves without capture or pawn moves or or position was three times repeated
     void makeMove(const Move &r); // only move pieces around, no check for move validity
     void unmakeMove(const Move &r);
@@ -65,6 +65,9 @@ struct ChessBoard : HashPolicy {
     void clear();
     ChessBoard();
     void print() const;
+    void setEnPassantSquare(uint8_t enPassantSquare);
+    void setFlags(EnumFlags<BoardFlags> flags);
+    void initHistory();
 protected:
     void initHash();
     void dumpRank(std::ostream &stream, uint8_t rank) const;

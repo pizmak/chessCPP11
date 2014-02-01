@@ -14,7 +14,7 @@ const int16_t ChessBoard<HashPolicy>::piecesValues[] = {100, 300, 300, 500, 900,
 template <typename HashPolicy>
 ChessBoard<HashPolicy>::ChessBoard() {
     initHash();
-    history.clear(*this);
+    history.init(HashPolicy::getHash());
 }
 
 template <typename HashPolicy>
@@ -148,7 +148,7 @@ void ChessBoard<HashPolicy>::makeMove(const Move &move) {
         HashPolicy::updateEnPassantFile(file(enPassantSquare));
     }
     HashPolicy::updateCastlingCapabilities(toInt(flags));
-    history.push(*this, move.captured != Piece::empty || pieces[move.to] == Piece::pawn);
+    history.push(HashPolicy::getHash(), move.captured != Piece::empty || pieces[move.to] == Piece::pawn);
 }
 
 template <typename HashPolicy>
@@ -302,7 +302,6 @@ void ChessBoard<HashPolicy>::clear() {
 
     this->enPassantSquare = 0;
     this->flags = BoardFlags::empty;
-    this->history.clear(*this);
     HashPolicy::clearHash();
 }
 
@@ -319,4 +318,9 @@ void ChessBoard<HashPolicy>::initHash() {
 template <typename HashPolicy>
 bool ChessBoard<HashPolicy>::isDraw() {
     return this->history.isDraw();
+}
+
+template <typename HashPolicy>
+void ChessBoard<HashPolicy>::initHistory() {
+    history.init(HashPolicy::getHash());
 }

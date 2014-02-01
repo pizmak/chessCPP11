@@ -198,6 +198,7 @@ void Engine::setupFenPosition(BoardType &board, std::list<std::string> fenPositi
     if (enPassant != "-") {
         board.enPassantSquare = notation2Number(enPassant);
     }
+    board.initHistory();
 }
 
 void Engine::clearHash() {
