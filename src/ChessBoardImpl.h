@@ -4,6 +4,7 @@
 #include "notation.h"
 #include "utils/bit.h"
 #include "utils/logging.h"
+#include "utils/split.h"
 #include <iomanip>
 #include <cstdint>
 #include <iosfwd>
@@ -333,4 +334,91 @@ void ChessBoard<HashPolicy>::setFlags(EnumFlags<BoardFlags> flags) {
 template <typename HashPolicy>
 void ChessBoard<HashPolicy>::initHistory() {
     history.init(HashPolicy::getHash());
+}
+
+template <typename HashPolicy>
+Piece ChessBoard<HashPolicy>::getPiece(uint8_t index) const {
+    return pieces[index];
+}
+
+template <typename HashPolicy>
+Color ChessBoard<HashPolicy>::getPieceColor(uint8_t index) const {
+    return piecesColors[index];
+}
+
+template <typename HashPolicy>
+uint64_t ChessBoard<HashPolicy>::getBitmask(Color color, Piece piece) const {
+    return bitmask[toInt(color)][toInt(piece)];
+}
+
+template <typename HashPolicy>
+Color ChessBoard<HashPolicy>::getMoveSide() const {
+    return toMove;
+}
+
+template <typename HashPolicy>
+uint8_t ChessBoard<HashPolicy>::getEnPassantSquare() const {
+    return enPassantSquare;
+}
+
+template <typename HashPolicy>
+EnumFlags<BoardFlags> ChessBoard<HashPolicy>::getFlags() const {
+    return flags;
+}
+
+
+template <typename HashPolicy>
+void ChessBoard<HashPolicy>::initFromFen(std::list<std::string> fenPosition) {
+    clear();
+    if (fenPosition.size() != 6) {
+        return;
+    }
+    std::list<std::string> ranks = split(fenPosition.front(), '/');
+    fenPosition.pop_front();
+    uint8_t _rank = 8;
+    for (auto rank : ranks) {
+        --_rank;
+        uint8_t file = 0;
+        while (rank.size() > 0) {
+            if (std::isdigit(rank[0])) {
+                file += rank[0] - '0';
+            } else {
+                Piece piece = notation2Piece(rank[0]);
+                appearPiece(piece, rank[0] >= 'a' ? Color::black : Color::white, number(_rank, file));
+                ++file;
+            }
+            rank = rank.substr(1);
+        }
+        ASSERT(file == 8, file);
+    }
+    ASSERT(_rank == 0, _rank);
+
+    std::string toMove = fenPosition.front();
+    fenPosition.pop_front();
+    ASSERT(toMove == "w" || toMove == "b", toMove);
+    this->toMove = toMove == "w" ? Color::white : Color::black;
+
+    std::string castles = fenPosition.front();
+    fenPosition.pop_front();
+    EnumFlags<BoardFlags> flags;
+    if (castles.find("K") != std::string::npos) {
+        flags |= BoardFlags::K_castling;
+    }
+    if (castles.find("Q") != std::string::npos) {
+        flags |= BoardFlags::Q_castling;
+    }
+    if (castles.find("k") != std::string::npos) {
+        flags |= BoardFlags::k_castling;
+    }
+    if (castles.find("q") != std::string::npos) {
+        flags |= BoardFlags::q_castling;
+    }
+    setFlags(flags);
+
+    std::string enPassant = fenPosition.front();
+    fenPosition.pop_front();
+    if (enPassant != "-") {
+        setEnPassantSquare(notation2Number(enPassant));
+    }
+    initHistory();
 }

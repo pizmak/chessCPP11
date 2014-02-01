@@ -2,7 +2,6 @@
 #include "utils/asserts.h"
 #include "notation.h"
 #include "ChessEvaluator.h"
-#include "utils/split.h"
 #include "Alphabeta.h"
 #include "utils/ScopeTimer.h"
 #include "MoveGenerator.h"
@@ -33,37 +32,37 @@ void Engine::move(const std::list<std::string> &moves) {
 }
 
 void Engine::fillMoveFlags(BoardType &board, Move &m) {
-    m.enPassantSquare = board.enPassantSquare;
-    m.captured = board.pieces[m.to];
-    if (board.pieces[m.from] == Piece::king) {
-        if (board.toMove == Color::white && board.flags & BoardFlags::K_castling) {
+    m.enPassantSquare = board.getEnPassantSquare();
+    m.captured = board.getPiece(m.to);
+    if (board.getPiece(m.from) == Piece::king) {
+        if (board.getMoveSide() == Color::white && board.getFlags() & BoardFlags::K_castling) {
             m.flags |= MoveFlags::K_castling;
         }
-        if (board.toMove == Color::white && board.flags & BoardFlags::Q_castling) {
+        if (board.getMoveSide() == Color::white && board.getFlags() & BoardFlags::Q_castling) {
             m.flags |= MoveFlags::Q_castling;
         }
-        if (board.toMove == Color::black && board.flags & BoardFlags::k_castling) {
+        if (board.getMoveSide() == Color::black && board.getFlags() & BoardFlags::k_castling) {
             m.flags |= MoveFlags::k_castling;
         }
-        if (board.toMove == Color::black && board.flags & BoardFlags::q_castling) {
+        if (board.getMoveSide() == Color::black && board.getFlags() & BoardFlags::q_castling) {
             m.flags |= MoveFlags::q_castling;
         }
         if (m.from - m.to == 2 || m.to - m.from == 2) {
             m.flags |= MoveFlags::castling;
         }
     }
-    if (board.pieces[m.from] == Piece::pawn &&
-            (board.toMove == Color::white && m.to - board.enPassantSquare == 8 || board.toMove == Color::black && board.enPassantSquare - m.to == 8)) {
+    if (board.getPiece(m.from) == Piece::pawn &&
+            (board.getMoveSide() == Color::white && m.to - board.getEnPassantSquare() == 8 || board.getMoveSide() == Color::black && board.getEnPassantSquare() - m.to == 8)) {
         m.flags |= MoveFlags::enPassantCapture;
     }
-    if (board.pieces[m.from] == Piece::rook) {
-        if (m.from == 7 && board.flags & BoardFlags::K_castling) {
+    if (board.getPiece(m.from) == Piece::rook) {
+        if (m.from == 7 && board.getFlags() & BoardFlags::K_castling) {
             m.flags |= MoveFlags::K_castling;
-        } else if (m.from == 0 && board.flags & BoardFlags::Q_castling) {
+        } else if (m.from == 0 && board.getFlags() & BoardFlags::Q_castling) {
             m.flags |= MoveFlags::Q_castling;
-        } else if (m.from == 0x3F && board.flags & BoardFlags::k_castling) {
+        } else if (m.from == 0x3F && board.getFlags() & BoardFlags::k_castling) {
             m.flags |= MoveFlags::k_castling;
-        } else if (m.from == 0x38 && board.flags & BoardFlags::q_castling) {
+        } else if (m.from == 0x38 && board.getFlags() & BoardFlags::q_castling) {
             m.flags |= MoveFlags::q_castling;
         }
     }
@@ -96,7 +95,7 @@ Move Engine::go() {
     ASSERT(afterLastMove > moves, "no moves");
 
     Move bestMove = moves[0];
-    int multiplier = board.toMove == Color::white ? 1 : -1;
+    int multiplier = board.getMoveSide() == Color::white ? 1 : -1;
     if (afterLastMove - moves == 1) {
         return bestMove;
     }
@@ -104,26 +103,26 @@ Move Engine::go() {
 
     for (Move *m = moves; m < afterLastMove; ++m) {
         board.makeMove(*m);
-        if (board.history.isDraw()) {
+        if (board.isDraw()) {
             m->score = 0;
         } else {
-            m->score = board.toMove == Color::black ? callAlphaBeta<true>(afterLastMove, bestMove.score, 1) : callAlphaBeta<false>(afterLastMove, bestMove.score, 1);
+            m->score = board.getMoveSide() == Color::black ? callAlphaBeta<true>(afterLastMove, bestMove.score, 1) : callAlphaBeta<false>(afterLastMove, bestMove.score, 1);
         }
         // TODO tutaj poglebianie ma sens? poza tym nie wiem czy nie lepiej dac np glebokosc 3 - powinno byc praktycznie tak samo szybko, a beda lepiej posortowane ruchy 
         board.unmakeMove(*m);
     }
 
     static auto sortFun = [this](const Move &m1, const Move &m2) {
-        return board.toMove == Color::black ? m1.score < m2.score : m1.score > m2.score;
+        return board.getMoveSide() == Color::black ? m1.score < m2.score : m1.score > m2.score;
     };
     std::sort(moves, afterLastMove, sortFun);
 
     for (Move *m = moves; m < afterLastMove; ++m) {
         board.makeMove(*m);
-        if (board.history.isDraw()) {
+        if (board.isDraw()) {
             m->score = 0;
         } else {
-            m->score = board.toMove == Color::black ? callAlphaBeta<true>(afterLastMove, bestMove.score, alphaBetaDepth) : callAlphaBeta<false>(afterLastMove, bestMove.score, alphaBetaDepth);
+            m->score = board.getMoveSide() == Color::black ? callAlphaBeta<true>(afterLastMove, bestMove.score, alphaBetaDepth) : callAlphaBeta<false>(afterLastMove, bestMove.score, alphaBetaDepth);
         }
         board.unmakeMove(*m);
         if (multiplier * m->score > multiplier * bestMove.score) {
@@ -136,7 +135,7 @@ Move Engine::go() {
             break;
         }
     }
-    ScoreAccuracy scoreAccuracy = !stopped ? ScoreAccuracy::exact : board.toMove == Color::white ? ScoreAccuracy::lowerBound : ScoreAccuracy::upperBound;
+    ScoreAccuracy scoreAccuracy = !stopped ? ScoreAccuracy::exact : board.getMoveSide() == Color::white ? ScoreAccuracy::lowerBound : ScoreAccuracy::upperBound;
     insert(board.getHash(), {board.getHash(), bestMove.score, uint8_t(alphaBetaDepth + 1), scoreAccuracy});
     std::cerr << "\nnumber of calls to scorePosition, hashH, hashM: "
             << ChessEvaluator::numberOfCalls << "(" << ChessEvaluator::numberOfCalls - numberOfCalls << ")"
@@ -153,58 +152,7 @@ void Engine::setupFenPosition(std::list<std::string> fenPosition) {
 
 void Engine::setupFenPosition(BoardType &board, std::list<std::string> fenPosition) {
     ASSERT(fenPosition.size() == 6, "invalid fen position");
-    board.clear();
-    if (fenPosition.size() != 6) {
-        return;
-    }
-    std::list<std::string> ranks = split(fenPosition.front(), '/');
-    fenPosition.pop_front();
-    uint8_t _rank = 8;
-    for (auto rank : ranks) {
-        --_rank;
-        uint8_t file = 0;
-        while (rank.size() > 0) {
-            if (std::isdigit(rank[0])) {
-                file += rank[0] - '0';
-            } else {
-                Piece piece = notation2Piece(rank[0]);
-                board.appearPiece(piece, rank[0] >= 'a' ? Color::black : Color::white, number(_rank, file));
-                ++file;
-            }
-            rank = rank.substr(1);
-        }
-        ASSERT(file == 8, file);
-    }
-    ASSERT(_rank == 0, _rank);
-
-    std::string toMove = fenPosition.front();
-    fenPosition.pop_front();
-    ASSERT(toMove == "w" || toMove == "b", toMove);
-    board.toMove = toMove == "w" ? Color::white : Color::black;
-
-    std::string castles = fenPosition.front();
-    fenPosition.pop_front();
-    EnumFlags<BoardFlags> flags;
-    if (castles.find("K") != std::string::npos) {
-        flags |= BoardFlags::K_castling;
-    }
-    if (castles.find("Q") != std::string::npos) {
-        flags |= BoardFlags::Q_castling;
-    }
-    if (castles.find("k") != std::string::npos) {
-        flags |= BoardFlags::k_castling;
-    }
-    if (castles.find("q") != std::string::npos) {
-        flags |= BoardFlags::q_castling;
-    }
-    board.setFlags(flags);
-
-    std::string enPassant = fenPosition.front();
-    fenPosition.pop_front();
-    if (enPassant != "-") {
-        board.setEnPassantSquare(notation2Number(enPassant));
-    }
-    board.initHistory();
+    board.initFromFen(fenPosition);
 }
 
 void Engine::clearHash() {

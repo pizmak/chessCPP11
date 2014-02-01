@@ -5,6 +5,8 @@
 #include "utils/EnumFlags.h"
 #include "common.h"
 #include "History.h"
+#include <string>
+#include <list>
 
 struct Move;
 
@@ -43,9 +45,10 @@ struct ChessBoard : HashPolicy {
     using ThisType = ChessBoard<HashPolicy>;
     static const int16_t piecesValues[];
     uint64_t materialDifference = 0;
+protected:
     Piece pieces[64] = {START_BOARD};
     Color piecesColors[64] = {START_COLORS};
-    uint_fast64_t bitmask[2][6] = {
+    uint64_t bitmask[2][6] = {
         {0x000000000000FF00ULL, 0x0000000000000042ULL, 0x0000000000000024ULL, 0x0000000000000081ULL, 0x0000000000000008ULL, 0x0000000000000010ULL},
         {0x00FF000000000000ULL, 0x4200000000000000ULL, 0x2400000000000000ULL, 0x8100000000000000ULL, 0x0800000000000000ULL, 0x1000000000000000ULL}
     };
@@ -53,6 +56,7 @@ struct ChessBoard : HashPolicy {
     Color toMove = Color::white;
     uint8_t enPassantSquare = 0;
     History history;
+public:
     bool isDraw(); // returns true if there were 50 moves without capture or pawn moves or or position was three times repeated
     void makeMove(const Move &r); // only move pieces around, no check for move validity
     void unmakeMove(const Move &r);
@@ -62,13 +66,20 @@ struct ChessBoard : HashPolicy {
     uint64_t allPieces() const;
     void disappearPiece(Piece piece, Color color, uint8_t from);
     void appearPiece(Piece piece, Color color, uint8_t to);
-    void clear();
     ChessBoard();
     void print() const;
     void setEnPassantSquare(uint8_t enPassantSquare);
     void setFlags(EnumFlags<BoardFlags> flags);
-    void initHistory();
+    Piece getPiece(uint8_t index) const;
+    Color getPieceColor(uint8_t index) const;
+    uint64_t getBitmask(Color color, Piece piece) const;
+    Color getMoveSide() const;
+    uint8_t getEnPassantSquare() const;
+    EnumFlags<BoardFlags> getFlags() const;
+    void initFromFen(std::list<std::string> fenPosition);
 protected:
+    void initHistory();
+    void clear();
     void initHash();
     void dumpRank(std::ostream &stream, uint8_t rank) const;
     void dumpMask(std::ostream &stream, Piece piece) const;
