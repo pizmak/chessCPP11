@@ -1,20 +1,19 @@
 #include <algorithm>
+#include "utils/Statistics.h"
+#include <stdio.h>
 
 static uint8_t maxDeepeningLevel = 5;
 static uint8_t currentDepeningLevel = 0;
-static uint64_t iloscCiec = 0;
-static uint64_t evalSimpleCount = 0;
-static uint64_t poglebianieCount[] = {0, 0, 0, 0, 0, 0, 0};
 static int16_t evalSimpleBeginningOfDepening = 0;
 
 template <typename GameTraits, bool isMin, int depth>
 struct Alphabeta {
     static int16_t go(typename GameTraits::State &state, int16_t alpha, int16_t beta, typename GameTraits::Move *spaceForMoves) {
         if (AlphaBetaGenericHashElement &hashed = GameTraits::getStateScore(state, depth, alpha, beta)) {
-            ++ChessEvaluator::hashHits;
+            Statistics::globalStatistics().increment("hash.hits");
             return hashed.score;
         }
-        ++ChessEvaluator::hashMisses;
+        Statistics::globalStatistics().increment("hash.misses");
         typename GameTraits::Move *afterLastMove = GameTraits::generateMoves(state, spaceForMoves);
         if (spaceForMoves == afterLastMove) {
             return GameTraits::evaluateFinalPosition(state) + (isMin ? depth : -depth);
@@ -24,7 +23,7 @@ struct Alphabeta {
             for (typename GameTraits::Move *move = spaceForMoves; move < afterLastMove; ++move) {
                 GameTraits::makeMove(state, *move);
                 GameTraits::storeMoveScore(*move, GameTraits::evaluateSimple(state));
-                ++evalSimpleCount;
+                Statistics::globalStatistics().increment("alphabeta.evalSimple");
                 GameTraits::unmakeMove(state, *move);
             }
             static auto sortFun = [](const typename GameTraits::Move &m1, const typename GameTraits::Move &m2) {
@@ -54,7 +53,10 @@ struct Alphabeta {
                         stop = true;
                     }
                 }
-                ++poglebianieCount[currentDepeningLevel];
+                char buffer[3];
+                snprintf(buffer, 3, "%d", currentDepeningLevel);
+                Statistics::globalStatistics().increment(std::string("alphabeta.deepening[") + buffer + "]");
+
                 ++currentDepeningLevel;
                 result = currentDepeningLevel >= maxDeepeningLevel || stop ?
                     Alphabeta<GameTraits, !isMin, 0 /* check deeper in case of capture */>::go(state, alpha, beta, afterLastMove) :
@@ -72,7 +74,7 @@ struct Alphabeta {
                 bestResult = std::max(bestResult, result);
             }
             if (alpha >= beta) {
-                ++iloscCiec;
+                Statistics::globalStatistics().increment("alphabeta.cuts");
                 accuracy = isMin ? ScoreAccuracy::upperBound : ScoreAccuracy::lowerBound;
                 break;
             }
@@ -95,10 +97,10 @@ template <typename GameTraits, bool isMin>
 struct Alphabeta<GameTraits, isMin, 0> {
     static inline int16_t go(typename GameTraits::State &state, int16_t alpha __attribute__((unused)), int16_t beta __attribute__((unused)), typename GameTraits::Move *spaceForMoves __attribute__((unused))) {
         if (AlphaBetaGenericHashElement &hashed = GameTraits::getStateScore(state, 0, alpha, beta)) {
-            ++ChessEvaluator::hashHits;
+            Statistics::globalStatistics().increment("hash.hits");
             return hashed.score;
         }
-        ++ChessEvaluator::hashMisses;
+        Statistics::globalStatistics().increment("hash.misses");
         int16_t result = GameTraits::evaluate(state);
         GameTraits::storeStateScore(state, result, 0, ScoreAccuracy::exact);
         return result;

@@ -2,6 +2,7 @@
 #include "utils/logging.h"
 #include "notation.h"
 #include "utils/split.h"
+#include "utils/Statistics.h"
 
 #include <fstream>
 #include <iostream>
@@ -59,6 +60,10 @@ uciok)";
     }
     if (command.find("s") == 0) {
         engine.getBoard().print();
+        return "";
+    }
+    if (command.find("printStats") == 0) {
+        printStats(command.substr(sizeof("printStats") - 1));
         return "";
     }
     engine.move(command);
@@ -163,5 +168,13 @@ void UciProtocol::setOption(std::string option) {
         std::cerr << "Hash option temporary unsupported" << std::endl;
     } else {
         std::cerr << "invalid option name: |" << optionName << "|" << std::endl;
+    }
+}
+
+void UciProtocol::printStats(std::string pattern) {
+    if (pattern.empty()) {
+        Statistics::globalStatistics().printAllFull(std::cerr);
+    } else {
+        Statistics::globalStatistics().printRegexFull(pattern.substr(1), std::cerr);
     }
 }

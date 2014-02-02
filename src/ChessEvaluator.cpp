@@ -5,6 +5,7 @@
 #include "Piece.h"
 #include "utils/logging.h"
 #include "MoveGenerator.h"
+#include "utils/Statistics.h"
 
 int16_t ChessEvaluator::distance[64][64];
 StageOfGame ChessEvaluator::gameStage = StageOfGame::OPENING;
@@ -161,13 +162,9 @@ StageOfGame ChessEvaluator::stageOfGame(const BoardType &board) {
     return StageOfGame::MIDDLEGAME;
 }
 
-int ChessEvaluator::numberOfCalls = 0;
-int ChessEvaluator::hashHits = 0;
-int ChessEvaluator::hashMisses = 0;
-
 int16_t ChessEvaluator::evaluate(const BoardType &board) {
     int16_t sum = board.materialDifference;
-    ++numberOfCalls;
+    Statistics::globalStatistics().increment("evaluator.callsNumber");
 
     uint8_t king_position[2] = {bit::mostSignificantBit(board.getBitmask(Color::white, Piece::king)), bit::mostSignificantBit(board.getBitmask(Color::black, Piece::king))};
 

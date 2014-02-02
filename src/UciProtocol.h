@@ -17,6 +17,7 @@ class UciProtocol {
     void setOption(std::string option);
     void processGo();
     void goAsync();
+    void printStats(std::string pattern);
     std::thread *currentThread;
     std::atomic<bool> searchInProgress;
 public:

@@ -15,9 +15,6 @@ public:
     static int16_t evaluate(const BoardType &board);
     static void updateStageOfGame(const BoardType &board);
     static void initialize();
-    static int numberOfCalls;
-    static int hashHits;
-    static int hashMisses;
 private:
     static StageOfGame gameStage;
     static const int16_t piecesValues[];
