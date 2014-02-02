@@ -90,6 +90,9 @@ Move Engine::go() {
     uint64_t numberOfCalls = ChessEvaluator::numberOfCalls;
     uint64_t hashHits = ChessEvaluator::hashHits;
     uint64_t hashMisses = ChessEvaluator::hashMisses;
+    uint64_t iloscCiecPrzedRuchem = iloscCiec;
+    for(auto &val : poglebianieCount) val = 0; 
+
     ChessEvaluator::updateStageOfGame(board);
     Move *afterLastMove = MoveGenerator::generateMoves(board, moves);
     ASSERT(afterLastMove > moves, "no moves");
@@ -139,8 +142,12 @@ Move Engine::go() {
     insert(board.getHash(), {board.getHash(), bestMove.score, uint8_t(alphaBetaDepth + 1), scoreAccuracy});
     std::cerr << "\nnumber of calls to scorePosition, hashH, hashM: "
             << ChessEvaluator::numberOfCalls << "(" << ChessEvaluator::numberOfCalls - numberOfCalls << ")"
+            << ", " << iloscCiec << "(+++" << iloscCiec - iloscCiecPrzedRuchem << ")"
+            << ", " << "(---" << poglebianieCount  <<  ")"
             << ", " << ChessEvaluator::hashHits << "(" << ChessEvaluator::hashHits - hashHits << ")"
             << ", " << ChessEvaluator::hashMisses << "(" << ChessEvaluator::hashMisses - hashMisses << ")" << std::endl;
+		for (auto &i : poglebianieCount) std::cerr << i << " , "; 
+		std::cerr << std::endl;
 // TODO watki operacje odczytu globalnych zmiennych i opracje ++ na nich powinny wykonywac bez synchronizacji?
 //    board.history.printHistory();
     return bestMove;

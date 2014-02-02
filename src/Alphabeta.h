@@ -2,6 +2,10 @@
 
 static uint8_t maxDeepeningLevel = 5;
 static uint8_t currentDepeningLevel = 0;
+static uint64_t iloscCiec = 0;
+static uint64_t evalSimpleCount = 0;
+static uint64_t poglebianieCount[] = {0, 0, 0, 0, 0, 0, 0};
+static int16_t evalSimpleBeginningOfDepening = 0;
 
 template <typename GameTraits, bool isMin, int depth>
 struct Alphabeta {
@@ -20,6 +24,7 @@ struct Alphabeta {
             for (typename GameTraits::Move *move = spaceForMoves; move < afterLastMove; ++move) {
                 GameTraits::makeMove(state, *move);
                 GameTraits::storeMoveScore(*move, GameTraits::evaluateSimple(state));
+                ++evalSimpleCount;
                 GameTraits::unmakeMove(state, *move);
             }
             static auto sortFun = [](const typename GameTraits::Move &m1, const typename GameTraits::Move &m2) {
@@ -34,11 +39,26 @@ struct Alphabeta {
         for (typename GameTraits::Move *move = spaceForMoves; move < afterLastMove; ++move) {
             GameTraits::makeMove(state, *move);
             int16_t result;
-            if (depth == 1 && (move->captured != Piece::empty || afterLastMove - spaceForMoves < 8 /*to jest prawie na pewno szach, a nawet jak nie to sie przyda*/)) {
+            if (depth == 1 && (move->captured != Piece::empty /*|| afterLastMove - spaceForMoves < 8*/ /*to jest prawie na pewno szach, a nawet jak nie to sie przyda*/)) {
+                if (currentDepeningLevel == 0) {
+                    GameTraits::unmakeMove(state, *move);
+                    evalSimpleBeginningOfDepening = GameTraits::evaluateSimple(state);
+                    GameTraits::makeMove(state, *move);
+                }
+                bool stop = false;
+                if (currentDepeningLevel == 1) {
+                    int16_t actualEval = GameTraits::evaluateSimple(state);
+                    int16_t multiplier = isMin ? -1 : 1;
+                    if (multiplier * (evalSimpleBeginningOfDepening - actualEval) > 21) {
+                        //std::cerr << "stopping!" << std::endl;
+                        stop = true;
+                    }
+                }
+                ++poglebianieCount[currentDepeningLevel];
                 ++currentDepeningLevel;
-                result = currentDepeningLevel > maxDeepeningLevel ?
-                        isMin ? std::numeric_limits<int16_t>::max() : std::numeric_limits<int16_t>::min() :
-                        Alphabeta<GameTraits, !isMin, 1 /* check deeper in case of capture */>::go(state, alpha, beta, afterLastMove);
+                result = currentDepeningLevel >= maxDeepeningLevel || stop ?
+                    Alphabeta<GameTraits, !isMin, 0 /* check deeper in case of capture */>::go(state, alpha, beta, afterLastMove) :
+                    Alphabeta<GameTraits, !isMin, 1 /* check deeper in case of capture */>::go(state, alpha, beta, afterLastMove);
                 --currentDepeningLevel;
             } else {
                 result = Alphabeta<GameTraits, !isMin, depth - 1>::go(state, alpha, beta, afterLastMove);
@@ -52,6 +72,7 @@ struct Alphabeta {
                 bestResult = std::max(bestResult, result);
             }
             if (alpha >= beta) {
+                ++iloscCiec;
                 accuracy = isMin ? ScoreAccuracy::upperBound : ScoreAccuracy::lowerBound;
                 break;
             }
