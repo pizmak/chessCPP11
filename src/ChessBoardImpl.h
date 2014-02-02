@@ -400,7 +400,7 @@ void ChessBoard<HashPolicy>::initFromFen(std::list<std::string> fenPosition) {
 
     std::string castles = fenPosition.front();
     fenPosition.pop_front();
-    EnumFlags<BoardFlags> flags;
+    EnumFlags<BoardFlags> flags = BoardFlags();
     if (castles.find("K") != std::string::npos) {
         flags |= BoardFlags::K_castling;
     }
