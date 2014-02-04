@@ -2,7 +2,7 @@
 
 #include "ChessBoardDefines.h"
 #include "Move.h"
-#include "AlphaBetaHashContainer.h"
+#include "hashTables/AlphaBetaHashContainer.h"
 
 #include <atomic>
 #include <list>

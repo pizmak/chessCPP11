@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ChessZobristHash.h"
+#include "zobristHashing/ChessZobristHash.h"
 #include "NoHash.h"
 #include "ChessBoard.h"
 

@@ -2,7 +2,7 @@
 #include "ChessBoard.h"
 #include "Move.h"
 #include "notation.h"
-#include "ZobristHash.h"
+#include "zobristHashing/ZobristHash.h"
 #include "Engine.h"
 #include "MoveGenerator.h"
 #include "utils/NativeArray.h"

@@ -6,7 +6,7 @@ include_directories (${szachy_SOURCE_DIR}/src)
 
 # Add executable called "helloDemo" that is built from the source files 
 # "demo.cxx" and "demo_b.cxx". The extensions are automatically found. 
-FILE(GLOB plikiCpp *.cpp utils/*.cpp test/*.cpp)
+FILE(GLOB plikiCpp *.cpp utils/*.cpp test/*.cpp zobristHashing/*.cpp)
 add_executable (szachy ${plikiCpp}) 
 
 # Link the executable to the Hello library. 
