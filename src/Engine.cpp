@@ -135,7 +135,7 @@ Move Engine::go() {
     }
     std::cerr << std::endl;
     ScoreAccuracy scoreAccuracy = !stopped ? ScoreAccuracy::exact : board.getMoveSide() == Color::white ? ScoreAccuracy::lowerBound : ScoreAccuracy::upperBound;
-    insert(board.getHash(), {board.getHash(), bestMove.score, uint8_t(alphaBetaDepth + 1), scoreAccuracy});
+    insert(board.getHash(), {board.getHash(), {bestMove.score, uint8_t(alphaBetaDepth + 1), scoreAccuracy}});
     std::cerr << std::endl;
     Statistics::globalStatistics().printAllSimple(std::cerr);
     std::cerr << std::endl;

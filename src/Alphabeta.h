@@ -9,9 +9,9 @@ static int16_t evalSimpleBeginningOfDepening = 0;
 template <typename GameTraits, bool isMin, int depth>
 struct Alphabeta {
     static int16_t go(typename GameTraits::State &state, int16_t alpha, int16_t beta, typename GameTraits::Move *spaceForMoves) {
-        if (AlphaBetaGenericHashElement &hashed = GameTraits::getStateScore(state, depth, alpha, beta)) {
+        if (const AlphaBetaGenericHashElement &hashed = GameTraits::getStateScore(state, depth, alpha, beta)) {
             Statistics::globalStatistics().increment("hash.hits");
-            return hashed.score;
+            return hashed.data.score;
         }
         Statistics::globalStatistics().increment("hash.misses");
         typename GameTraits::Move *afterLastMove = GameTraits::generateMoves(state, spaceForMoves);
@@ -96,9 +96,9 @@ struct Alphabeta {
 template <typename GameTraits, bool isMin>
 struct Alphabeta<GameTraits, isMin, 0> {
     static inline int16_t go(typename GameTraits::State &state, int16_t alpha __attribute__((unused)), int16_t beta __attribute__((unused)), typename GameTraits::Move *spaceForMoves __attribute__((unused))) {
-        if (AlphaBetaGenericHashElement &hashed = GameTraits::getStateScore(state, 0, alpha, beta)) {
+        if (const AlphaBetaGenericHashElement &hashed = GameTraits::getStateScore(state, 0, alpha, beta)) {
             Statistics::globalStatistics().increment("hash.hits");
-            return hashed.score;
+            return hashed.data.score;
         }
         Statistics::globalStatistics().increment("hash.misses");
         int16_t result = GameTraits::evaluate(state);

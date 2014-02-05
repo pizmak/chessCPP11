@@ -18,28 +18,28 @@ struct ChessTraits {
         return state.first.materialDifference;
     }
     static void storeStateScore(State &state, int16_t score, uint8_t level, ScoreAccuracy accuracy) {
-        AlphaBetaGenericHashElement &hashedValue = state.second.get(state.first.getHash());
-        if (accuracy != ScoreAccuracy::exact && hashedValue.accuracy == ScoreAccuracy::exact) {
+        const AlphaBetaGenericHashElement &hashedValue = state.second.get(state.first.getHash());
+        if (accuracy != ScoreAccuracy::exact && hashedValue.data.accuracy == ScoreAccuracy::exact) {
             return;
         }
-        if (hashedValue.depth > level) {
+        if (hashedValue.data.depth > level) {
             return;
         }
-        state.second.insert(state.first.getHash(), {state.first.getHash(), score, level, accuracy});
+        state.second.insert(state.first.getHash(), {state.first.getHash(), {score, level, accuracy}});
     }
-    static AlphaBetaGenericHashElement &getStateScore(const State &state, uint8_t minLevel, int16_t alpha, int16_t beta) {
+    static AlphaBetaGenericHashElement getStateScore(const State &state, uint8_t minLevel, int16_t alpha, int16_t beta) {
         static AlphaBetaGenericHashElement empty;
-        AlphaBetaGenericHashElement &ret = state.second.get(state.first.getHash());
-        if (ret.hash != state.first.getHash() || ret.depth < minLevel) {
+        const AlphaBetaGenericHashElement &ret = state.second.get(state.first.getHash());
+        if (ret.hash != state.first.getHash() || ret.data.depth < minLevel) {
             return empty;
         }
-        switch (ret.accuracy) {
+        switch (ret.data.accuracy) {
         case ScoreAccuracy::exact:
             return ret;
         case ScoreAccuracy::lowerBound:
-            return beta < ret.score ? ret : empty;
+            return beta < ret.data.score ? ret : empty;
         case ScoreAccuracy::upperBound:
-            return alpha > ret.score ? ret : empty;
+            return alpha > ret.data.score ? ret : empty;
         }
         return empty;
     }

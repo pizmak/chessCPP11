@@ -2,12 +2,12 @@
 
 #include "ChessBoardDefines.h"
 #include "Move.h"
-#include "hashTables/AlphaBetaHashContainer.h"
+#include "hashTables/SharedHashContainer.h"
 
 #include <atomic>
 #include <list>
 
-class Engine : public AlphaBetaHashContainer<26> {
+class Engine : public SharedHashContainer<26> {
     BoardType board;
     Move moves[4096];
     uint8_t alphaBetaDepth = 5;

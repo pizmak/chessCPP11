@@ -11,10 +11,15 @@ ENUM(ScoreAccuracy, uint8_t,
 
 struct AlphaBetaGenericHashElement {
     uint64_t hash;
-    int16_t score;
-    uint8_t depth;
-    ScoreAccuracy accuracy;
-    explicit operator bool() {
+    union {
+        struct {
+            int16_t score;
+            uint8_t depth;
+            ScoreAccuracy accuracy;
+        } data;
+        uint32_t intData;
+    };
+    explicit operator bool() const {
         return hash != 0;
     }
 };
