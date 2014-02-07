@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ChessBoardDefines.h"
+#include "ChessDefines.h"
 
 #include <list>
 

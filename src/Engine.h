@@ -1,13 +1,13 @@
 #pragma once
 
-#include "ChessBoardDefines.h"
+#include "ChessDefines.h"
 #include "Move.h"
 #include "hashTables/SharedHashContainer.h"
 
 #include <atomic>
 #include <list>
 
-class Engine : public SharedHashContainer<26> {
+class Engine : public HashContainerType {
     BoardType board;
     Move moves[4096];
     uint8_t alphaBetaDepth = 5;
