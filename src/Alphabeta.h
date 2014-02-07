@@ -8,7 +8,7 @@ static int16_t evalSimpleBeginningOfDepening = 0;
 
 template <typename GameTraits, bool isMin, int depth>
 struct Alphabeta {
-    static int16_t go(typename GameTraits::State &state, int16_t alpha, int16_t beta, typename GameTraits::Move *spaceForMoves) {
+    static int16_t go(typename GameTraits::State &state, int16_t alpha, int16_t beta, typename GameTraits::Move *spaceForMoves, uint8_t level) {
         if (const AlphaBetaGenericHashElement &hashed = GameTraits::getStateScore(state, depth, alpha, beta)) {
             Statistics::globalStatistics().increment("hash.hits");
             return hashed.data.score;
@@ -59,11 +59,11 @@ struct Alphabeta {
 
                 ++currentDepeningLevel;
                 result = currentDepeningLevel >= maxDeepeningLevel || stop ?
-                    Alphabeta<GameTraits, !isMin, 0 /* check deeper in case of capture */>::go(state, alpha, beta, afterLastMove) :
-                    Alphabeta<GameTraits, !isMin, 1 /* check deeper in case of capture */>::go(state, alpha, beta, afterLastMove);
+                    Alphabeta<GameTraits, !isMin, 0 /* check deeper in case of capture */>::go(state, alpha, beta, afterLastMove, level + 1) :
+                    Alphabeta<GameTraits, !isMin, 1 /* check deeper in case of capture */>::go(state, alpha, beta, afterLastMove, level + 1);
                 --currentDepeningLevel;
             } else {
-                result = Alphabeta<GameTraits, !isMin, depth - 1>::go(state, alpha, beta, afterLastMove);
+                result = Alphabeta<GameTraits, !isMin, depth - 1>::go(state, alpha, beta, afterLastMove, level + 1);
             }
             GameTraits::unmakeMove(state, *move);
             if (isMin) {
@@ -95,7 +95,7 @@ struct Alphabeta {
 
 template <typename GameTraits, bool isMin>
 struct Alphabeta<GameTraits, isMin, 0> {
-    static inline int16_t go(typename GameTraits::State &state, int16_t alpha __attribute__((unused)), int16_t beta __attribute__((unused)), typename GameTraits::Move *spaceForMoves __attribute__((unused))) {
+    static inline int16_t go(typename GameTraits::State &state, int16_t alpha __attribute__((unused)), int16_t beta __attribute__((unused)), typename GameTraits::Move *spaceForMoves __attribute__((unused)), uint8_t level __attribute__((unused))) {
         if (const AlphaBetaGenericHashElement &hashed = GameTraits::getStateScore(state, 0, alpha, beta)) {
             Statistics::globalStatistics().increment("hash.hits");
             return hashed.data.score;
@@ -109,7 +109,7 @@ struct Alphabeta<GameTraits, isMin, 0> {
 
 #define CALL_ALPHA_BETA(isMin, i) \
     case i: \
-        return Alphabeta<GameTraits, isMin, i>::go(state, alpha, beta,  spaceForMoves);
+        return Alphabeta<GameTraits, isMin, i>::go(state, alpha, beta,  spaceForMoves, 0);
 
 template <typename GameTraits>
 int16_t callAlphaBeta(typename GameTraits::State &state, bool isMin, int16_t alpha, int16_t beta, uint8_t depth, typename GameTraits::Move *spaceForMoves) {
