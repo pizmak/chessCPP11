@@ -106,3 +106,22 @@ struct Alphabeta<GameTraits, isMin, 0> {
         return result;
     }
 };
+
+#define CALL_ALPHA_BETA(isMin, i) \
+    case i: \
+        return Alphabeta<GameTraits, isMin, i>::go(state, alpha, beta,  spaceForMoves);
+
+template <typename GameTraits>
+int16_t callAlphaBeta(typename GameTraits::State &state, bool isMin, int16_t alpha, int16_t beta, uint8_t depth, typename GameTraits::Move *spaceForMoves) {
+    if (isMin) {
+        switch (depth) {
+            FOREACH_ARG(CALL_ALPHA_BETA, true, NO_SEPARATOR, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20);
+        }
+    } else {
+        switch (depth) {
+            FOREACH_ARG(CALL_ALPHA_BETA, false, NO_SEPARATOR, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20);
+        }
+    }
+    std::cerr << "invalid value of alpha beta: " << depth << std::endl;
+    return 0;
+}

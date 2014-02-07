@@ -68,22 +68,6 @@ void Engine::fillMoveFlags(BoardType &board, Move &m) {
     }
 }
 
-#define CALL_ALPHA_BETA(i) \
-    case i: \
-        return Alphabeta<ChessTraits, isMin, i>::go(state, \
-                isMin ? alphaOrBeta : std::numeric_limits<int16_t>::min(), \
-                !isMin ? alphaOrBeta : std::numeric_limits<int16_t>::max(), moveStorage);
-
-template <bool isMin>
-int16_t Engine::callAlphaBeta(Move *moveStorage, int16_t alphaOrBeta, uint8_t depth) {
-    ChessTraits::State state(board, *this);
-    switch (depth) {
-        FOREACH(CALL_ALPHA_BETA, NO_SEPARATOR, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20);
-    }
-    std::cerr << "invalid value of alpha beta: " << depth << std::endl;
-    return 0;
-}
-
 Move Engine::go() {
     ScopeTimer timer("Move");
     stopped.store(false);
@@ -92,21 +76,24 @@ Move Engine::go() {
     Move *afterLastMove = MoveGenerator::generateMoves(board, moves);
     ASSERT(afterLastMove > moves, "no moves");
 
+    bool isMin = board.getMoveSide() == Color::black;
+    int16_t alpha = std::numeric_limits<int16_t>::min(), beta = std::numeric_limits<int16_t>::max();
     Move bestMove = moves[0];
-    int multiplier = board.getMoveSide() == Color::white ? 1 : -1;
+    int multiplier = isMin ? -1 : 1;
     if (afterLastMove - moves == 1) {
         return bestMove;
     }
-    bestMove.score = std::numeric_limits<int16_t>::max() * -multiplier;
+    bestMove.score = isMin ? beta : alpha;
 
+    ChessTraits::State state(board, *this);
     for (Move *m = moves; m < afterLastMove; ++m) {
         board.makeMove(*m);
-        if (board.isDraw()) {
-            m->score = 0;
-        } else {
-            m->score = board.getMoveSide() == Color::black ? callAlphaBeta<true>(afterLastMove, bestMove.score, 1) : callAlphaBeta<false>(afterLastMove, bestMove.score, 1);
+        m->score = board.isDraw() ? 0 : callAlphaBeta<ChessTraits>(state, !isMin, alpha, beta, 1, afterLastMove);
+        if (multiplier * m->score > multiplier * bestMove.score) {
+            bestMove = *m;
+//            (isMin ? beta : alpha) = m->score;
         }
-        // TODO tutaj poglebianie ma sens? poza tym nie wiem czy nie lepiej dac np glebokosc 3 - powinno byc praktycznie tak samo szybko, a beda lepiej posortowane ruchy 
+        // TODO tutaj poglebianie ma sens? poza tym nie wiem czy nie lepiej dac np glebokosc 3 - powinno byc praktycznie tak samo szybko, a beda lepiej posortowane ruchy
         board.unmakeMove(*m);
     }
 
@@ -115,20 +102,20 @@ Move Engine::go() {
     };
     std::sort(moves, afterLastMove, sortFun);
 
+    alpha = std::numeric_limits<int16_t>::min();
+    beta = std::numeric_limits<int16_t>::max();
+    bestMove.score = isMin ? beta : alpha;
     for (Move *m = moves; m < afterLastMove; ++m) {
         board.makeMove(*m);
-        if (board.isDraw()) {
-            m->score = 0;
-        } else {
-            m->score = board.getMoveSide() == Color::black ? callAlphaBeta<true>(afterLastMove, bestMove.score, alphaBetaDepth) : callAlphaBeta<false>(afterLastMove, bestMove.score, alphaBetaDepth);
-        }
-        board.unmakeMove(*m);
+        m->score = board.isDraw() ? 0 : callAlphaBeta<ChessTraits>(state, !isMin, alpha, beta, alphaBetaDepth, afterLastMove);
         if (multiplier * m->score > multiplier * bestMove.score) {
             bestMove = *m;
-            std::cerr << "\n" << *m << " - new best\n";
+            (isMin ? beta : alpha) = m->score;
+            std::cerr << std::endl << *m << " - new best" << std::endl;
         } else {
             std::cerr << ".";
         }
+        board.unmakeMove(*m);
         if (stopped) {
             break;
         }

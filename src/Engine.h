@@ -11,8 +11,6 @@ class Engine : public SharedHashContainer<26> {
     BoardType board;
     Move moves[4096];
     uint8_t alphaBetaDepth = 5;
-    template <bool isMin>
-    int16_t callAlphaBeta(Move *moveStorage, int16_t alphaOrBeta, uint8_t depth);
     void fillMoveFlags(BoardType &board, Move &m);
     void setupFenPosition(BoardType &board, std::list<std::string> fenPosition);
     std::atomic<bool> stopped;
