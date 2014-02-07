@@ -85,7 +85,7 @@ Move Engine::go() {
     }
     bestMove.score = isMin ? beta : alpha;
 
-    ChessTraits::State state(board, *this);
+    ChessTraits::State state(board, hashContainer);
     for (Move *m = moves; m < afterLastMove; ++m) {
         board.makeMove(*m);
         m->score = board.isDraw() ? 0 : callAlphaBeta<ChessTraits>(state, !isMin, alpha, beta, 1, afterLastMove);
@@ -122,7 +122,7 @@ Move Engine::go() {
     }
     std::cerr << std::endl;
     ScoreAccuracy scoreAccuracy = !stopped ? ScoreAccuracy::exact : board.getMoveSide() == Color::white ? ScoreAccuracy::lowerBound : ScoreAccuracy::upperBound;
-    insert(board.getHash(), {board.getHash(), {bestMove.score, uint8_t(alphaBetaDepth + 1), scoreAccuracy}});
+    hashContainer.insert(board.getHash(), {board.getHash(), {bestMove.score, uint8_t(alphaBetaDepth + 1), scoreAccuracy}});
     std::cerr << std::endl;
     Statistics::globalStatistics().printAllSimple(std::cerr);
     std::cerr << std::endl;
@@ -142,7 +142,7 @@ void Engine::setupFenPosition(BoardType &board, std::list<std::string> fenPositi
 }
 
 void Engine::clearHash() {
-    clear();
+    hashContainer.clear();
 }
 
 void Engine::stop() {

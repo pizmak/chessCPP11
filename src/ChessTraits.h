@@ -9,7 +9,7 @@
 #include <climits>
 
 struct ChessTraits {
-    using State = std::pair<BoardType &, Engine &>;
+    using State = std::pair<BoardType &, HashContainerType &>;
     using Move = ::Move;
     static int16_t evaluate(State &state) {
         return ChessEvaluator::evaluate(state.first);

@@ -7,8 +7,9 @@
 #include <atomic>
 #include <list>
 
-class Engine : public HashContainerType {
+class Engine {
     BoardType board;
+    HashContainerType hashContainer;
     Move moves[4096];
     uint8_t alphaBetaDepth = 5;
     void fillMoveFlags(BoardType &board, Move &m);
