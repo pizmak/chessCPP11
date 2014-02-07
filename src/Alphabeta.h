@@ -16,7 +16,8 @@ struct Alphabeta {
         Statistics::globalStatistics().increment("hash.misses");
         typename GameTraits::Move *afterLastMove = GameTraits::generateMoves(state, spaceForMoves);
         if (spaceForMoves == afterLastMove) {
-            return GameTraits::evaluateFinalPosition(state) + (isMin ? depth : -depth);
+            int16_t ret = GameTraits::evaluateFinalPosition(state);
+            return  ret == 0 ? 0 : ret + (isMin ? -level : level);
         }
 
         if (depth > 1) {
