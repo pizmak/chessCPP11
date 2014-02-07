@@ -53,7 +53,7 @@
 #define FOREACH(macroName, separator, ...) ADD_COUNT(FOREACH_HELPER, ##__VA_ARGS__)(macroName, separator, ##__VA_ARGS__)
 
 #define FOREACH_ARG_HELPER0( macroName, arg, separator) CONCAT(macroName, 0)
-#define FOREACH_ARG_HELPER1( macroName, arg, separator, arg1) macroName(arg)
+#define FOREACH_ARG_HELPER1( macroName, arg, separator, arg1) macroName(arg, arg1)
 #define FOREACH_ARG_HELPER2( macroName, arg, separator, arg1, ...) macroName(arg, arg1) separator() FOREACH_ARG_HELPER1( macroName, arg, separator, __VA_ARGS__)
 #define FOREACH_ARG_HELPER3( macroName, arg, separator, arg1, ...) macroName(arg, arg1) separator() FOREACH_ARG_HELPER2( macroName, arg, separator, __VA_ARGS__)
 #define FOREACH_ARG_HELPER4( macroName, arg, separator, arg1, ...) macroName(arg, arg1) separator() FOREACH_ARG_HELPER3( macroName, arg, separator, __VA_ARGS__)
