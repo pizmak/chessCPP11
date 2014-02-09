@@ -23,8 +23,16 @@ bool isMove(const std::string &move) {
     return move.length() == 4 && isRank(move[0]) && isFile(move[1]) && isRank(move[2]) && isFile(move[3]);
 }
 
+UciProtocol::UciProtocol() : currentThread(0) {
+    init();
+}
+
+void UciProtocol::init() {
+    engine.reset();
+    searchInProgress.store(false);
+}
+
 std::string UciProtocol::dispatchCommand(std::string command) {
-    std::cerr << "command: " << command << std::endl;
     if (command == "uci") {
         return R"(id name Elizunia
 id author robal
@@ -93,21 +101,6 @@ void UciProtocol::goAsync() {
     searchInProgress.store(false);
 }
 
-void UciProtocol::testArena() {
-    std::string command = "uci";
-    while (true) {
-        if (command == "quit") {
-            std::cerr << "quit" << std::endl;
-            break;
-        }
-        std::string resp = dispatchCommand(command);
-        if (resp.length() > 0) {
-            std::cout << resp << std::endl;
-        }
-        std::getline(std::cin, command);
-    }
-}
-
 void UciProtocol::setupStartPosition(std::string data) {
     std::list<std::string> moves = split(data, ' ');
 #ifdef DEBUG
@@ -122,12 +115,6 @@ void UciProtocol::setupStartPosition(std::string data) {
 void UciProtocol::setupFenPosition(std::string data) {
     std::list<std::string> fenPosition  = split(data, ' ');
     engine.setupFenPosition(fenPosition);
-}
-
-void UciProtocol::start() {
-    engine.reset();
-    searchInProgress.store(false);
-    testArena();
 }
 
 void UciProtocol::setupPosition(std::string command) {

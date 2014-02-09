@@ -9,8 +9,6 @@ class UciProtocol {
     UciProtocol(const UciProtocol &other) = delete;
     UciProtocol(const UciProtocol &&other) = delete;
     Engine engine;
-    void testArena();
-    std::string dispatchCommand(std::string command);
     void setupStartPosition(std::string data);
     void setupFenPosition(std::string data);
     void setupPosition(std::string command);
@@ -21,6 +19,7 @@ class UciProtocol {
     std::thread *currentThread;
     std::atomic<bool> searchInProgress;
 public:
-    UciProtocol() : currentThread(0) {}
-    void start();
+    UciProtocol();
+    void init();
+    std::string dispatchCommand(std::string command);
 };
