@@ -10,6 +10,8 @@
 #include <string>
 #include <set>
 #include <cctype>
+#include <mutex>
+#include <thread>
 
 void Engine::reset() {
     board = BoardType();
@@ -68,6 +70,57 @@ void Engine::fillMoveFlags(BoardType &board, Move &m) {
     }
 }
 
+namespace {
+    std::mutex moveMutex;
+    uint8_t protectedMoveIndex;
+    int16_t threadAlpha, threadBeta;
+    Move bestMove;
+
+    void threadAlphabeta(typename ChessTraits::State *state, bool isMin, int16_t alpha, int16_t beta, uint8_t depth, Move * moves, Move *afterLastMove) {
+        BoardType boardCopy = state->first;
+        typename ChessTraits::State stateCopy(boardCopy, state->second);
+        typename ChessTraits::Move spaceForMoves[4096];
+        int multiplier = isMin ? 1 : -1;
+        while(true) {
+            moveMutex.lock();
+            uint8_t moveIndex = protectedMoveIndex++;
+            if (alpha > threadAlpha) {
+                threadAlpha = alpha;
+            } else {
+                alpha = threadAlpha;
+            }
+
+            if (beta < threadBeta) {
+                threadBeta = beta;
+            } else {
+                beta = threadBeta;
+            }
+
+
+            moveMutex.unlock();
+            if (moveIndex >= afterLastMove - moves) {
+                break;
+            }
+            std::cerr << "bede liczyc ruch: " << moves[moveIndex] << " alfa: " << alpha << " beta: " << beta << std::endl;
+            stateCopy.first.makeMove(moves[moveIndex]);
+            moves[moveIndex].score = stateCopy.first.isDraw() ? 0 : callAlphaBeta<ChessTraits>(stateCopy, isMin, alpha, beta, depth, spaceForMoves);
+            moveMutex.lock();
+            if (multiplier * moves[moveIndex].score > multiplier * bestMove.score) {
+                bestMove = moves[moveIndex];
+                (!isMin ? beta : alpha) = moves[moveIndex].score;
+                std::cerr << std::endl << moves[moveIndex] << " - new best" << std::endl;
+            } else {
+                std::cerr << ".";
+            }
+            moveMutex.unlock();
+//            if (stopped) {
+//                break;
+//            }
+            stateCopy.first.unmakeMove(moves[moveIndex]);
+        }
+    }
+}
+
 Move Engine::go() {
     ScopeTimer timer("Move");
     stopped.store(false);
@@ -77,18 +130,18 @@ Move Engine::go() {
     ASSERT(afterLastMove > moves, "no moves");
 
     bool isMin = board.getMoveSide() == Color::black;
-    int16_t alpha = std::numeric_limits<int16_t>::min(), beta = std::numeric_limits<int16_t>::max();
-    Move bestMove = moves[0];
+    threadAlpha = std::numeric_limits<int16_t>::min(), threadBeta = std::numeric_limits<int16_t>::max();
+    bestMove = moves[0];
     int multiplier = isMin ? -1 : 1;
     if (afterLastMove - moves == 1) {
         return bestMove;
     }
-    bestMove.score = isMin ? beta : alpha;
+    bestMove.score = isMin ? threadBeta : threadAlpha;
 
     ChessTraits::State state(board, hashContainer);
     for (Move *m = moves; m < afterLastMove; ++m) {
         board.makeMove(*m);
-        m->score = board.isDraw() ? 0 : callAlphaBeta<ChessTraits>(state, !isMin, alpha, beta, 1, afterLastMove);
+        m->score = board.isDraw() ? 0 : callAlphaBeta<ChessTraits>(state, !isMin, threadAlpha, threadBeta, 1, afterLastMove);
         if (multiplier * m->score > multiplier * bestMove.score) {
             bestMove = *m;
 //            (isMin ? beta : alpha) = m->score;
@@ -102,24 +155,21 @@ Move Engine::go() {
     };
     std::sort(moves, afterLastMove, sortFun);
 
-    alpha = std::numeric_limits<int16_t>::min();
-    beta = std::numeric_limits<int16_t>::max();
-    bestMove.score = isMin ? beta : alpha;
-    for (Move *m = moves; m < afterLastMove; ++m) {
-        board.makeMove(*m);
-        m->score = board.isDraw() ? 0 : callAlphaBeta<ChessTraits>(state, !isMin, alpha, beta, alphaBetaDepth, afterLastMove);
-        if (multiplier * m->score > multiplier * bestMove.score) {
-            bestMove = *m;
-            (isMin ? beta : alpha) = m->score;
-            std::cerr << std::endl << *m << " - new best" << std::endl;
-        } else {
-            std::cerr << ".";
-        }
-        board.unmakeMove(*m);
-        if (stopped) {
-            break;
-        }
+    int threadsCount = 4;
+
+    //std::thread();
+
+    threadAlpha = std::numeric_limits<int16_t>::min(), threadBeta = std::numeric_limits<int16_t>::max();
+    bestMove.score = isMin ? threadBeta : threadAlpha;
+    protectedMoveIndex = 0;
+    std::thread threads[threadsCount];
+    for (int i = 0; i < threadsCount; ++i) {
+        threads[i] = std::thread(threadAlphabeta, &state, !isMin, threadAlpha, threadBeta, alphaBetaDepth, moves, afterLastMove);
     }
+    for (int i = 0; i < threadsCount; ++i) {
+        threads[i].join();
+    }
+
     std::cerr << std::endl;
     ScoreAccuracy scoreAccuracy = !stopped ? ScoreAccuracy::exact : board.getMoveSide() == Color::white ? ScoreAccuracy::lowerBound : ScoreAccuracy::upperBound;
     hashContainer.insert(board.getHash(), {board.getHash(), {bestMove.score, uint8_t(alphaBetaDepth + 1), scoreAccuracy}});

@@ -2,9 +2,9 @@
 #include "utils/Statistics.h"
 #include <stdio.h>
 
-static uint8_t maxDeepeningLevel = 5;
-static uint8_t currentDepeningLevel = 0;
-static int16_t evalSimpleBeginningOfDepening = 0;
+thread_local static uint8_t maxDeepeningLevel = 5;
+thread_local static uint8_t currentDepeningLevel = 0;
+thread_local static int16_t evalSimpleBeginningOfDepening = 0;
 
 template <typename GameTraits, bool isMin, int depth>
 struct Alphabeta {
