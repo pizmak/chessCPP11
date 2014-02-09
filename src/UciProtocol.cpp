@@ -3,12 +3,9 @@
 #include "notation.h"
 #include "utils/split.h"
 #include "utils/Statistics.h"
+#include "utils/asserts.h"
 
-#include <fstream>
 #include <iostream>
-#include <string>
-#include <vector>
-#include <thread>
 #include <cstdlib>
 
 bool isFile(char file) {
