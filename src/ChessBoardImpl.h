@@ -122,7 +122,7 @@ void ChessBoard<HashPolicy>::makeMove(const Move &move) {
     }
     if (pieces[move.to] == Piece::king) {
         if (move.flags & MoveFlags::castling) {
-            ASSERT(flags & castling, flags);
+            ASSERT(flags & allCastlings, flags);
             uint8_t startSquare = move.to > move.from ? 7 : 0;
             uint8_t offset = move.to > move.from ? -2 : 3;
             uint8_t colorOffset = 56 * int(toMove);
