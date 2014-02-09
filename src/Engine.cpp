@@ -73,7 +73,6 @@ void Engine::fillMoveFlags(BoardType &board, Move &m) {
 namespace {
     std::mutex moveMutex;
     uint8_t protectedMoveIndex;
-    int16_t threadAlpha, threadBeta;
     Move bestMove;
 
     void threadAlphabeta(typename ChessTraits::State *state, bool isMin, int16_t alpha, int16_t beta, uint8_t depth, Move * moves, Move *afterLastMove) {

@@ -5,10 +5,13 @@
 thread_local static uint8_t maxDeepeningLevel = 5;
 thread_local static uint8_t currentDepeningLevel = 0;
 thread_local static int16_t evalSimpleBeginningOfDepening = 0;
+int16_t threadAlpha, threadBeta;
 
 template <typename GameTraits, bool isMin, int depth>
 struct Alphabeta {
     static int16_t go(typename GameTraits::State &state, int16_t alpha, int16_t beta, typename GameTraits::Move *spaceForMoves, uint8_t level) {
+        if (alpha < threadAlpha) alpha = threadAlpha;
+        if (beta > threadBeta) beta = threadBeta;
         if (const AlphaBetaGenericHashElement &hashed = GameTraits::getStateScore(state, depth, alpha, beta)) {
             Statistics::globalStatistics().increment("hash.hits");
             return hashed.data.score;
