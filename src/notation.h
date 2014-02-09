@@ -30,13 +30,13 @@ constexpr uint8_t file2N(const char* c) {
 }
 // kolumny od 0 do 7
 inline uint8_t file(uint8_t number) {
-    ASSERT(/*number >= 0 && */number < 64, number);
+    ASSERT(/*number >= 0 && */number < 64, int(number));
     return number & 7;
 }
 
 // wiersze od 0 do 7 (0 -> 'a', 1 -> 'b' ...)
 inline uint8_t rank(uint8_t number) {
-    ASSERT(/*number >= 0 && */number < 64, number);
+    ASSERT(/*number >= 0 && */number < 64, int(number));
     return number >> 3;
 }
 
@@ -46,17 +46,17 @@ inline uint8_t number(uint8_t rank, uint8_t file) {
 }
 
 inline Color color(uint8_t number) {
-    ASSERT(/*number >= 0 && */number < 64, number);
+    ASSERT(/*number >= 0 && */number < 64, int(number));
     return number & 1 ? Color::white : Color::black;
 }
 
 inline Color color(uint8_t rank, uint8_t file) {
-    ASSERT(/*rank >= 0 && */rank < 8/* && file >= 0 */&& file < 8, rank, file);
+    ASSERT(/*rank >= 0 && */rank < 8/* && file >= 0 */&& file < 8, int(rank), int(file));
     return rank + file & 1 ? Color::white : Color::black;
 }
 
 inline bool isWhite(uint8_t rank, uint8_t file) {
-    ASSERT(/*rank >= 0 &&*/ rank < 8 && /*file >= 0 && */file < 8, rank, file);
+    ASSERT(/*rank >= 0 &&*/ rank < 8 && /*file >= 0 && */file < 8, int(rank), int(file));
     return color(rank, file) == Color::white;
 }
 
