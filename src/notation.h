@@ -9,25 +9,34 @@
 #include "Move.h"
 #include "Color.h"
 
-inline bool inRange(uint8_t _rank, uint8_t _file) {
+constexpr inline bool inRange(uint8_t _rank, uint8_t _file) {
     return _rank < 8 && _file < 8;
+}
+
+constexpr uint8_t rank2N(char c) {
+    return c - '1';
+}
+
+constexpr uint8_t file2N(char c) {
+    return c <= 'Z' ? c - 'A' : c - 'a';
+}
+
+constexpr uint8_t n2N(const char* c) {
+    return file2N(c[0]) + 8 * rank2N(c[1]);
 }
 
 inline uint8_t notation2Number(const std::string &s) {
     return (s[0] - 'a') + (s[1] - '1') * 8;
 }
 
-constexpr uint8_t n2N(const char* c) {
-    return (*(c) - 'a') + (*(c+1) - '1') * 8;
+constexpr char n2Rank(uint8_t number) {
+    return number + '1';
 }
 
-constexpr uint8_t rank2N(const char* c) {
-    return (*(c) - '1');
+constexpr char n2File(uint8_t number) {
+    return number + 'a';
 }
 
-constexpr uint8_t file2N(const char* c) {
-    return (*(c) - 'a');
-}
 // kolumny od 0 do 7
 inline uint8_t file(uint8_t number) {
     ASSERT(/*number >= 0 && */number < 64, int(number));
