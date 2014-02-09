@@ -69,7 +69,7 @@ const int16_t ChessEvaluator::centrum_bonus[] = {
 template <Color color> int16_t ChessEvaluator::evaluatePawn(const BoardType &board, uint8_t square) {
     ASSERT(square >= n2N("a2") && square <= n2N("h7"), square);
     static_assert(color == Color::white || color == Color::black, "invalid color");
-    constexpr uint8_t bonusLine = color == Color::white ? rank2N('7') : rank2N('1');
+    constexpr uint8_t bonusLine = color == Color::white ? rank2N('7') : rank2N('2');
     int16_t ret = centrum_bonus[square];
     if (rank(square) == bonusLine) {
         ret += oneButLastLineBonus;
