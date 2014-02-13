@@ -9,62 +9,73 @@
 #include "Move.h"
 #include "Color.h"
 
-constexpr inline bool inRange(uint8_t _rank, uint8_t _file) {
+#ifdef DEBUG
+#define CONSTEXPR
+#else
+#define CONSTEXPR constexpr
+#endif
+
+inline bool inRange(uint8_t _rank, uint8_t _file) {
     return _rank < 8 && _file < 8;
 }
 
-constexpr uint8_t rank2N(char c) {
+CONSTEXPR inline uint8_t rank2N(char c) {
+    ASSERT(c >= '1' && c <='8', int(c));
     return c - '1';
 }
 
-constexpr uint8_t file2N(char c) {
+CONSTEXPR inline uint8_t file2N(char c) {
+    ASSERT((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'), int(c));
     return c <= 'Z' ? c - 'A' : c - 'a';
 }
 
-constexpr uint8_t n2N(const char* c) {
+CONSTEXPR inline uint8_t n2N(const char* c) {
     return file2N(c[0]) + 8 * rank2N(c[1]);
 }
 
 inline uint8_t notation2Number(const std::string &s) {
+    ASSERT(s[0] >= 'a' && s[0] <= 'z' && s[1] >= '1' && s[1] <= '8', s);
     return (s[0] - 'a') + (s[1] - '1') * 8;
 }
 
-constexpr char n2Rank(uint8_t number) {
+CONSTEXPR inline char n2Rank(uint8_t number) {
+    ASSERT(number < 8, int(number));
     return number + '1';
 }
 
-constexpr char n2File(uint8_t number) {
+CONSTEXPR inline char n2File(uint8_t number) {
+    ASSERT(number < 8, int(number));
     return number + 'a';
 }
 
 // kolumny od 0 do 7
-inline uint8_t file(uint8_t number) {
+CONSTEXPR inline uint8_t file(uint8_t number) {
     ASSERT(/*number >= 0 && */number < 64, int(number));
     return number & 7;
 }
 
 // wiersze od 0 do 7 (0 -> 'a', 1 -> 'b' ...)
-inline uint8_t rank(uint8_t number) {
+CONSTEXPR inline uint8_t rank(uint8_t number) {
     ASSERT(/*number >= 0 && */number < 64, int(number));
     return number >> 3;
 }
 
-inline uint8_t number(uint8_t rank, uint8_t file) {
+CONSTEXPR inline uint8_t number(uint8_t rank, uint8_t file) {
     ASSERT(/*rank >= 0 && */rank < 8/* && file >= 0 */&& file < 8, (int)rank, (int)file);
     return (rank << 3) + file;
 }
 
-inline Color color(uint8_t number) {
+CONSTEXPR inline Color color(uint8_t number) {
     ASSERT(/*number >= 0 && */number < 64, int(number));
     return number & 1 ? Color::white : Color::black;
 }
 
-inline Color color(uint8_t rank, uint8_t file) {
+CONSTEXPR inline Color color(uint8_t rank, uint8_t file) {
     ASSERT(/*rank >= 0 && */rank < 8/* && file >= 0 */&& file < 8, int(rank), int(file));
     return rank + file & 1 ? Color::white : Color::black;
 }
 
-inline bool isWhite(uint8_t rank, uint8_t file) {
+CONSTEXPR inline bool isWhite(uint8_t rank, uint8_t file) {
     ASSERT(/*rank >= 0 &&*/ rank < 8 && /*file >= 0 && */file < 8, int(rank), int(file));
     return color(rank, file) == Color::white;
 }
@@ -164,7 +175,8 @@ inline void printBitmaskAsBoard(uint64_t bitmask, std::ostream &stream) {
     }
 }
 
-template <Color color> constexpr uint8_t  forwardSquare(uint8_t square) {
+template <Color color> CONSTEXPR uint8_t  forwardSquare(uint8_t square) {
     static_assert(color == Color::white || color == Color::black, "invalid color");
+    ASSERT(color == Color::white ? square + 8 < 64 : square - 8 >= 0, int(square));
     return color == Color::white ? square + 8 : square - 8;
 }
