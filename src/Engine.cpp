@@ -35,7 +35,18 @@ void Engine::move(const std::list<std::string> &moves) {
 
 void Engine::fillMoveFlags(BoardType &board, Move &m) {
     m.enPassantSquare = board.getEnPassantSquare();
-    m.captured = board.getPiece(m.to);
+    if (m.from == 255 && m.to == 255) { //castling
+        Color toMove = board.getMoveSide();
+        m.from = bit::mostSignificantBit(board.getBitmask(toMove, Piece::king));
+        m.to = number(rank2N(toMove == Color::white ? '1' : '8'), file2N(m.flags & MoveFlags::K_castling ? 'g' : 'c'));
+        EnumFlags<MoveFlags> flags = toMove == Color::white
+                ? MoveFlags::K_castling | MoveFlags::Q_castling : MoveFlags::k_castling | MoveFlags::q_castling;
+        m.flags &= flags;
+        m.flags |= MoveFlags::castling;// here only MoveFlags::castling and one of MoveFlags::X_castling is set this corresponding to castling
+        // but potntially one more should be set so no return here
+    } else {
+        m.captured = board.getPiece(m.to);
+    }
     if (board.getPiece(m.from) == Piece::king) {
         if (board.getMoveSide() == Color::white && board.getFlags() & BoardFlags::K_castling) {
             m.flags |= MoveFlags::K_castling;
@@ -49,7 +60,7 @@ void Engine::fillMoveFlags(BoardType &board, Move &m) {
         if (board.getMoveSide() == Color::black && board.getFlags() & BoardFlags::q_castling) {
             m.flags |= MoveFlags::q_castling;
         }
-        if (m.from - m.to == 2 || m.to - m.from == 2) {
+        if (m.from - m.to == 2 || m.to - m.from == 2) { // it is ok for chess 960
             m.flags |= MoveFlags::castling;
         }
     }
@@ -58,13 +69,13 @@ void Engine::fillMoveFlags(BoardType &board, Move &m) {
         m.flags |= MoveFlags::enPassantCapture;
     }
     if (board.getPiece(m.from) == Piece::rook) {
-        if (m.from == 7 && board.getFlags() & BoardFlags::K_castling) {
+        if (m.from == board.getKingSideRookSquare<Color::white>() && board.getFlags() & BoardFlags::K_castling) {
             m.flags |= MoveFlags::K_castling;
-        } else if (m.from == 0 && board.getFlags() & BoardFlags::Q_castling) {
+        } else if (m.from == board.getQueenSideRookSquare<Color::white>() && board.getFlags() & BoardFlags::Q_castling) {
             m.flags |= MoveFlags::Q_castling;
-        } else if (m.from == 0x3F && board.getFlags() & BoardFlags::k_castling) {
+        } else if (m.from == board.getKingSideRookSquare<Color::black>() && board.getFlags() & BoardFlags::k_castling) {
             m.flags |= MoveFlags::k_castling;
-        } else if (m.from == 0x38 && board.getFlags() & BoardFlags::q_castling) {
+        } else if (m.from == board.getQueenSideRookSquare<Color::black>() && board.getFlags() & BoardFlags::q_castling) {
             m.flags |= MoveFlags::q_castling;
         }
     }

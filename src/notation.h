@@ -144,12 +144,18 @@ inline Piece notation2Piece(char notation) {
 }
 
 inline Move parseMove(const std::string &move) {
-    Move m{0, 0, 0, Piece::empty, MoveFlags::empty, 0};
-    m.from = notation2Number(move.substr(0, 2));
-    m.to = notation2Number(move.substr(2, 2));
-    if (move.length() == 5) {
-        ASSERT(m.to > 0x37 && m.to < 0x40 || m.to < 0x8, move);
-        m.flags = piece2promotion(notation2Piece(move[4]));
+    Move m{255, 255, 0, Piece::empty, MoveFlags::empty, 0};
+    if (move == "O-O" || move == "0-0") {
+        m.flags = MoveFlags::K_castling | MoveFlags::k_castling | MoveFlags::castling;
+    } else if (move == "O-O-O" || move == "0-0-0") {
+        m.flags = MoveFlags::Q_castling | MoveFlags::q_castling | MoveFlags::castling;
+    } else {
+        m.from = notation2Number(move.substr(0, 2));
+        m.to = notation2Number(move.substr(2, 2));
+        if (move.length() == 5) {
+            ASSERT(m.to > 0x37 && m.to < 0x40 || m.to < 0x8, move);
+            m.flags = piece2promotion(notation2Piece(move[4]));
+        }
     }
     return m;
 }

@@ -5,6 +5,7 @@
 #include "utils/EnumFlags.h"
 #include "common.h"
 #include "History.h"
+#include "notation.h"
 #include <string>
 #include <list>
 
@@ -56,8 +57,11 @@ protected:
     Color toMove = Color::white;
     uint8_t enPassantSquare = 0;
     History history;
+    uint8_t kingStartFile = file2N('e');
+    uint8_t queenSideRookFile = file2N('a');
+    uint8_t kingSideRookFile  = file2N('h');
 public:
-    bool isDraw(); // returns true if there were 50 moves without capture or pawn moves or or position was three times repeated
+    bool isDraw() const; // returns true if there were 50 moves without capture or pawn moves or or position was three times repeated
     void makeMove(const Move &r); // only move pieces around, no check for move validity
     void unmakeMove(const Move &r);
     void checkIntegrity(const Move &m = Move()) const;
@@ -77,6 +81,16 @@ public:
     uint8_t getEnPassantSquare() const;
     EnumFlags<BoardFlags> getFlags() const;
     void initFromFen(std::list<std::string> fenPosition);
+    void initCastlingsFromFen(std::string);
+    uint8_t getKingStartFile() const;
+    uint8_t getQueenSideRookFile() const;
+    uint8_t getKingSideRookFile() const;
+    template<Color color>
+    uint8_t getKingStartSquare() const;
+    template<Color color>
+    uint8_t getQueenSideRookSquare() const;
+    template<Color color>
+    uint8_t getKingSideRookSquare() const;
 protected:
     void initHistory();
     void clear();

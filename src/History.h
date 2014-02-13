@@ -12,12 +12,12 @@ class History {
     };
     using HistoryVector = std::vector<HistoryElement>;
     HistoryVector historyTable;
-    bool topPositionThreeTimesRepeated();
+    bool topPositionThreeTimesRepeated() const;
 public:
-    bool isTopPositionRepeated(int expectedCount);
-    bool isDraw();
+    bool isTopPositionRepeated(int expectedCount) const;
+    bool isDraw() const;
     void push(uint64_t hash, bool captureOrPawnMove);
     void pop();
     void init(uint64_t initialPositionHash);
-    void printHistory();
+    void printHistory() const;
 };

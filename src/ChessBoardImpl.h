@@ -125,29 +125,39 @@ void ChessBoard<HashPolicy>::makeMove(const Move &move) {
     checkIntegrity(move);
     ASSERT(piecesColors[move.from] == toMove, number2Notation(move.from), piecesColors[move.from], toMove, move, *this);
     uint8_t newEnPassantSquare = pieces[move.from] == Piece::pawn && (move.to - move.from == 16 || move.from - move.to == 16) ? move.to : 0;
-    if (move.captured != Piece::empty) {
-        takePiece(pieces[move.from], toMove, move.captured, move.from, move.to);
-    } else {
-        movePiece(pieces[move.from], toMove, move.from, move.to);
-    }
-    if (pieces[move.to] == Piece::king) {
+    if (pieces[move.from] == Piece::king) {
         if (move.flags & MoveFlags::castling) {
             ASSERT(flags & allCastlings, flags);
-            uint8_t startSquare = move.to > move.from ? 7 : 0;
-            uint8_t offset = move.to > move.from ? -2 : 3;
             ASSERT(file(move.to) == file2N('g') || file(move.to) == file2N('c') ,  move, *this);
             ASSERT(rank(move.to) == rank2N('1') && toMove == Color::white || rank(move.to) == rank2N('8') && toMove == Color::black ,  move, *this);
+            uint8_t rookStartFile = file(move.to) == file2N('g') ? this->kingSideRookFile :  this->queenSideRookFile;
+            uint8_t offset = file(move.to) == file2N('g') ? file2N('f') - this->kingSideRookFile : file2N('d') - this->queenSideRookFile;
             uint8_t colorOffset = 56 * int(toMove);
-            movePiece(Piece::rook, toMove, startSquare + colorOffset, startSquare + colorOffset + offset);
+            disappearPiece(Piece::rook, toMove, rookStartFile + colorOffset);
+            movePiece(pieces[move.from], toMove, move.from, move.to);
+            appearPiece(Piece::rook, toMove, rookStartFile + colorOffset + offset);
+        } else {
+            if (move.captured != Piece::empty) {
+                takePiece(pieces[move.from], toMove, move.captured, move.from, move.to);
+            } else {
+                movePiece(pieces[move.from], toMove, move.from, move.to);
+            }
         }
-    } else if (move.flags & promotions) {
-        disappearPiece(pieces[move.to], toMove, move.to);
-        appearPiece(promotionPiece(move.flags & promotions), toMove, move.to);
-        materialDifference += (piecesValues[toInt(promotionPiece(move.flags & promotions))] - piecesValues[toInt(Piece::pawn)]) * (toMove == Color::white ? 1 : -1);
-    } else if (move.flags & MoveFlags::enPassantCapture) {
-        ASSERT(enPassantSquare == (toMove == Color::white ? move.to - 8 : move.to + 8), move.to - 8, (int)enPassantSquare);
-        disappearPiece(Piece::pawn, opponent(toMove), enPassantSquare);
-        materialDifference += piecesValues[toInt(Piece::pawn)] * (toMove == Color::white ? 1 : -1);
+    } else {
+        if (move.captured != Piece::empty) {
+            takePiece(pieces[move.from], toMove, move.captured, move.from, move.to);
+        } else {
+            movePiece(pieces[move.from], toMove, move.from, move.to);
+        }
+        if (move.flags & promotions) {
+            disappearPiece(pieces[move.to], toMove, move.to);
+            appearPiece(promotionPiece(move.flags & promotions), toMove, move.to);
+            materialDifference += (piecesValues[toInt(promotionPiece(move.flags & promotions))] - piecesValues[toInt(Piece::pawn)]) * (toMove == Color::white ? 1 : -1);
+        } else if (move.flags & MoveFlags::enPassantCapture) {
+            ASSERT(enPassantSquare == (toMove == Color::white ? move.to - 8 : move.to + 8), move.to - 8, (int)enPassantSquare);
+            disappearPiece(Piece::pawn, opponent(toMove), enPassantSquare);
+            materialDifference += piecesValues[toInt(Piece::pawn)] * (toMove == Color::white ? 1 : -1);
+        }
     }
     setFlags(flags & ~toBoardFlags(move.flags));
     setEnPassantSquare(newEnPassantSquare);
@@ -164,28 +174,38 @@ void ChessBoard<HashPolicy>::unmakeMove(const Move &move) {
     checkIntegrity(move);
     ASSERT(piecesColors[move.to] == opponent(toMove), toMove, piecesColors[move.to]);
     history.pop();
-    if (move.captured != Piece::empty) {
-        untakePiece(pieces[move.to], opponent(toMove), move.captured, move.from, move.to);
-    } else {
-        movePiece(pieces[move.to], opponent(toMove), move.to, move.from);
-    }
     setEnPassantSquare(move.enPassantSquare);
-    if (pieces[move.from] == Piece::king) {
+    if (pieces[move.to] == Piece::king) {
         if (move.flags & MoveFlags::castling) {
-            uint8_t startSquare = move.to > move.from ? 7 : 0;
-            uint8_t offset = move.to > move.from ? -2 : 3;
             ASSERT(file(move.to) == file2N('g') || file(move.to) == file2N('c') ,  move, *this);
             ASSERT(rank(move.to) == rank2N('1') && toMove == Color::black || rank(move.to) == rank2N('8') && toMove == Color::white ,  move, *this);
+            uint8_t rookStartFile = file(move.to) == file2N('g') ? this->kingSideRookFile : this->queenSideRookFile;
+            uint8_t offset = file(move.to) == file2N('g') ? file2N('f') - this->kingSideRookFile : file2N('d') - this->queenSideRookFile;
             uint8_t colorOffset = 56 * int(opponent(toMove));
-            movePiece(Piece::rook, opponent(toMove), startSquare + colorOffset + offset, startSquare + colorOffset);
+            disappearPiece(Piece::rook, opponent(toMove), rookStartFile + colorOffset + offset);
+            movePiece(pieces[move.to], opponent(toMove), move.to, move.from);
+            appearPiece(Piece::rook, opponent(toMove), rookStartFile + colorOffset);
+        } else {
+            if (move.captured != Piece::empty) {
+                untakePiece(pieces[move.to], opponent(toMove), move.captured, move.from, move.to);
+            } else {
+                movePiece(pieces[move.to], opponent(toMove), move.to, move.from);
+            }
         }
-    } else if (move.flags & promotions) {
-        disappearPiece(pieces[move.from], opponent(toMove), move.from);
-        appearPiece(Piece::pawn, opponent(toMove), move.from);
-        materialDifference += (piecesValues[toInt(promotionPiece(move.flags & promotions))] - piecesValues[toInt(Piece::pawn)]) * (toMove == Color::white ? 1 : -1);
-    } else if (move.flags & MoveFlags::enPassantCapture) { // pion zbity w przelocie pojawia sie
-        appearPiece(Piece::pawn, toMove, move.enPassantSquare);
-        materialDifference += piecesValues[toInt(Piece::pawn)] * (toMove == Color::white ? 1 : -1);
+    } else {
+        if (move.captured != Piece::empty) {
+            untakePiece(pieces[move.to], opponent(toMove), move.captured, move.from, move.to);
+        } else {
+            movePiece(pieces[move.to], opponent(toMove), move.to, move.from);
+        }
+        if (move.flags & promotions) {
+            disappearPiece(pieces[move.from], opponent(toMove), move.from);
+            appearPiece(Piece::pawn, opponent(toMove), move.from);
+            materialDifference += (piecesValues[toInt(promotionPiece(move.flags & promotions))] - piecesValues[toInt(Piece::pawn)]) * (toMove == Color::white ? 1 : -1);
+        } else if (move.flags & MoveFlags::enPassantCapture) { // pion zbity w przelocie pojawia sie
+            appearPiece(Piece::pawn, toMove, move.enPassantSquare);
+            materialDifference += piecesValues[toInt(Piece::pawn)] * (toMove == Color::white ? 1 : -1);
+        }
     }
     setFlags(flags | toBoardFlags(move.flags));
     toMove = opponent(toMove);
@@ -218,14 +238,18 @@ void ChessBoard<HashPolicy>::checkIntegrity(const Move &move) const {
     }
     ASSERT(enPassantSquare == 0 || (toMove == Color::black && enPassantSquare >= 24 && enPassantSquare < 32) ||
                                    (toMove == Color::white && enPassantSquare >= 32 && enPassantSquare < 40), toMove, (int)enPassantSquare, *this);
-    ASSERT(!(flags & BoardFlags::K_castling) || (pieces[ 4] == Piece::king && pieces[ 7] == Piece::rook &&
-            piecesColors[ 4] == Color::white && piecesColors[ 7] == Color::white), pieces[ 4], pieces[ 7], piecesColors[ 4], piecesColors[ 7], flags, move, *this);
-    ASSERT(!(flags & BoardFlags::Q_castling) || (pieces[ 4] == Piece::king && pieces[ 0] == Piece::rook &&
-            piecesColors[ 4] == Color::white && piecesColors[ 0] == Color::white), pieces[ 4], pieces[ 0], piecesColors[ 4], piecesColors[ 0], flags, move, *this);
-    ASSERT(!(flags & BoardFlags::k_castling) || (pieces[60] == Piece::king && pieces[63] == Piece::rook &&
-            piecesColors[60] == Color::black && piecesColors[63] == Color::black), pieces[60], pieces[63], piecesColors[60], piecesColors[63], flags, move, *this);
-    ASSERT(!(flags & BoardFlags::q_castling) || (pieces[60] == Piece::king && pieces[56] == Piece::rook &&
-            piecesColors[60] == Color::black && piecesColors[56] == Color::black), pieces[60], pieces[56], piecesColors[60], piecesColors[56], flags, move, *this);
+    ASSERT(!(flags & BoardFlags::K_castling) || (pieces[getKingStartSquare<Color::white>()] == Piece::king && pieces[getKingSideRookSquare<Color::white>()] == Piece::rook &&
+            piecesColors[getKingStartSquare<Color::white>()] == Color::white && piecesColors[getKingSideRookSquare<Color::white>()] == Color::white),
+            pieces[getKingStartSquare<Color::white>()], pieces[getKingSideRookSquare<Color::white>()], piecesColors[getKingStartSquare<Color::white>()], piecesColors[getKingSideRookSquare<Color::white>()], flags, move, *this);
+    ASSERT(!(flags & BoardFlags::Q_castling) || (pieces[getKingStartSquare<Color::white>()] == Piece::king && pieces[getQueenSideRookSquare<Color::white>()] == Piece::rook &&
+            piecesColors[getKingStartSquare<Color::white>()] == Color::white && piecesColors[getQueenSideRookSquare<Color::white>()] == Color::white),
+            pieces[getKingStartSquare<Color::white>()], pieces[getQueenSideRookSquare<Color::white>()], piecesColors[getKingStartSquare<Color::white>()], piecesColors[getQueenSideRookSquare<Color::white>()], flags, move, *this);
+    ASSERT(!(flags & BoardFlags::k_castling) || (pieces[getKingStartSquare<Color::black>()] == Piece::king && pieces[getKingSideRookSquare<Color::black>()] == Piece::rook &&
+            piecesColors[getKingStartSquare<Color::black>()] == Color::black && piecesColors[getKingSideRookSquare<Color::black>()] == Color::black),
+            pieces[getKingStartSquare<Color::black>()], pieces[getKingSideRookSquare<Color::black>()], piecesColors[getKingStartSquare<Color::black>()], piecesColors[getKingSideRookSquare<Color::black>()], flags, move, *this);
+    ASSERT(!(flags & BoardFlags::q_castling) || (pieces[getKingStartSquare<Color::black>()] == Piece::king && pieces[getQueenSideRookSquare<Color::black>()] == Piece::rook &&
+            piecesColors[getKingStartSquare<Color::black>()] == Color::black && piecesColors[getQueenSideRookSquare<Color::black>()] == Color::black),
+            pieces[getKingStartSquare<Color::black>()], pieces[getQueenSideRookSquare<Color::black>()], piecesColors[getKingStartSquare<Color::black>()], piecesColors[getQueenSideRookSquare<Color::black>()], flags, move, *this);
 }
 
 template <typename HashPolicy>
@@ -323,7 +347,7 @@ void ChessBoard<HashPolicy>::initHash() {
 }
 
 template <typename HashPolicy>
-bool ChessBoard<HashPolicy>::isDraw() {
+bool ChessBoard<HashPolicy>::isDraw() const {
     return this->history.isDraw();
 }
 
@@ -384,10 +408,28 @@ EnumFlags<BoardFlags> ChessBoard<HashPolicy>::getFlags() const {
     return flags;
 }
 
+template <typename HashPolicy>
+uint8_t ChessBoard<HashPolicy>::getKingStartFile() const {
+    return kingStartFile;
+}
+
+template <typename HashPolicy>
+uint8_t ChessBoard<HashPolicy>::getQueenSideRookFile() const {
+    return queenSideRookFile;
+}
+
+template <typename HashPolicy>
+uint8_t ChessBoard<HashPolicy>::getKingSideRookFile() const {
+    return kingSideRookFile;
+}
+
+#define INVALID_FILE 0xFF
 
 template <typename HashPolicy>
 void ChessBoard<HashPolicy>::initFromFen(std::list<std::string> fenPosition) {
     clear();
+    kingSideRookFile = INVALID_FILE;
+    queenSideRookFile = INVALID_FILE;
     if (fenPosition.size() != 6) {
         return;
     }
@@ -416,22 +458,19 @@ void ChessBoard<HashPolicy>::initFromFen(std::list<std::string> fenPosition) {
     ASSERT(toMove == "w" || toMove == "b", toMove);
     this->toMove = toMove == "w" ? Color::white : Color::black;
 
-    std::string castles = fenPosition.front();
+    std::string castlings = fenPosition.front();
     fenPosition.pop_front();
-    EnumFlags<BoardFlags> flags = BoardFlags();
-    if (castles.find("K") != std::string::npos) {
-        flags |= BoardFlags::K_castling;
+    int whiteKingStartFile = INVALID_FILE;
+    int blackKingStartFile = INVALID_FILE;
+    if (std::find_if(castlings.begin(), castlings.end(), [](char c) { return c >= 'A' && c <= 'Z'; }) != castlings.end()) {
+        kingStartFile = whiteKingStartFile = file(bit::mostSignificantBit(getBitmask(Color::white, Piece::king)));
     }
-    if (castles.find("Q") != std::string::npos) {
-        flags |= BoardFlags::Q_castling;
+    if (std::find_if(castlings.begin(), castlings.end(), [](char c) { return c >= 'a' && c <= 'z'; }) != castlings.end()) {
+        kingStartFile = blackKingStartFile = file(bit::mostSignificantBit(getBitmask(Color::black, Piece::king)));
+        ASSERT(whiteKingStartFile == INVALID_FILE || whiteKingStartFile == blackKingStartFile, whiteKingStartFile, blackKingStartFile);
     }
-    if (castles.find("k") != std::string::npos) {
-        flags |= BoardFlags::k_castling;
-    }
-    if (castles.find("q") != std::string::npos) {
-        flags |= BoardFlags::q_castling;
-    }
-    setFlags(flags);
+
+    initCastlingsFromFen(castlings);
 
     std::string enPassant = fenPosition.front();
     fenPosition.pop_front();
@@ -439,4 +478,78 @@ void ChessBoard<HashPolicy>::initFromFen(std::list<std::string> fenPosition) {
         setEnPassantSquare(notation2Number(enPassant));
     }
     initHistory();
+}
+
+template <typename HashPolicy>
+void ChessBoard<HashPolicy>::initCastlingsFromFen(std::string castlings) {
+    if (castlings == "-") {
+        return;
+    }
+    EnumFlags<BoardFlags> flags{};
+    uint64_t firstRankWhiteRooksFiles = 0xFF & getBitmask(Color::white, Piece::rook);
+    uint64_t lastRankBlackRooksFiles = (0xFF00000000000000 & getBitmask(Color::black, Piece::rook)) >> 56;
+    for (char c : castlings) {
+        if (c == 'K') {
+            flags |= BoardFlags::K_castling;
+            kingSideRookFile = bit::mostSignificantBit(firstRankWhiteRooksFiles);
+        } else if (c == 'Q') {
+            flags |= BoardFlags::Q_castling;
+            queenSideRookFile = bit::leastSignificantBit(firstRankWhiteRooksFiles);
+        } else if (c == 'k') {
+            flags |= BoardFlags::k_castling;
+            ASSERT(kingSideRookFile == INVALID_FILE || kingSideRookFile == bit::mostSignificantBit(lastRankBlackRooksFiles), int(kingSideRookFile), int(bit::mostSignificantBit(lastRankBlackRooksFiles)));
+            kingSideRookFile = bit::mostSignificantBit(lastRankBlackRooksFiles);
+        } else if (c == 'q') {
+            flags |= BoardFlags::q_castling;
+            ASSERT(queenSideRookFile == INVALID_FILE || queenSideRookFile == bit::leastSignificantBit(lastRankBlackRooksFiles), int(queenSideRookFile), int(bit::leastSignificantBit(lastRankBlackRooksFiles)));
+            queenSideRookFile = bit::leastSignificantBit(lastRankBlackRooksFiles);
+        } else if (c >= 'A' && c <= 'H') {
+            ASSERT(bit::isSet(getBitmask(Color::white, Piece::rook), file2N(c)), getBitmask(Color::white, Piece::rook), c);
+            if (c < kingStartFile) {
+                flags |=  BoardFlags::Q_castling;
+                ASSERT(queenSideRookFile == INVALID_FILE || queenSideRookFile == file2N(c), int(queenSideRookFile), c);
+                queenSideRookFile = file2N(c);
+            } else {
+                flags |=  BoardFlags::K_castling;
+                ASSERT(kingSideRookFile == INVALID_FILE || kingSideRookFile == file2N(c), int(kingSideRookFile), c);
+                kingSideRookFile = file2N(c);
+            }
+        } else if (c >= 'a' && c <= 'h') {
+            ASSERT(bit::isSet(getBitmask(Color::black, Piece::rook), file2N(c)), getBitmask(Color::black, Piece::rook), c);
+            if (c < kingStartFile) {
+                flags |=  BoardFlags::Q_castling;
+                ASSERT(queenSideRookFile == INVALID_FILE || queenSideRookFile == file2N(c), int(queenSideRookFile), c);
+                queenSideRookFile = file2N(c);
+            } else {
+                flags |=  BoardFlags::K_castling;
+                ASSERT(kingSideRookFile == INVALID_FILE || kingSideRookFile == file2N(c), int(queenSideRookFile), c);
+                kingSideRookFile = file2N(c);
+            }
+        } else {
+            ASSERT(false, c);
+        }
+    }
+    TRACE_PARAMS(int(kingSideRookFile), int(queenSideRookFile), flags);
+    setFlags(flags);
+}
+
+template <typename HashPolicy>
+template<Color color>
+uint8_t ChessBoard<HashPolicy>::getKingStartSquare() const {
+    static_assert(color == Color::white || color == Color::black, "invalid color");
+    return number(rank2N(color == Color::white ? '1' : '8'), kingStartFile);
+}
+
+template <typename HashPolicy>
+template<Color color>
+uint8_t ChessBoard<HashPolicy>::getQueenSideRookSquare() const {
+    static_assert(color == Color::white || color == Color::black, "invalid color");
+    return number(rank2N(color == Color::white ? '1' : '8'), queenSideRookFile);
+}
+
+template <typename HashPolicy>
+template<Color color>
+uint8_t ChessBoard<HashPolicy>::getKingSideRookSquare() const {
+    static_assert(color == Color::white || color == Color::black, "invalid color");
+    return number(rank2N(color == Color::white ? '1' : '8'), kingSideRookFile);
 }

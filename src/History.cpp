@@ -1,7 +1,7 @@
 #include "History.h"
 #include "utils/asserts.h"
 
-bool History::isDraw() {
+bool History::isDraw() const {
     ASSERT(historyTable.size() > 0, historyTable.size());
     return historyTable.back().movesFromLastCaptureOrPawnMove >= 100 || topPositionThreeTimesRepeated();
 }
@@ -21,7 +21,7 @@ void History::init(uint64_t initialPositionHash) {
     historyTable.emplace_back(initialPositionHash, 0);
 }
 
-bool History::topPositionThreeTimesRepeated() {
+bool History::topPositionThreeTimesRepeated() const {
     ASSERT(historyTable.size() > 0, historyTable.size());
     int count = 1;
     uint64_t searchedHash = historyTable.back().hash;
@@ -33,7 +33,7 @@ bool History::topPositionThreeTimesRepeated() {
     return count >= 3;
 }
 
-bool History::isTopPositionRepeated(int expectedCount) {
+bool History::isTopPositionRepeated(int expectedCount) const {
     ASSERT(historyTable.size() > 0, historyTable.size());
     int count = 1;
     uint64_t searchedHash = historyTable.back().hash;
@@ -46,7 +46,7 @@ bool History::isTopPositionRepeated(int expectedCount) {
     return count >= expectedCount;
 }
 
-void History::printHistory() {
+void History::printHistory() const {
     std::cerr << "current pos: " << historyTable.back().hash << std::endl;
     int count = 1;
     uint64_t searchedHash = historyTable.back().hash;

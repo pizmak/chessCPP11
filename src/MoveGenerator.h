@@ -13,8 +13,8 @@ struct MoveGenerator {
     static uint64_t pawnBitmask[2][64];
 
     static void initBitmasks();
-    static Move *movesOfShortDistancePiece(BoardType &board, uint8_t square, uint64_t mask, Move *startMove);
-    static Move *movesOfLongDistancePiece(BoardType &board, uint8_t square, uint64_t mask[64][4], Move *startMove);
+    static Move *movesOfShortDistancePiece(BoardType &board, uint8_t square, uint64_t mask, Move *startMove, EnumFlags<MoveFlags> flags = MoveFlags::empty);
+    static Move *movesOfLongDistancePiece(BoardType &board, uint8_t square, uint64_t mask[64][4], Move *startMove, EnumFlags<MoveFlags> flags = MoveFlags::empty);
     static Move *generateMoves(BoardType &board, Move *startMove);
     template <Color color>
     static Move *generatePawnMoves(BoardType &board, uint8_t square, Move *startMove);
@@ -34,5 +34,9 @@ struct MoveGenerator {
     static bool isSquareAttacked(BoardType &board, uint8_t square, Color color);
     static bool isMoveValid(BoardType &board, const Move &m);
 private:
+    static bool whiteKingSideCastlingPossible(BoardType &board);
+    static bool blackKingSideCastlingPossible(BoardType &board);
+    static bool whiteQueenSideCastlingPossible(BoardType &board);
+    static bool blackQueenSideCastlingPossible(BoardType &board);
     static void addCastlingFlags(BoardType &board, Move &move);
 };

@@ -26,28 +26,28 @@ void MoveGenerator::addCastlingFlags(BoardType &board, Move &move) {
     return; // in release mode there is no need to set castling flags for moves that captures rooks
     // but we want to do it in debug mode to call checkIntegrity in makeMove
 #endif
-    if (board.getMoveSide() == Color::black && board.getFlags() & BoardFlags::K_castling && move.to == n2N("h1")
-            && move.captured == Piece::rook && board.getPieceColor(n2N("h1")) == Color::white) {
+      if (board.getMoveSide() == Color::black && board.getFlags() & BoardFlags::K_castling && move.to == board.getKingSideRookSquare<Color::white>()
+          && move.captured == Piece::rook && board.getPieceColor(board.getKingSideRookSquare<Color::white>()) == Color::white) {
         move.flags |= MoveFlags::K_castling;
-    }
-    if (board.getMoveSide() == Color::black && board.getFlags() & BoardFlags::Q_castling && move.to == n2N("a1")
-            && move.captured == Piece::rook && board.getPieceColor(n2N("a1")) == Color::white) {
+      }
+      if (board.getMoveSide() == Color::black && board.getFlags() & BoardFlags::Q_castling && move.to == board.getQueenSideRookSquare<Color::white>()
+          && move.captured == Piece::rook && board.getPieceColor(board.getQueenSideRookSquare<Color::white>()) == Color::white) {
         move.flags |= MoveFlags::Q_castling;
-    }
-    if (board.getMoveSide() == Color::white && board.getFlags() & BoardFlags::k_castling && move.to == n2N("h8")
-            && move.captured == Piece::rook && board.getPieceColor(n2N("h8")) == Color::black) {
+      }
+      if (board.getMoveSide() == Color::white && board.getFlags() & BoardFlags::k_castling && move.to == board.getKingSideRookSquare<Color::black>()
+          && move.captured == Piece::rook && board.getPieceColor(board.getKingSideRookSquare<Color::black>()) == Color::black) {
         move.flags |= MoveFlags::k_castling;
-    }
-    if (board.getMoveSide() == Color::white && board.getFlags() & BoardFlags::q_castling && move.to == n2N("a8")
-            && move.captured == Piece::rook && board.getPieceColor(n2N("a8")) == Color::black) {
+      }
+      if (board.getMoveSide() == Color::white && board.getFlags() & BoardFlags::q_castling && move.to == board.getQueenSideRookSquare<Color::black>()
+          && move.captured == Piece::rook && board.getPieceColor(board.getQueenSideRookSquare<Color::black>()) == Color::black) {
         move.flags |= MoveFlags::q_castling;
-    }
+      }
 }
 
-Move *MoveGenerator::movesOfShortDistancePiece(BoardType &board, uint8_t square, uint64_t mask, Move *startMove) {
+Move *MoveGenerator::movesOfShortDistancePiece(BoardType &board, uint8_t square, uint64_t mask, Move *startMove, EnumFlags<MoveFlags> flags) {
     mask &= ~board.piecesOf(board.getMoveSide());
-    bit::foreach_bit(mask, [&board, &startMove, square](uint8_t moveTo) {
-        *startMove = {square, moveTo, board.getEnPassantSquare(), board.getPiece(moveTo)};
+    bit::foreach_bit(mask, [&board, &startMove, square, flags](uint8_t moveTo) {
+        *startMove = {square, moveTo, board.getEnPassantSquare(), board.getPiece(moveTo), flags};
         addCastlingFlags(board, *startMove);
         if (isMoveValid(board, *startMove)) {
             ++startMove;
@@ -56,7 +56,7 @@ Move *MoveGenerator::movesOfShortDistancePiece(BoardType &board, uint8_t square,
     return startMove;
 }
 
-Move *MoveGenerator::movesOfLongDistancePiece(BoardType &board, uint8_t square, uint64_t mask[64][4], Move *startMove) {
+Move *MoveGenerator::movesOfLongDistancePiece(BoardType &board, uint8_t square, uint64_t mask[64][4], Move *startMove, EnumFlags<MoveFlags> flags) {
     for (int direction = 0; direction < 4; ++direction) {
         uint64_t piecesOnLine = mask[square][direction] & board.allPieces();
         uint8_t possiblePiece = 0;
@@ -65,7 +65,7 @@ Move *MoveGenerator::movesOfLongDistancePiece(BoardType &board, uint8_t square, 
             possiblePiece = (bit::single(square) < mask[square][direction] ?
                     bit::leastSignificantBit : bit::mostSignificantBit)(piecesOnLine);
             if (board.getPieceColor(possiblePiece) != board.getMoveSide()) {
-                *startMove = {square, possiblePiece, board.getEnPassantSquare(), board.getPiece(possiblePiece)};
+                *startMove = {square, possiblePiece, board.getEnPassantSquare(), board.getPiece(possiblePiece), flags};
                 addCastlingFlags(board, *startMove);
                 if (isMoveValid(board, *startMove)) {
                     ++startMove;
@@ -75,8 +75,8 @@ Move *MoveGenerator::movesOfLongDistancePiece(BoardType &board, uint8_t square, 
             bit::unset(movesMask, possiblePiece);
         }
 
-        bit::foreach_bit(movesMask, [&board, square, &startMove](uint8_t targetSquare) {
-            *startMove = {square, targetSquare, board.getEnPassantSquare(), Piece::empty};
+        bit::foreach_bit(movesMask, [&board, square, &startMove, flags](uint8_t targetSquare) {
+            *startMove = {square, targetSquare, board.getEnPassantSquare(), Piece::empty, flags};
             if (isMoveValid(board, *startMove)) {
                 ++startMove;
             }
@@ -178,29 +178,17 @@ Move *MoveGenerator::generateBishopMoves(BoardType &board, uint8_t square, Move 
 }
 
 Move *MoveGenerator::generateRookMoves(BoardType &board, uint8_t square, Move *startMove) {
-    Move *afterLastMove = movesOfLongDistancePiece(board, square, rookBitmask, startMove);
-    static auto QcastFun = [](Move &move) {
-        move.flags |= MoveFlags::Q_castling;
-    };
-    static auto KcastFun = [](Move &move) {
-        move.flags |= MoveFlags::K_castling;
-    };
-    static auto qcastFun = [](Move &move) {
-        move.flags |= MoveFlags::q_castling;
-    };
-    static auto kcastFun = [](Move &move) {
-        move.flags |= MoveFlags::k_castling;
-    };
-    if (square == 0 && board.getFlags() & BoardFlags::Q_castling) {
-        std::for_each(startMove, afterLastMove, QcastFun);
-    } else if (square == 7 && board.getFlags() & BoardFlags::K_castling) {
-        std::for_each(startMove, afterLastMove, KcastFun);
-    } else if (square == 0x38 && board.getFlags() & BoardFlags::q_castling) {
-        std::for_each(startMove, afterLastMove, qcastFun);
-    } else if (square == 0x3F && board.getFlags() & BoardFlags::k_castling) {
-        std::for_each(startMove, afterLastMove, kcastFun);
+    EnumFlags<MoveFlags> flags{};
+    if (square == board.getQueenSideRookSquare<Color::white>() && board.getFlags() & BoardFlags::Q_castling) {
+        flags = MoveFlags::Q_castling;
+    } else if (square == board.getKingSideRookSquare<Color::white>() && board.getFlags() & BoardFlags::K_castling) {
+        flags = MoveFlags::K_castling;
+    } else if (square == board.getQueenSideRookSquare<Color::black>() && board.getFlags() & BoardFlags::q_castling) {
+        flags = MoveFlags::q_castling;
+    } else if (square == board.getKingSideRookSquare<Color::black>() && board.getFlags() & BoardFlags::k_castling) {
+        flags = MoveFlags::k_castling;
     }
-    return afterLastMove;
+    return movesOfLongDistancePiece(board, square, rookBitmask, startMove, flags);
 }
 
 Move *MoveGenerator::generateQueenMoves(BoardType &board, uint8_t square, Move *startMove) {
@@ -208,60 +196,50 @@ Move *MoveGenerator::generateQueenMoves(BoardType &board, uint8_t square, Move *
     return generateRookMoves(board, square, startMove);
 }
 
-Move *MoveGenerator::generateKingMoves(BoardType &board, uint8_t square, Move* startMove) {
-    Move *afterLastMove = movesOfShortDistancePiece(board, square, kingBitmask[square], startMove);
-    static auto QcastFun = [](Move &move) {
-        move.flags |= MoveFlags::Q_castling;
-    };
-    static auto KcastFun = [](Move &move) {
-        move.flags |= MoveFlags::K_castling;
-    };
-    static auto qcastFun = [](Move &move) {
-        move.flags |= MoveFlags::q_castling;
-    };
-    static auto kcastFun = [](Move &move) {
-        move.flags |= MoveFlags::k_castling;
-    };
-    if (square == n2N("e1") && board.getFlags() & BoardFlags::K_castling) {
-        std::for_each(startMove, afterLastMove, KcastFun);
-        if (board.getPieceColor(n2N("f1")) == Color::empty && board.getPieceColor(n2N("g1")) == Color::empty && board.getPiece(n2N("h1")) == Piece::rook && board.getPieceColor(n2N("h1")) == Color::white &&
-                !isSquareAttacked(board, n2N("e1"), Color::black) && !isSquareAttacked(board, n2N("f1"), Color::black) && !isSquareAttacked(board, n2N("g1"), Color::black)) {
-            *afterLastMove = {n2N("e1"), n2N("g1"), board.getEnPassantSquare(), Piece::empty, MoveFlags::K_castling | MoveFlags::castling};
-            ++afterLastMove;
+Move *MoveGenerator::generateKingMoves(BoardType &board, uint8_t square, Move *startMove) {
+    EnumFlags<MoveFlags> flags{};
+    if (square == board.getKingStartSquare<Color::white>() && board.getFlags() & BoardFlags::K_castling) {
+        flags |= MoveFlags::K_castling;
+        if (whiteKingSideCastlingPossible(board)) {
+            *startMove = {board.getKingStartSquare<Color::white>(), n2N("g1"), board.getEnPassantSquare(), Piece::empty, MoveFlags::K_castling | MoveFlags::castling};
+            if (board.getFlags() & BoardFlags::Q_castling) {
+                startMove->flags |= MoveFlags::Q_castling;
+            }
+            ++startMove;
         }
     }
-    if (square == n2N("e1") && board.getFlags() & BoardFlags::Q_castling) {
-        std::for_each(startMove, afterLastMove, QcastFun);
-        if (board.getPieceColor(n2N("d1")) == Color::empty && board.getPieceColor(n2N("c1")) == Color::empty && board.getPieceColor(n2N("b1")) == Color::empty &&  board.getPiece(n2N("a1")) == Piece::rook && board.getPieceColor(n2N("a1")) == Color::white &&
-                !isSquareAttacked(board, n2N("e1"), Color::black) && !isSquareAttacked(board, n2N("d1"), Color::black) && !isSquareAttacked(board, n2N("c1"), Color::black)) {
-            *afterLastMove = {n2N("e1"), n2N("c1"), board.getEnPassantSquare(), Piece::empty, MoveFlags::Q_castling | MoveFlags::castling};
+    if (square == board.getKingStartSquare<Color::white>() && board.getFlags() & BoardFlags::Q_castling) {
+        flags |= MoveFlags::Q_castling;
+        if (whiteQueenSideCastlingPossible(board)) {
+            *startMove = {board.getKingStartSquare<Color::white>(), n2N("c1"), board.getEnPassantSquare(), Piece::empty, MoveFlags::Q_castling | MoveFlags::castling};
             if (board.getFlags() & BoardFlags::K_castling) {
-                afterLastMove->flags |= MoveFlags::K_castling;
+                startMove->flags |= MoveFlags::K_castling;
             }
-            ++afterLastMove;
+            ++startMove;
         }
-        return afterLastMove;
+        return startMove;
     }
-    if (square == n2N("e8") && board.getFlags() & BoardFlags::k_castling) {
-        std::for_each(startMove, afterLastMove, kcastFun);
-        if (board.getPieceColor(n2N("f8")) == Color::empty && board.getPieceColor(n2N("g8")) == Color::empty && board.getPiece(n2N("h8")) == Piece::rook && board.getPieceColor(n2N("h8")) == Color::black &&
-                !isSquareAttacked(board, n2N("e8"), Color::white) && !isSquareAttacked(board, n2N("f8"), Color::white) && !isSquareAttacked(board, n2N("g8"), Color::white)) {
-            *afterLastMove = {n2N("e8"), n2N("g8"), board.getEnPassantSquare(), Piece::empty, MoveFlags::k_castling | MoveFlags::castling};
-            ++afterLastMove;
+    if (square == board.getKingStartSquare<Color::black>() && board.getFlags() & BoardFlags::k_castling) {
+        flags |= MoveFlags::k_castling;
+        if (blackKingSideCastlingPossible(board)) {
+            *startMove = {board.getKingStartSquare<Color::black>(), n2N("g8"), board.getEnPassantSquare(), Piece::empty, MoveFlags::k_castling | MoveFlags::castling};
+            if (board.getFlags() & BoardFlags::q_castling) {
+                startMove->flags |= MoveFlags::q_castling;
+            }
+            ++startMove;
         }
     }
-    if (square == n2N("e8") && board.getFlags() & BoardFlags::q_castling) {
-        std::for_each(startMove, afterLastMove, qcastFun);
-        if (board.getPieceColor(n2N("d8")) == Color::empty && board.getPieceColor(n2N("c8")) == Color::empty && board.getPieceColor(n2N("b8")) == Color::empty &&  board.getPiece(n2N("a8")) == Piece::rook && board.getPieceColor(n2N("a8")) == Color::black &&
-                !isSquareAttacked(board, n2N("e8"), Color::white) && !isSquareAttacked(board, n2N("d8"), Color::white) && !isSquareAttacked(board, n2N("c8"), Color::white)) {
-            *afterLastMove = {n2N("e8"), n2N("c8"), board.getEnPassantSquare(), Piece::empty, MoveFlags::q_castling | MoveFlags::castling};
+    if (square == board.getKingStartSquare<Color::black>() && board.getFlags() & BoardFlags::q_castling) {
+        flags |= MoveFlags::q_castling;
+        if (blackQueenSideCastlingPossible(board)) {
+            *startMove = {board.getKingStartSquare<Color::black>(), n2N("c8"), board.getEnPassantSquare(), Piece::empty, MoveFlags::q_castling | MoveFlags::castling};
             if (board.getFlags() & BoardFlags::k_castling) {
-                afterLastMove->flags |= MoveFlags::k_castling;
+                startMove->flags |= MoveFlags::k_castling;
             }
-            ++afterLastMove;
+            ++startMove;
         }
     }
-    return afterLastMove;
+    return movesOfShortDistancePiece(board, square, kingBitmask[square], startMove, flags);;
 }
 
 uint64_t MoveGenerator::maskOfShortDistancePiece(uint8_t square, const PairList &list) {
@@ -358,3 +336,90 @@ bool MoveGenerator::isSquareAttacked(BoardType &board, uint8_t square, Color col
     return false;
 }
 
+bool MoveGenerator::whiteKingSideCastlingPossible(BoardType &board) {
+    uint8_t kingSquare = board.getKingStartSquare<Color::white>();
+    uint8_t rookSquare = board.getKingSideRookSquare<Color::white>();
+    if (board.getPiece(rookSquare) != Piece::rook || board.getPieceColor(rookSquare) != Color::white) {
+        return false;
+    }
+    uint8_t emptyStart = std::min(n2N("f1"), kingSquare);
+    uint8_t emptyEnd = std::max(n2N("g1"), rookSquare);
+    for (uint8_t i = emptyStart; i <= emptyEnd; ++i) {
+        if (board.getPieceColor(i) != Color::empty && i != kingSquare && i != rookSquare) {
+            return false;
+        }
+    }
+    for (uint8_t i = kingSquare; i <= n2N("g1"); ++i) {
+        if (isSquareAttacked(board, i, Color::black)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool MoveGenerator::blackKingSideCastlingPossible(BoardType &board) {
+    uint8_t kingSquare = board.getKingStartSquare<Color::black>();
+    uint8_t rookSquare = board.getKingSideRookSquare<Color::black>();
+    if (board.getPiece(rookSquare) != Piece::rook || board.getPieceColor(rookSquare) != Color::black) {
+        return false;
+    }
+    uint8_t emptyStart = std::min(n2N("f8"), kingSquare);
+    uint8_t emptyEnd = std::max(n2N("g8"), rookSquare);
+    for (uint8_t i = emptyStart; i <= emptyEnd; ++i) {
+        if (board.getPieceColor(i) != Color::empty && i != kingSquare && i != rookSquare) {
+            return false;
+        }
+    }
+    for (uint8_t i = kingSquare; i <= n2N("g8"); ++i) {
+        if (isSquareAttacked(board, i, Color::white)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool MoveGenerator::whiteQueenSideCastlingPossible(BoardType &board) {
+    uint8_t kingSquare = board.getKingStartSquare<Color::white>();
+    uint8_t rookSquare = board.getQueenSideRookSquare<Color::white>();
+    if (board.getPiece(rookSquare) != Piece::rook || board.getPieceColor(rookSquare) != Color::white) {
+        return false;
+    }
+    uint8_t emptyStart = std::min(n2N("c1"), rookSquare);
+    uint8_t emptyEnd = std::max(n2N("d1"), kingSquare);
+    for (uint8_t i = emptyStart; i <= emptyEnd; ++i) {
+        if (board.getPieceColor(i) != Color::empty && i != kingSquare && i != rookSquare) {
+            return false;
+        }
+    }
+    int checkStartSquare = std::min(kingSquare, n2N("c1"));
+    int checkEndSquare = std::max(kingSquare, n2N("c1"));
+    for (uint8_t i = checkStartSquare; i <= checkEndSquare; ++i) {
+        if (isSquareAttacked(board, i, Color::black)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool MoveGenerator::blackQueenSideCastlingPossible(BoardType &board) {
+    uint8_t kingSquare = board.getKingStartSquare<Color::black>();
+    uint8_t rookSquare = board.getQueenSideRookSquare<Color::black>();
+    if (board.getPiece(rookSquare) != Piece::rook || board.getPieceColor(rookSquare) != Color::black) {
+        return false;
+    }
+    uint8_t emptyStart = std::min(n2N("c8"), rookSquare);
+    uint8_t emptyEnd = std::max(n2N("d8"), kingSquare);
+    for (uint8_t i = emptyStart; i <= emptyEnd; ++i) {
+        if (board.getPieceColor(i) != Color::empty && i != kingSquare && i != rookSquare) {
+            return false;
+        }
+    }
+    int checkStartSquare = std::min(kingSquare, n2N("c8"));
+    int checkEndSquare = std::max(kingSquare, n2N("c8"));
+    for (uint8_t i = checkStartSquare; i <= checkEndSquare; ++i) {
+        if (isSquareAttacked(board, i, Color::white)) {
+            return false;
+        }
+    }
+    return true;
+}
