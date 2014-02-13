@@ -8,7 +8,9 @@
 #define _TRACE_PARAM(p) #p << " = " << p
 #define _LEFT_SHIFT() << ", " <<
 #define TRACE_PARAMS(...) \
-    std::cerr << FOREACH(_TRACE_PARAM, _LEFT_SHIFT, __VA_ARGS__) << std::endl;
+    std::cerr << __FUNCTION__ << "(";\
+    std::cerr << FOREACH(_TRACE_PARAM, _LEFT_SHIFT, __VA_ARGS__);\
+    std::cerr << ")" << std::endl;
 
 #else
 
