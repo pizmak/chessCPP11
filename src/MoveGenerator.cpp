@@ -21,10 +21,34 @@ void MoveGenerator::initBitmasks() {
     }
 }
 
+void MoveGenerator::addCastlingFlags(BoardType &board, Move &move) {
+#ifndef DEBUG
+    return; // in release mode there is no need to set castling flags for moves that captures rooks
+    // but we want to do it in debug mode to call checkIntegrity in makeMove
+#endif
+    if (board.getMoveSide() == Color::black && board.getFlags() & BoardFlags::K_castling && move.to == n2N("h1")
+            && move.captured == Piece::rook && board.getPieceColor(n2N("h1")) == Color::white) {
+        move.flags |= MoveFlags::K_castling;
+    }
+    if (board.getMoveSide() == Color::black && board.getFlags() & BoardFlags::Q_castling && move.to == n2N("a1")
+            && move.captured == Piece::rook && board.getPieceColor(n2N("a1")) == Color::white) {
+        move.flags |= MoveFlags::Q_castling;
+    }
+    if (board.getMoveSide() == Color::white && board.getFlags() & BoardFlags::k_castling && move.to == n2N("h8")
+            && move.captured == Piece::rook && board.getPieceColor(n2N("h8")) == Color::black) {
+        move.flags |= MoveFlags::k_castling;
+    }
+    if (board.getMoveSide() == Color::white && board.getFlags() & BoardFlags::q_castling && move.to == n2N("a8")
+            && move.captured == Piece::rook && board.getPieceColor(n2N("a8")) == Color::black) {
+        move.flags |= MoveFlags::q_castling;
+    }
+}
+
 Move *MoveGenerator::movesOfShortDistancePiece(BoardType &board, uint8_t square, uint64_t mask, Move *startMove) {
     mask &= ~board.piecesOf(board.getMoveSide());
     bit::foreach_bit(mask, [&board, &startMove, square](uint8_t moveTo) {
         *startMove = {square, moveTo, board.getEnPassantSquare(), board.getPiece(moveTo)};
+        addCastlingFlags(board, *startMove);
         if (isMoveValid(board, *startMove)) {
             ++startMove;
         }
@@ -42,6 +66,7 @@ Move *MoveGenerator::movesOfLongDistancePiece(BoardType &board, uint8_t square, 
                     bit::leastSignificantBit : bit::mostSignificantBit)(piecesOnLine);
             if (board.getPieceColor(possiblePiece) != board.getMoveSide()) {
                 *startMove = {square, possiblePiece, board.getEnPassantSquare(), board.getPiece(possiblePiece)};
+                addCastlingFlags(board, *startMove);
                 if (isMoveValid(board, *startMove)) {
                     ++startMove;
                 }
@@ -97,6 +122,7 @@ Move *MoveGenerator::generatePawnMoves(BoardType &board, uint8_t square, Move *s
     static_assert(color == Color::white || color == Color::black, "");
     if (bit::isSet(pawnBitmask[toInt(color)][color == Color::white ? square - 8 : square + 8], board.getEnPassantSquare())) {
         *startMove = {square, color == Color::white ? uint8_t(board.getEnPassantSquare() + 8) : uint8_t(board.getEnPassantSquare() - 8), board.getEnPassantSquare(), Piece::empty, MoveFlags::enPassantCapture};
+        addCastlingFlags(board, *startMove);
         if (isMoveValid(board, *startMove)) {
             ++startMove;
         }
@@ -127,6 +153,7 @@ Move *MoveGenerator::generatePawnMoves(BoardType &board, uint8_t square, Move *s
     uint64_t captures = pawnBitmask[toInt(color)][square] & board.piecesOf(opponent(color));
     bit::foreach_bit(captures, [&board, &startMove, square](uint8_t targetSquare) {
         *startMove = {square, targetSquare, board.getEnPassantSquare(), board.getPiece(targetSquare)};
+        addCastlingFlags(board, *startMove);
         if (isMoveValid(board, *startMove)) {
             if (startMove->to > 0x37 || startMove->to < 8) {
                 startMove[1] = startMove[2] = startMove[3] = *startMove;

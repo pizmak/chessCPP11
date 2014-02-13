@@ -60,7 +60,7 @@ public:
     bool isDraw(); // returns true if there were 50 moves without capture or pawn moves or or position was three times repeated
     void makeMove(const Move &r); // only move pieces around, no check for move validity
     void unmakeMove(const Move &r);
-    void checkIntegrity() const;
+    void checkIntegrity(const Move &m = Move()) const;
     void dump(std::ostream &stream) const;
     uint64_t piecesOf(Color color) const;
     uint64_t allPieces() const;

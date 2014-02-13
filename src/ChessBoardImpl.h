@@ -8,6 +8,13 @@
 #include <iomanip>
 #include <cstdint>
 #include <iosfwd>
+#include <algorithm>
+
+template <typename HashPolicy>
+std::ostream &operator<<(std::ostream &stream, ChessBoard<HashPolicy> &board) {
+    board.dump(stream);
+    return stream;
+}
 
 template <typename HashPolicy>
 const int16_t ChessBoard<HashPolicy>::piecesValues[] = {100, 300, 300, 500, 900, 9000, 0}; // indexed by Piece
@@ -32,7 +39,7 @@ uint64_t ChessBoard<HashPolicy>::allPieces() const {
 template <typename HashPolicy>
 void ChessBoard<HashPolicy>::disappearPiece(Piece piece, Color color, uint8_t from) {
     ASSERT(pieces[from] == piece && piecesColors[from] == color,
-            number2Notation(from), pieces[from], piece, piecesColors[from], color);
+            number2Notation(from), pieces[from], piece, piecesColors[from], color, *this);
     HashPolicy::updatePiece(from, toInt(piecesColors[from]), toInt(pieces[from]));
     pieces[from] = Piece::empty;
     piecesColors[from] = Color::empty;
@@ -42,6 +49,8 @@ void ChessBoard<HashPolicy>::disappearPiece(Piece piece, Color color, uint8_t fr
 template <typename HashPolicy>
 void ChessBoard<HashPolicy>::appearPiece(Piece piece, Color color, uint8_t to) {
     // we can appear piece on square which is empty on opponents square (capture) or our square (promotion)
+    ASSERT(piecesColors[to] != color || color == Color::white && pieces[to] == Piece::pawn && rank(to) == rank2N('8')
+            || color == Color::black && pieces[to] == Piece::pawn && rank(to) == rank2N('1'), piece, color, int(to), *this);
     pieces[to] = piece;
     piecesColors[to] = color;
     bit::set(bitmask[toInt(color)][toInt(piece)], to);
@@ -113,7 +122,8 @@ inline EnumFlags<BoardFlags> toBoardFlags(EnumFlags<MoveFlags> moveFlags) {
 
 template <typename HashPolicy>
 void ChessBoard<HashPolicy>::makeMove(const Move &move) {
-    ASSERT(piecesColors[move.from] == toMove, number2Notation(move.from), piecesColors[move.from], toMove);
+    checkIntegrity(move);
+    ASSERT(piecesColors[move.from] == toMove, number2Notation(move.from), piecesColors[move.from], toMove, move, *this);
     uint8_t newEnPassantSquare = pieces[move.from] == Piece::pawn && (move.to - move.from == 16 || move.from - move.to == 16) ? move.to : 0;
     if (move.captured != Piece::empty) {
         takePiece(pieces[move.from], toMove, move.captured, move.from, move.to);
@@ -125,6 +135,8 @@ void ChessBoard<HashPolicy>::makeMove(const Move &move) {
             ASSERT(flags & allCastlings, flags);
             uint8_t startSquare = move.to > move.from ? 7 : 0;
             uint8_t offset = move.to > move.from ? -2 : 3;
+            ASSERT(file(move.to) == file2N('g') || file(move.to) == file2N('c') ,  move, *this);
+            ASSERT(rank(move.to) == rank2N('1') && toMove == Color::white || rank(move.to) == rank2N('8') && toMove == Color::black ,  move, *this);
             uint8_t colorOffset = 56 * int(toMove);
             movePiece(Piece::rook, toMove, startSquare + colorOffset, startSquare + colorOffset + offset);
         }
@@ -144,10 +156,12 @@ void ChessBoard<HashPolicy>::makeMove(const Move &move) {
     HashPolicy::resetRepetition();
     history.push(HashPolicy::getHash(), move.captured != Piece::empty || pieces[move.to] == Piece::pawn);
     HashPolicy::setRepetition(history.isTopPositionRepeated(2));
+    checkIntegrity(move);
 }
 
 template <typename HashPolicy>
 void ChessBoard<HashPolicy>::unmakeMove(const Move &move) {
+    checkIntegrity(move);
     ASSERT(piecesColors[move.to] == opponent(toMove), toMove, piecesColors[move.to]);
     history.pop();
     if (move.captured != Piece::empty) {
@@ -160,6 +174,8 @@ void ChessBoard<HashPolicy>::unmakeMove(const Move &move) {
         if (move.flags & MoveFlags::castling) {
             uint8_t startSquare = move.to > move.from ? 7 : 0;
             uint8_t offset = move.to > move.from ? -2 : 3;
+            ASSERT(file(move.to) == file2N('g') || file(move.to) == file2N('c') ,  move, *this);
+            ASSERT(rank(move.to) == rank2N('1') && toMove == Color::black || rank(move.to) == rank2N('8') && toMove == Color::white ,  move, *this);
             uint8_t colorOffset = 56 * int(opponent(toMove));
             movePiece(Piece::rook, opponent(toMove), startSquare + colorOffset + offset, startSquare + colorOffset);
         }
@@ -174,11 +190,13 @@ void ChessBoard<HashPolicy>::unmakeMove(const Move &move) {
     setFlags(flags | toBoardFlags(move.flags));
     toMove = opponent(toMove);
     HashPolicy::switchPlayer();
+    checkIntegrity(move);
 }
 
 template <typename HashPolicy>
-void ChessBoard<HashPolicy>::checkIntegrity() const {
+void ChessBoard<HashPolicy>::checkIntegrity(const Move &move) const {
 #ifndef DEBUG
+    (void)move;
     return;
 #endif
     for (int i = 0; i < 64; ++i) {
@@ -199,15 +217,15 @@ void ChessBoard<HashPolicy>::checkIntegrity() const {
         }
     }
     ASSERT(enPassantSquare == 0 || (toMove == Color::black && enPassantSquare >= 24 && enPassantSquare < 32) ||
-                                   (toMove == Color::white && enPassantSquare >= 32 && enPassantSquare < 40), toMove, (int)enPassantSquare);
+                                   (toMove == Color::white && enPassantSquare >= 32 && enPassantSquare < 40), toMove, (int)enPassantSquare, *this);
     ASSERT(!(flags & BoardFlags::K_castling) || (pieces[ 4] == Piece::king && pieces[ 7] == Piece::rook &&
-            piecesColors[ 4] == Color::white && piecesColors[ 7] == Color::white), pieces[ 4], pieces[ 7], piecesColors[ 4], piecesColors[ 7], flags);
+            piecesColors[ 4] == Color::white && piecesColors[ 7] == Color::white), pieces[ 4], pieces[ 7], piecesColors[ 4], piecesColors[ 7], flags, move, *this);
     ASSERT(!(flags & BoardFlags::Q_castling) || (pieces[ 4] == Piece::king && pieces[ 0] == Piece::rook &&
-            piecesColors[ 4] == Color::white && piecesColors[ 0] == Color::white), pieces[ 4], pieces[ 0], piecesColors[ 4], piecesColors[ 0], flags);
+            piecesColors[ 4] == Color::white && piecesColors[ 0] == Color::white), pieces[ 4], pieces[ 0], piecesColors[ 4], piecesColors[ 0], flags, move, *this);
     ASSERT(!(flags & BoardFlags::k_castling) || (pieces[60] == Piece::king && pieces[63] == Piece::rook &&
-            piecesColors[60] == Color::black && piecesColors[63] == Color::black), pieces[60], pieces[63], piecesColors[60], piecesColors[63], flags);
+            piecesColors[60] == Color::black && piecesColors[63] == Color::black), pieces[60], pieces[63], piecesColors[60], piecesColors[63], flags, move, *this);
     ASSERT(!(flags & BoardFlags::q_castling) || (pieces[60] == Piece::king && pieces[56] == Piece::rook &&
-            piecesColors[60] == Color::black && piecesColors[56] == Color::black), pieces[60], pieces[56], piecesColors[60], piecesColors[56], flags);
+            piecesColors[60] == Color::black && piecesColors[56] == Color::black), pieces[60], pieces[56], piecesColors[60], piecesColors[56], flags, move, *this);
 }
 
 template <typename HashPolicy>

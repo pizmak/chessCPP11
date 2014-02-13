@@ -26,9 +26,11 @@ struct Alphabeta {
         if (depth > 1) {
             for (typename GameTraits::Move *move = spaceForMoves; move < afterLastMove; ++move) {
                 GameTraits::makeMove(state, *move);
+                state.first.checkIntegrity(*move);
                 GameTraits::storeMoveScore(*move, GameTraits::evaluateSimple(state));
                 Statistics::globalStatistics().increment("alphabeta.evalSimple");
                 GameTraits::unmakeMove(state, *move);
+                state.first.checkIntegrity(*move);
             }
             static auto sortFun = [](const typename GameTraits::Move &m1, const typename GameTraits::Move &m2) {
                 return isMin ? GameTraits::getMoveScore(m1) < GameTraits::getMoveScore(m2) : GameTraits::getMoveScore(m1) > GameTraits::getMoveScore(m2);
@@ -41,6 +43,7 @@ struct Alphabeta {
         int16_t bestResult = isMin ? std::numeric_limits<int16_t>::max() : std::numeric_limits<int16_t>::min();
         for (typename GameTraits::Move *move = spaceForMoves; move < afterLastMove; ++move) {
             GameTraits::makeMove(state, *move);
+            state.first.checkIntegrity(*move);
             int16_t result;
             if (depth == 1 && (move->captured != Piece::empty /*|| afterLastMove - spaceForMoves < 8*/ /*to jest prawie na pewno szach, a nawet jak nie to sie przyda*/)) {
                 if (currentDepeningLevel == 0) {
@@ -70,6 +73,7 @@ struct Alphabeta {
                 result = Alphabeta<GameTraits, !isMin, depth - 1>::go(state, alpha, beta, afterLastMove, level + 1);
             }
             GameTraits::unmakeMove(state, *move);
+            state.first.checkIntegrity(*move);
             if (isMin) {
                 beta = std::min(beta, result);
                 bestResult = std::min(bestResult, result);

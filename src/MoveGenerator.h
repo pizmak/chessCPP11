@@ -33,4 +33,6 @@ struct MoveGenerator {
     // do not check if king is attaking square
     static bool isSquareAttacked(BoardType &board, uint8_t square, Color color);
     static bool isMoveValid(BoardType &board, const Move &m);
+private:
+    static void addCastlingFlags(BoardType &board, Move &move);
 };
