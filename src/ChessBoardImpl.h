@@ -49,8 +49,8 @@ void ChessBoard<HashPolicy>::disappearPiece(Piece piece, Color color, uint8_t fr
 template <typename HashPolicy>
 void ChessBoard<HashPolicy>::appearPiece(Piece piece, Color color, uint8_t to) {
     // we can appear piece on square which is empty on opponents square (capture) or our square (promotion)
-    ASSERT(piecesColors[to] != color || color == Color::white && pieces[to] == Piece::pawn && rank(to) == rank2N('8')
-            || color == Color::black && pieces[to] == Piece::pawn && rank(to) == rank2N('1'), piece, color, int(to), *this);
+    ASSERT(piecesColors[to] != color || color == Color::white && pieces[to] == Piece::pawn && rank(to) == r2N('8')
+            || color == Color::black && pieces[to] == Piece::pawn && rank(to) == r2N('1'), piece, color, int(to), *this);
     pieces[to] = piece;
     piecesColors[to] = color;
     bit::set(bitmask[toInt(color)][toInt(piece)], to);
@@ -128,10 +128,10 @@ void ChessBoard<HashPolicy>::makeMove(const Move &move) {
     if (pieces[move.from] == Piece::king) {
         if (move.flags & MoveFlags::castling) {
             ASSERT(flags & allCastlings, flags);
-            ASSERT(file(move.to) == file2N('g') || file(move.to) == file2N('c') ,  move, *this);
-            ASSERT(rank(move.to) == rank2N('1') && toMove == Color::white || rank(move.to) == rank2N('8') && toMove == Color::black ,  move, *this);
-            uint8_t rookStartFile = file(move.to) == file2N('g') ? this->kingSideRookFile :  this->queenSideRookFile;
-            uint8_t offset = file(move.to) == file2N('g') ? file2N('f') - this->kingSideRookFile : file2N('d') - this->queenSideRookFile;
+            ASSERT(file(move.to) == f2N('g') || file(move.to) == f2N('c') ,  move, *this);
+            ASSERT(rank(move.to) == r2N('1') && toMove == Color::white || rank(move.to) == r2N('8') && toMove == Color::black ,  move, *this);
+            uint8_t rookStartFile = file(move.to) == f2N('g') ? this->kingSideRookFile :  this->queenSideRookFile;
+            uint8_t offset = file(move.to) == f2N('g') ? f2N('f') - this->kingSideRookFile : f2N('d') - this->queenSideRookFile;
             uint8_t colorOffset = 56 * int(toMove);
             disappearPiece(Piece::rook, toMove, rookStartFile + colorOffset);
             movePiece(pieces[move.from], toMove, move.from, move.to);
@@ -177,10 +177,10 @@ void ChessBoard<HashPolicy>::unmakeMove(const Move &move) {
     setEnPassantSquare(move.enPassantSquare);
     if (pieces[move.to] == Piece::king) {
         if (move.flags & MoveFlags::castling) {
-            ASSERT(file(move.to) == file2N('g') || file(move.to) == file2N('c') ,  move, *this);
-            ASSERT(rank(move.to) == rank2N('1') && toMove == Color::black || rank(move.to) == rank2N('8') && toMove == Color::white ,  move, *this);
-            uint8_t rookStartFile = file(move.to) == file2N('g') ? this->kingSideRookFile : this->queenSideRookFile;
-            uint8_t offset = file(move.to) == file2N('g') ? file2N('f') - this->kingSideRookFile : file2N('d') - this->queenSideRookFile;
+            ASSERT(file(move.to) == f2N('g') || file(move.to) == f2N('c') ,  move, *this);
+            ASSERT(rank(move.to) == r2N('1') && toMove == Color::black || rank(move.to) == r2N('8') && toMove == Color::white ,  move, *this);
+            uint8_t rookStartFile = file(move.to) == f2N('g') ? this->kingSideRookFile : this->queenSideRookFile;
+            uint8_t offset = file(move.to) == f2N('g') ? f2N('f') - this->kingSideRookFile : f2N('d') - this->queenSideRookFile;
             uint8_t colorOffset = 56 * int(opponent(toMove));
             disappearPiece(Piece::rook, opponent(toMove), rookStartFile + colorOffset + offset);
             movePiece(pieces[move.to], opponent(toMove), move.to, move.from);
@@ -256,12 +256,12 @@ template <typename HashPolicy>
 void ChessBoard<HashPolicy>::dumpRank(std::ostream &stream, uint8_t rank) const {
     ASSERT(/*rank >= 0 && */rank < 8, rank);
     for (uint8_t file = 0; file < 8; ++file) {
-        switch (piecesColors[number(rank, file)]) {
+        switch (piecesColors[number(file, rank)]) {
         case Color::empty:
             stream << (isWhite(rank, file) ? " " : ".");
             break;
         default:
-            stream << piece2Notation(pieces[number(rank, file)], piecesColors[number(rank, file)]);
+            stream << piece2Notation(pieces[number(file, rank)], piecesColors[number(rank, file)]);
         }
     }
 }
@@ -444,14 +444,14 @@ void ChessBoard<HashPolicy>::initFromFen(std::list<std::string> fenPosition) {
                 file += rank[0] - '0';
             } else {
                 Piece piece = notation2Piece(rank[0]);
-                appearPiece(piece, rank[0] >= 'a' ? Color::black : Color::white, number(_rank, file));
+                appearPiece(piece, rank[0] >= 'a' ? Color::black : Color::white, number(file, _rank));
                 ++file;
             }
             rank = rank.substr(1);
         }
-        ASSERT(file == 8, file);
+        ASSERT(file == 8, int(file));
     }
-    ASSERT(_rank == 0, _rank);
+    ASSERT(_rank == 0, int(_rank));
 
     std::string toMove = fenPosition.front();
     fenPosition.pop_front();
@@ -504,26 +504,26 @@ void ChessBoard<HashPolicy>::initCastlingsFromFen(std::string castlings) {
             ASSERT(queenSideRookFile == INVALID_FILE || queenSideRookFile == bit::leastSignificantBit(lastRankBlackRooksFiles), int(queenSideRookFile), int(bit::leastSignificantBit(lastRankBlackRooksFiles)));
             queenSideRookFile = bit::leastSignificantBit(lastRankBlackRooksFiles);
         } else if (c >= 'A' && c <= 'H') {
-            ASSERT(bit::isSet(getBitmask(Color::white, Piece::rook), file2N(c)), getBitmask(Color::white, Piece::rook), c);
+            ASSERT(bit::isSet(getBitmask(Color::white, Piece::rook), f2N(c)), getBitmask(Color::white, Piece::rook), c);
             if (c < kingStartFile) {
                 flags |=  BoardFlags::Q_castling;
-                ASSERT(queenSideRookFile == INVALID_FILE || queenSideRookFile == file2N(c), int(queenSideRookFile), c);
-                queenSideRookFile = file2N(c);
+                ASSERT(queenSideRookFile == INVALID_FILE || queenSideRookFile == f2N(c), int(queenSideRookFile), c);
+                queenSideRookFile = f2N(c);
             } else {
                 flags |=  BoardFlags::K_castling;
-                ASSERT(kingSideRookFile == INVALID_FILE || kingSideRookFile == file2N(c), int(kingSideRookFile), c);
-                kingSideRookFile = file2N(c);
+                ASSERT(kingSideRookFile == INVALID_FILE || kingSideRookFile == f2N(c), int(kingSideRookFile), c);
+                kingSideRookFile = f2N(c);
             }
         } else if (c >= 'a' && c <= 'h') {
-            ASSERT(bit::isSet(getBitmask(Color::black, Piece::rook), file2N(c)), getBitmask(Color::black, Piece::rook), c);
+            ASSERT(bit::isSet(getBitmask(Color::black, Piece::rook), f2N(c)), getBitmask(Color::black, Piece::rook), c);
             if (c < kingStartFile) {
                 flags |=  BoardFlags::Q_castling;
-                ASSERT(queenSideRookFile == INVALID_FILE || queenSideRookFile == file2N(c), int(queenSideRookFile), c);
-                queenSideRookFile = file2N(c);
+                ASSERT(queenSideRookFile == INVALID_FILE || queenSideRookFile == f2N(c), int(queenSideRookFile), c);
+                queenSideRookFile = f2N(c);
             } else {
                 flags |=  BoardFlags::K_castling;
-                ASSERT(kingSideRookFile == INVALID_FILE || kingSideRookFile == file2N(c), int(queenSideRookFile), c);
-                kingSideRookFile = file2N(c);
+                ASSERT(kingSideRookFile == INVALID_FILE || kingSideRookFile == f2N(c), int(queenSideRookFile), c);
+                kingSideRookFile = f2N(c);
             }
         } else {
             ASSERT(false, c);
@@ -537,19 +537,19 @@ template <typename HashPolicy>
 template<Color color>
 uint8_t ChessBoard<HashPolicy>::getKingStartSquare() const {
     static_assert(color == Color::white || color == Color::black, "invalid color");
-    return number(rank2N(color == Color::white ? '1' : '8'), kingStartFile);
+    return number(kingStartFile, r2N(color == Color::white ? '1' : '8'));
 }
 
 template <typename HashPolicy>
 template<Color color>
 uint8_t ChessBoard<HashPolicy>::getQueenSideRookSquare() const {
     static_assert(color == Color::white || color == Color::black, "invalid color");
-    return number(rank2N(color == Color::white ? '1' : '8'), queenSideRookFile);
+    return number(queenSideRookFile, r2N(color == Color::white ? '1' : '8'));
 }
 
 template <typename HashPolicy>
 template<Color color>
 uint8_t ChessBoard<HashPolicy>::getKingSideRookSquare() const {
     static_assert(color == Color::white || color == Color::black, "invalid color");
-    return number(rank2N(color == Color::white ? '1' : '8'), kingSideRookFile);
+    return number(kingSideRookFile, r2N(color == Color::white ? '1' : '8'));
 }

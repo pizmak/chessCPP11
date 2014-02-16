@@ -69,7 +69,7 @@ const int16_t ChessEvaluator::centrum_bonus[] = {
 template <Color color> int16_t ChessEvaluator::evaluatePawn(const BoardType &board, uint8_t square) {
     ASSERT(square >= n2N("a2") && square <= n2N("h7"), square);
     static_assert(color == Color::white || color == Color::black, "invalid color");
-    CONSTEXPR uint8_t bonusLine = color == Color::white ? rank2N('7') : rank2N('2');
+    CONSTEXPR uint8_t bonusLine = color == Color::white ? r2N('7') : r2N('2');
     int16_t ret = centrum_bonus[square];
     if (rank(square) == bonusLine) {
         ret += oneButLastLineBonus;
@@ -96,7 +96,7 @@ template <Color color> int16_t ChessEvaluator::evaluateBishop(const BoardType &b
 }
 
 template <Color color> int16_t ChessEvaluator::evaluateRook(const BoardType &board __attribute__((unused)), uint8_t square, uint8_t king_position[2]) {
-    CONSTEXPR uint8_t penaltyRank = color == Color::white ? rank2N('7') : rank2N('2');
+    CONSTEXPR uint8_t penaltyRank = color == Color::white ? r2N('7') : r2N('2');
     int16_t ret = centrum_bonus[square];
     ret += -2 * distance[square][king_position[toInt(opponent(color))]];
     ret += int(rank(square) == penaltyRank) * rookOnOneButLastRankBonus;

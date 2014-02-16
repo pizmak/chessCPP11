@@ -19,23 +19,23 @@ inline bool inRange(uint8_t _rank, uint8_t _file) {
     return _rank < 8 && _file < 8;
 }
 
-CONSTEXPR inline uint8_t rank2N(char c) {
+CONSTEXPR inline uint8_t r2N(char c) {
     ASSERT(c >= '1' && c <='8', int(c));
     return c - '1';
 }
 
-CONSTEXPR inline uint8_t file2N(char c) {
+CONSTEXPR inline uint8_t f2N(char c) {
     ASSERT((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'), int(c));
     return c <= 'Z' ? c - 'A' : c - 'a';
 }
 
 CONSTEXPR inline uint8_t n2N(const char* c) {
-    return file2N(c[0]) + 8 * rank2N(c[1]);
+    return f2N(c[0]) + 8 * r2N(c[1]);
 }
 
 inline uint8_t notation2Number(const std::string &s) {
     ASSERT(s[0] >= 'a' && s[0] <= 'z' && s[1] >= '1' && s[1] <= '8', s);
-    return (s[0] - 'a') + (s[1] - '1') * 8;
+    return f2N(s[0]) + 8 * r2N(s[1]);
 }
 
 CONSTEXPR inline char n2Rank(uint8_t number) {
@@ -60,7 +60,7 @@ CONSTEXPR inline uint8_t rank(uint8_t number) {
     return number >> 3;
 }
 
-CONSTEXPR inline uint8_t number(uint8_t rank, uint8_t file) {
+CONSTEXPR inline uint8_t number(uint8_t file, uint8_t rank) {
     ASSERT(/*rank >= 0 && */rank < 8/* && file >= 0 */&& file < 8, (int)rank, (int)file);
     return (rank << 3) + file;
 }
@@ -144,7 +144,7 @@ inline Piece notation2Piece(char notation) {
 }
 
 inline Move parseMove(const std::string &move) {
-    Move m{255, 255, 0, Piece::empty, MoveFlags::empty, 0};
+    Move m{0xFF, 0xFF, 0, Piece::empty, MoveFlags::empty, 0};
     if (move == "O-O" || move == "0-0") {
         m.flags = MoveFlags::K_castling | MoveFlags::k_castling | MoveFlags::castling;
     } else if (move == "O-O-O" || move == "0-0-0") {
@@ -153,7 +153,7 @@ inline Move parseMove(const std::string &move) {
         m.from = notation2Number(move.substr(0, 2));
         m.to = notation2Number(move.substr(2, 2));
         if (move.length() == 5) {
-            ASSERT(m.to > 0x37 && m.to < 0x40 || m.to < 0x8, move);
+            ASSERT(m.to >= n2N("a8") && m.to <= n2N("h8") || m.to <= n2N("h1"), move);
             m.flags = piece2promotion(notation2Piece(move[4]));
         }
     }
@@ -175,7 +175,7 @@ inline std::string move2String(const Move &move) {
 inline void printBitmaskAsBoard(uint64_t bitmask, std::ostream &stream) {
     for (uint8_t rank = 7; rank < 8; --rank) {
         for (uint8_t file = 0; file < 8; ++file) {
-            stream << (bit::isSet(bitmask, number(rank, file)) ? "1" : "0");
+            stream << (bit::isSet(bitmask, number(file, rank)) ? "1" : "0");
         }
         stream << std::endl;
     }

@@ -131,7 +131,7 @@ Move *MoveGenerator::generatePawnMoves(BoardType &board, uint8_t square, Move *s
     if (board.getPiece(targetSquare) == Piece::empty) {
         *startMove = {square, targetSquare, board.getEnPassantSquare(), Piece::empty};
         if (isMoveValid(board, *startMove)) {
-            if (startMove->to > 0x37 || startMove->to < 8) {
+            if (startMove->to >= n2N("a8") || startMove->to <= n2N("h1")) {
                 startMove[1] = startMove[2] = startMove[3] = *startMove;
                 startMove->flags |= MoveFlags::queenPromotion;
                 startMove[1].flags |= MoveFlags::rookPromotion;
@@ -141,7 +141,7 @@ Move *MoveGenerator::generatePawnMoves(BoardType &board, uint8_t square, Move *s
             }
             ++startMove;
             uint8_t targetSquare = color == Color::white ? square + 16 : square - 16;
-            bool inSecondLine = color == Color::white ? square < 0x10 : square > 0x2F;
+            bool inSecondLine = color == Color::white ? square <= n2N("h2") : square >= n2N("a7");
             if (inSecondLine && board.getPiece(targetSquare) == Piece::empty) {
                 *startMove = {square, targetSquare, board.getEnPassantSquare(), Piece::empty};
                 if (isMoveValid(board, *startMove)) {
@@ -155,7 +155,7 @@ Move *MoveGenerator::generatePawnMoves(BoardType &board, uint8_t square, Move *s
         *startMove = {square, targetSquare, board.getEnPassantSquare(), board.getPiece(targetSquare)};
         addCastlingFlags(board, *startMove);
         if (isMoveValid(board, *startMove)) {
-            if (startMove->to > 0x37 || startMove->to < 8) {
+            if (startMove->to >= n2N("a8") || startMove->to <= n2N("h1")) {
                 startMove[1] = startMove[2] = startMove[3] = *startMove;
                 startMove->flags |= MoveFlags::queenPromotion;
                 startMove[1].flags |= MoveFlags::rookPromotion;
@@ -239,7 +239,7 @@ Move *MoveGenerator::generateKingMoves(BoardType &board, uint8_t square, Move *s
             ++startMove;
         }
     }
-    return movesOfShortDistancePiece(board, square, kingBitmask[square], startMove, flags);;
+    return movesOfShortDistancePiece(board, square, kingBitmask[square], startMove, flags);
 }
 
 uint64_t MoveGenerator::maskOfShortDistancePiece(uint8_t square, const PairList &list) {
@@ -248,7 +248,7 @@ uint64_t MoveGenerator::maskOfShortDistancePiece(uint8_t square, const PairList 
     uint8_t _rank = rank(square);
     for (auto &pair : list) {
         if (inRange(_rank + pair.first, _file + pair.second)) {
-            bit::set(ret, number(_rank + pair.first, _file + pair.second));
+            bit::set(ret, number(_file + pair.second, _rank + pair.first));
         }
     }
     return ret;
@@ -263,7 +263,7 @@ void MoveGenerator::maskOfLongDistancePiece(uint8_t square, uint64_t array[4], c
     for (auto &pair : list) {
         multiplier = 1;
         while (inRange(_rank + multiplier * pair.first, _file + multiplier * pair.second)) {
-            bit::set(array[direction], number(_rank + multiplier * pair.first, _file + multiplier * pair.second));
+            bit::set(array[direction], number(_file + multiplier * pair.second, _rank + multiplier * pair.first));
             ++multiplier;
         }
         ++direction;

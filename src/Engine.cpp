@@ -38,7 +38,7 @@ void Engine::fillMoveFlags(BoardType &board, Move &m) {
     if (m.from == 255 && m.to == 255) { //castling
         Color toMove = board.getMoveSide();
         m.from = bit::mostSignificantBit(board.getBitmask(toMove, Piece::king));
-        m.to = number(rank2N(toMove == Color::white ? '1' : '8'), file2N(m.flags & MoveFlags::K_castling ? 'g' : 'c'));
+        m.to = number(f2N(m.flags & MoveFlags::K_castling ? 'g' : 'c'), r2N(toMove == Color::white ? '1' : '8'));
         EnumFlags<MoveFlags> flags = toMove == Color::white
                 ? MoveFlags::K_castling | MoveFlags::Q_castling : MoveFlags::k_castling | MoveFlags::q_castling;
         m.flags &= flags;
