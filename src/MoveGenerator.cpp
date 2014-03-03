@@ -217,7 +217,6 @@ Move *MoveGenerator::generateKingMoves(BoardType &board, uint8_t square, Move *s
             }
             ++startMove;
         }
-        return startMove;
     }
     if (square == board.getKingStartSquare<Color::black>() && board.getFlags() & BoardFlags::k_castling) {
         flags |= MoveFlags::k_castling;
