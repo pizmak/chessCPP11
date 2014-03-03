@@ -530,6 +530,14 @@ void ChessBoard<HashPolicy>::initCastlingsFromFen(std::string castlings) {
         }
     }
     TRACE_PARAMS(int(kingSideRookFile), int(queenSideRookFile), flags);
+    if (kingSideRookFile == INVALID_FILE) {
+        // adequate castling flags are not set so it is safe to set it to default value
+        // it is important to this attribute to have correct value
+        kingSideRookFile = f2N('h');
+    }
+    if (queenSideRookFile == INVALID_FILE) {
+        queenSideRookFile = f2N('a');
+    }
     setFlags(flags);
 }
 
