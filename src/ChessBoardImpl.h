@@ -137,14 +137,14 @@ void ChessBoard<HashPolicy>::makeMove(const Move &move) {
             movePiece(pieces[move.from], toMove, move.from, move.to);
             appearPiece(Piece::rook, toMove, rookStartFile + colorOffset + offset);
         } else {
-            if (move.captured != Piece::empty) {
+            if (move.isCapture()) {
                 takePiece(pieces[move.from], toMove, move.captured, move.from, move.to);
             } else {
                 movePiece(pieces[move.from], toMove, move.from, move.to);
             }
         }
     } else {
-        if (move.captured != Piece::empty) {
+        if (move.isCapture()) {
             takePiece(pieces[move.from], toMove, move.captured, move.from, move.to);
         } else {
             movePiece(pieces[move.from], toMove, move.from, move.to);
@@ -164,7 +164,7 @@ void ChessBoard<HashPolicy>::makeMove(const Move &move) {
     toMove = opponent(toMove);
     HashPolicy::switchPlayer();
     HashPolicy::resetRepetition();
-    history.push(HashPolicy::getHash(), move.captured != Piece::empty || pieces[move.to] == Piece::pawn);
+    history.push(HashPolicy::getHash(), move.isCapture() || pieces[move.to] == Piece::pawn);
     HashPolicy::setRepetition(history.isTopPositionRepeated(2));
     checkIntegrity(move);
 }
@@ -186,14 +186,14 @@ void ChessBoard<HashPolicy>::unmakeMove(const Move &move) {
             movePiece(pieces[move.to], opponent(toMove), move.to, move.from);
             appearPiece(Piece::rook, opponent(toMove), rookStartFile + colorOffset);
         } else {
-            if (move.captured != Piece::empty) {
+            if (move.isCapture()) {
                 untakePiece(pieces[move.to], opponent(toMove), move.captured, move.from, move.to);
             } else {
                 movePiece(pieces[move.to], opponent(toMove), move.to, move.from);
             }
         }
     } else {
-        if (move.captured != Piece::empty) {
+        if (move.isCapture()) {
             untakePiece(pieces[move.to], opponent(toMove), move.captured, move.from, move.to);
         } else {
             movePiece(pieces[move.to], opponent(toMove), move.to, move.from);

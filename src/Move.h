@@ -31,6 +31,9 @@ struct Move {
     EnumFlags<MoveFlags> flags;
     // always rewritten from Board enPassantSquare - unmakeMove should properly set boards enPassantSqare to previous value
     int16_t score;
+    bool isCapture() const {
+        return captured != Piece::empty;
+    }
 };
 
 std::ostream &operator<<(std::ostream &stream, const Move &move);

@@ -45,7 +45,7 @@ struct Alphabeta {
             GameTraits::makeMove(state, *move);
             state.first.checkIntegrity(*move);
             int16_t result;
-            if (depth == 1 && (move->captured != Piece::empty /*|| afterLastMove - spaceForMoves < 8*/ /*to jest prawie na pewno szach, a nawet jak nie to sie przyda*/)) {
+            if (depth == 1 && (move->isCapture() /*|| afterLastMove - spaceForMoves < 8*/ /*to jest prawie na pewno szach, a nawet jak nie to sie przyda*/)) {
                 if (currentDepeningLevel == 0) {
                     GameTraits::unmakeMove(state, *move);
                     evalSimpleBeginningOfDepening = GameTraits::evaluateSimple(state);
