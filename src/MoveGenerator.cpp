@@ -48,6 +48,11 @@ Move *MoveGenerator::movesOfShortDistancePiece(BoardType &board, uint8_t square,
     mask &= ~board.piecesOf(board.getMoveSide());
     bit::foreach_bit(mask, [&board, &startMove, square, flags](uint8_t moveTo) {
         *startMove = {square, moveTo, board.getEnPassantSquare(), board.getPiece(moveTo), flags};
+        if (board.getMoveSide() == Color::white) {
+            ++board.attackers[moveTo];
+        } else {
+            --board.attackers[moveTo];
+        }
         addCastlingFlags(board, *startMove);
         if (isMoveValid(board, *startMove)) {
             ++startMove;
@@ -64,6 +69,11 @@ Move *MoveGenerator::movesOfLongDistancePiece(BoardType &board, uint8_t square, 
         if (piecesOnLine) {
             possiblePiece = (bit::single(square) < mask[square][direction] ?
                     bit::leastSignificantBit : bit::mostSignificantBit)(piecesOnLine);
+            if (board.getMoveSide() == Color::white) {
+                ++board.attackers[possiblePiece];
+            } else {
+                --board.attackers[possiblePiece];
+            }
             if (board.getPieceColor(possiblePiece) != board.getMoveSide()) {
                 *startMove = {square, possiblePiece, board.getEnPassantSquare(), board.getPiece(possiblePiece), flags};
                 addCastlingFlags(board, *startMove);
