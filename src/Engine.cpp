@@ -165,7 +165,7 @@ Move Engine::go() {
     };
     std::sort(moves, afterLastMove, sortFun);
 
-    int threadsCount = 4;
+    int threadsCount = 1;
 
     //std::thread();
 
