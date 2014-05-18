@@ -45,17 +45,24 @@ void MoveGenerator::addCastlingFlags(BoardType &board, Move &move) {
 }
 
 Move *MoveGenerator::movesOfShortDistancePiece(BoardType &board, uint8_t square, uint64_t mask, Move *startMove, EnumFlags<MoveFlags> flags) {
-    mask &= ~board.piecesOf(board.getMoveSide());
+    //mask &= ~board.piecesOf(board.getMoveSide());
     bit::foreach_bit(mask, [&board, &startMove, square, flags](uint8_t moveTo) {
         *startMove = {square, moveTo, board.getEnPassantSquare(), board.getPiece(moveTo), flags};
-        if (board.getMoveSide() == Color::white) {
-            ++board.attackers[moveTo];
+        if (board.getPieceColor(moveTo) == board.getMoveSide()) {
+            //  tutaj bicie/bronienie swojej figury
+            Piece piece = board.getPiece(square);
+            board.disappearPiece(piece, board.getMoveSide(), square);
+            if (!isSquareAttacked(board, board.getKingPosition(board.getMoveSide()), opponent(board.getMoveSide()))) {
+                if (board.getMoveSide() == Color::white) ++board.attackers[moveTo]; else --board.attackers[moveTo];
+            }
+            board.appearPiece(piece, board.getMoveSide(), square);
         } else {
-            --board.attackers[moveTo];
-        }
-        addCastlingFlags(board, *startMove);
-        if (isMoveValid(board, *startMove)) {
-            ++startMove;
+            // wszystkie pozostale ruchy i bicia figur przeciwnika
+            addCastlingFlags(board, *startMove);
+            if (isMoveValid(board, *startMove)) {
+                if (board.getMoveSide() == Color::white) ++board.attackers[moveTo]; else --board.attackers[moveTo];
+                ++startMove;
+            }
         }
     });
     return startMove;
@@ -64,22 +71,26 @@ Move *MoveGenerator::movesOfShortDistancePiece(BoardType &board, uint8_t square,
 Move *MoveGenerator::movesOfLongDistancePiece(BoardType &board, uint8_t square, uint64_t mask[64][4], Move *startMove, EnumFlags<MoveFlags> flags) {
     for (int direction = 0; direction < 4; ++direction) {
         uint64_t piecesOnLine = mask[square][direction] & board.allPieces();
-        uint8_t possiblePiece = 0;
         uint64_t movesMask = mask[square][direction];
         if (piecesOnLine) {
-            possiblePiece = (bit::single(square) < mask[square][direction] ?
+            uint8_t possiblePiece = (bit::single(square) < mask[square][direction] ?
                     bit::leastSignificantBit : bit::mostSignificantBit)(piecesOnLine);
-            if (board.getMoveSide() == Color::white) {
-                ++board.attackers[possiblePiece];
-            } else {
-                --board.attackers[possiblePiece];
-            }
             if (board.getPieceColor(possiblePiece) != board.getMoveSide()) {
+                // tutaj bicie przeciwnika
                 *startMove = {square, possiblePiece, board.getEnPassantSquare(), board.getPiece(possiblePiece), flags};
                 addCastlingFlags(board, *startMove);
                 if (isMoveValid(board, *startMove)) {
                     ++startMove;
+                    if (board.getMoveSide() == Color::white) ++board.attackers[possiblePiece]; else --board.attackers[possiblePiece];
                 }
+            } else {
+                //  tutaj bicie/bronienie swojej figury
+                Piece piece = board.getPiece(square);
+                board.disappearPiece(piece, board.getMoveSide(), square);
+                if (!isSquareAttacked(board, board.getKingPosition(board.getMoveSide()), opponent(board.getMoveSide()))) {
+                    if (board.getMoveSide() == Color::white) ++board.attackers[possiblePiece]; else --board.attackers[possiblePiece];
+                }
+                board.appearPiece(piece, board.getMoveSide(), square);
             }
             movesMask = bit::sub(movesMask, mask[possiblePiece][direction]);
             bit::unset(movesMask, possiblePiece);
@@ -89,6 +100,7 @@ Move *MoveGenerator::movesOfLongDistancePiece(BoardType &board, uint8_t square, 
             *startMove = {square, targetSquare, board.getEnPassantSquare(), Piece::empty, flags};
             if (isMoveValid(board, *startMove)) {
                 ++startMove;
+                if (board.getMoveSide() == Color::white) ++board.attackers[targetSquare]; else --board.attackers[targetSquare];
             }
         });
     }
