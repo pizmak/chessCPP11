@@ -423,6 +423,10 @@ uint8_t ChessBoard<HashPolicy>::getKingSideRookFile() const {
     return kingSideRookFile;
 }
 
+template <typename HashPolicy>
+uint8_t ChessBoard<HashPolicy>::getKingPosition(Color color) const {
+    return bit::mostSignificantBit(getBitmask(color, Piece::king));
+}
 #define INVALID_FILE 0xFF
 
 template <typename HashPolicy>

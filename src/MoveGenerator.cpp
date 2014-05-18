@@ -307,7 +307,7 @@ uint64_t MoveGenerator::kingMask(uint8_t square) {
 
 bool MoveGenerator::isMoveValid(BoardType &board, const Move &m) {
     board.makeMove(m);
-    bool ret = isSquareAttacked(board, bit::mostSignificantBit(board.getBitmask(opponent(board.getMoveSide()), Piece::king)), board.getMoveSide());
+    bool ret = isSquareAttacked(board, board.getKingPosition(opponent(board.getMoveSide())), board.getMoveSide());
     board.unmakeMove(m);
     return !ret;
 }

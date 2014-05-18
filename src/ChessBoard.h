@@ -60,8 +60,8 @@ protected:
     uint8_t kingStartFile = f2N('e');
     uint8_t queenSideRookFile = f2N('a');
     uint8_t kingSideRookFile  = f2N('h');
-    int8_t attackers[64];
 public:
+    int8_t attackers[64]; // should be protected
     bool isDraw() const; // returns true if there were 50 moves without capture or pawn moves or or position was three times repeated
     void makeMove(const Move &r); // only move pieces around, no check for move validity
     void unmakeMove(const Move &r);
@@ -92,6 +92,7 @@ public:
     uint8_t getQueenSideRookSquare() const;
     template<Color color>
     uint8_t getKingSideRookSquare() const;
+    uint8_t getKingPosition(Color) const;
 protected:
     void initHistory();
     void clear();
