@@ -1,5 +1,5 @@
 # Make sure the compiler can find include files from our Hello library. 
-include_directories (${szachy_SOURCE_DIR}/src) 
+include_directories (${CMAKE_SOURCE_DIR}/src) 
 
 # Make sure the linker can find the Hello library once it is built. 
 #    link_directories (${HELLO_BINARY_DIR}/Hello) 
